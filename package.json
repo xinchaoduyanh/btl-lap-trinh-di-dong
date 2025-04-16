@@ -1,0 +1,27 @@
+{
+  "name": "lap_trinh_di_dong",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.30.1",
+    "@typescript-eslint/parser": "^8.30.1",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.3.0",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-define-config": "^2.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.6",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-native": "^5.0.0",
+    "prettier": "^3.5.3"
+  }
+}

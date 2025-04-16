@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",                           // Gốc là thư mục hiện tại (monorepo root)
+    "paths": {
+      "@restaurant/shared/*": ["packages/shared/*"]   // Alias để import
+    },
+    "module": "commonjs",
+    "target": "ES2020",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  }
+}

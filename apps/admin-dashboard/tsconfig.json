@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "preserve",            // Giữ nguyên JSX để Next xử lý
+    "module": "esnext",           // Dùng ESM cho trình duyệt
+    "moduleResolution": "node",
+    "resolveJsonModule": true,    // Hữu ích nếu import file JSON
+    "isolatedModules": true       // Bắt buộc với Next.js (App Router)
+  },
+  "include": ["app", "components", "lib"]
+}
