@@ -23,5 +23,8 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-native": "^5.0.0",
     "prettier": "^3.5.3"
+  },
+  "dependencies": {
+    "lap_trinh_di_dong": "file:"
   }
 }
