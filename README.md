@@ -17,4 +17,6 @@ Hệ thống thông báo real-time cho các sự kiện như đơn hàng mới, 
 
 Tính năng đánh giá, bình luận món ăn.
 
-Phần tiếp theo là cách cài đặt, tôi sẽ để tiêu đề như yêu cầu của bạn.
+Phần tiếp theo là cách cài đặt ....
+
+(To be continued)
