@@ -7,6 +7,9 @@
     "allowJs": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "jsx" : "react",
+    "jsxFactory": "React.createElement",
+    "jsxFragmentFactory": "React.Fragment",
     "paths": {
       "@/*": ["apps/mobile-app/*"]
     }
