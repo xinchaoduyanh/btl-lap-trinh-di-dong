@@ -1,0 +1,96 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  WAITER
+  CASHIER
+  MANAGER
+  ADMIN
+}
+
+model Employee {
+  id          String     @id @default(uuid())
+  email       String     @unique
+  password    String
+  name        String
+  role        String     // waiter, cashier, manager
+  isActive    Boolean    @default(true)
+  attendances Attendance[]
+  orders      Order[]
+  notifications Notification[]
+  createdAt   DateTime   @default(now())
+}
+
+model Shift {
+  id        String     @id @default(uuid())
+  name      String     // Morning, Afternoon, Evening
+  startTime DateTime
+  endTime   DateTime
+  attendances Attendance[]
+}
+
+model Attendance {
+  id         String   @id @default(uuid())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String
+  shift      Shift    @relation(fields: [shiftId], references: [id])
+  shiftId    String
+  checkIn    DateTime
+  checkOut   DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model Table {
+  id        String   @id @default(uuid())
+  number    Int      @unique
+  status    String   // free, occupied, reserved
+  orders    Order[]
+}
+
+model MenuItem {
+  id        String      @id @default(uuid())
+  name      String
+  price     Float
+  isAvailable Boolean   @default(true)
+  orderItems OrderItem[]
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  table       Table       @relation(fields: [tableId], references: [id])
+  tableId     String
+  employee    Employee    @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  status      String      // pending, processing, done, paid
+  totalAmount Float
+  createdAt   DateTime    @default(now())
+  orderItems  OrderItem[]
+}
+
+model OrderItem {
+  id        String    @id @default(uuid())
+  order     Order     @relation(fields: [orderId], references: [id])
+  orderId   String
+  menuItem  MenuItem  @relation(fields: [menuItemId], references: [id])
+  menuItemId String
+  quantity  Int
+  unitPrice Float     // đơn giá lúc đặt
+}
+
+
+model Notification {
+  id         String   @id @default(uuid())
+  message    String
+  isRead     Boolean  @default(false)
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String
+  createdAt  DateTime @default(now())
+}
