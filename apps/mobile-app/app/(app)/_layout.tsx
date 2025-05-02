@@ -21,15 +21,27 @@ export default function AppLayout() {
         }}
       />
       <Stack.Screen
-        name="order-table"
+        name="order-management"
         options={{
-          title: 'Order Table'
+          title: 'Order Management'
         }}
       />
       <Stack.Screen
-        name="notification"
+        name="notifications"
         options={{
-          title: 'Notification'
+          title: 'Notifications'
+        }}
+      />
+      <Stack.Screen
+        name="table-management"
+        options={{
+          title: 'Table Management'
+        }}
+      />
+      <Stack.Screen
+        name="profile"
+        options={{
+          title: 'Profile'
         }}
       />
       {/* Thêm các screens khác ở đây */}
