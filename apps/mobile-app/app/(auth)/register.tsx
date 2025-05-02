@@ -1,267 +1,182 @@
-import React, { useState } from 'react';
+"use client"
+import React from "react"
+import { useState } from "react"
 import {
+  StyleSheet,
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Dimensions,
-} from 'react-native';
-import { useRouter, Link } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-  import { 
-    UserPlus, 
-    Mail, 
-    Lock, 
-    Eye, 
-    EyeOff, 
-    User
-  } from 'lucide-react-native';
+  TouchableOpacity,
+  Image,
+  ImageBackground,
+} from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { Link, useRouter } from "expo-router"
+import { useAuth } from "../../context/AuthContext"
+import { useTheme } from "../../context/ThemeContext"
+
+// Components
+import { FormInput } from "../../components/FormInput"
+import { PrimaryButton } from "../../components/Buttons"
 
 export default function RegisterScreen() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const router = useRouter()
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const { register, isLoading } = useAuth()
+  const { colors } = useTheme()
 
-  const handleRegister = () => {
-    // Validate inputs
-    if (!name || !email || !password || !confirmPassword) {
-      // Show error
-      return;
-    }
-
+  const handleRegister = async () => {
     if (password !== confirmPassword) {
-      // Show error
-      return;
+      alert("Passwords do not match")
+      return
     }
 
-    setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      // Navigate to tabs/home
-      router.replace('/(tabs)');
-    }, 1000);
-  };
+    await register(fullName, email, password)
+    router.replace("/login")
+  }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-        <LinearGradient
-          colors={['#3B82F6', '#8B5CF6']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
+        <ScrollView contentContainerStyle={styles.scrollView}>
           <View style={styles.logoContainer}>
-            <UserPlus color="#fff" size={40} />
-            <Text style={styles.logoText}>Create Account</Text>
-          </View>
-        </LinearGradient>
-
-        <View style={styles.formContainer}>
-          <Text style={styles.welcomeText}>Join Us</Text>
-          <Text style={styles.subtitleText}>
-            Create an account to get started
-          </Text>
-
-          <View style={styles.inputContainer}>
-            <User color="#6B7280" size={20} />
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-              placeholderTextColor="#9CA3AF"
+            <Image
+              source={{ uri: "https://img.freepik.com/free-vector/hot-pot-concept-illustration_114360-8670.jpg" }}
+              style={styles.logo}
             />
+            <Text style={[styles.appName, { color: colors.primary }]}>ITHotpot</Text>
           </View>
 
-          <View style={styles.inputContainer}>
-            <Mail color="#6B7280" size={20} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Lock color="#6B7280" size={20} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              placeholderTextColor="#9CA3AF"
-            />
-            <TouchableOpacity 
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
+          <View style={styles.formContainer}>
+            <ImageBackground
+              source={{ uri: "https://img.freepik.com/free-vector/hand-drawn-hot-pot-illustration_23-2149175802.jpg" }}
+              style={styles.formBackground}
+              imageStyle={styles.formBackgroundImage}
             >
-              {showPassword ? (
-                <EyeOff color="#6B7280" size={20} />
-              ) : (
-                <Eye color="#6B7280" size={20} />
-              )}
-            </TouchableOpacity>
-          </View>
+              <View style={styles.formOverlay}>
+                <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
 
-          <View style={styles.inputContainer}>
-            <Lock color="#6B7280" size={20} />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
+                <FormInput
+                  label="Full Name"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  placeholder="Enter your full name"
+                />
 
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={isLoading}
-          >
-            <Text style={styles.buttonText}>
-              {isLoading ? 'Creating Account...' : 'Create Account'}
-            </Text>
-          </TouchableOpacity>
+                <FormInput
+                  label="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter your email"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
 
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>Already have an account? </Text>
-            <Link href="/login" asChild>
-              <TouchableOpacity>
-                <Text style={styles.loginLink}>Sign In</Text>
-              </TouchableOpacity>
-            </Link>
+                <FormInput
+                  label="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter your password"
+                  secureTextEntry
+                />
+
+                <FormInput
+                  label="Confirm Password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Confirm your password"
+                  secureTextEntry
+                />
+
+                <PrimaryButton
+                  title={isLoading ? "Creating Account..." : "Register"}
+                  onPress={handleRegister}
+                  disabled={isLoading}
+                  style={{ backgroundColor: colors.primary }}
+                />
+
+                <View style={styles.loginContainer}>
+                  <Text style={styles.loginText}>Already have an account? </Text>
+                  <Link href="/login" asChild>
+                    <TouchableOpacity>
+                      <Text style={[styles.loginLink, { color: colors.primary }]}>Login</Text>
+                    </TouchableOpacity>
+                  </Link>
+                </View>
+              </View>
+            </ImageBackground>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  )
 }
-
-const { height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f9fc',
   },
-  scrollContainer: {
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
     flexGrow: 1,
-  },
-  header: {
-    height: height * 0.25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    justifyContent: "center",
+    padding: 20,
   },
   logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    marginBottom: 30,
   },
-  logoText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
+  logo: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  appName: {
+    fontSize: 24,
+    fontWeight: "bold",
     marginTop: 10,
   },
   formContainer: {
-    flex: 1,
-    padding: 24,
-  },
-  welcomeText: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginTop: 16,
-  },
-  subtitleText: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-  },
-  input: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
-    color: '#1F2937',
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  button: {
-    backgroundColor: '#3B82F6',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-    elevation: 3,
-    shadowColor: '#3B82F6',
+    borderRadius: 10,
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  buttonDisabled: {
-    backgroundColor: '#93C5FD',
+  formBackground: {
+    width: "100%",
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  formBackgroundImage: {
+    opacity: 0.1,
+  },
+  formOverlay: {
+    backgroundColor: "rgba(255,255,255,0.9)",
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
   },
   loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 20,
   },
   loginText: {
-    fontSize: 16,
-    color: '#6B7280',
+    color: "#666",
   },
   loginLink: {
-    fontSize: 16,
-    color: '#3B82F6',
-    fontWeight: '600',
+    fontWeight: "bold",
   },
-});
+})

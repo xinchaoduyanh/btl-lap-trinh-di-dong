@@ -12,6 +12,7 @@
     "skipLibCheck": true,
     "jsx": "react", // Thêm cấu hình JSX
     "jsxFactory": "React.createElement", // Chỉ định factory function cho JSX
-    "jsxFragmentFactory": "React.Fragment" // Chỉ định factory function cho Fragment
+    "jsxFragmentFactory": "React.Fragment", // Chỉ định factory function cho Fragment
+    "types": ["react-native"]
   }
 }
