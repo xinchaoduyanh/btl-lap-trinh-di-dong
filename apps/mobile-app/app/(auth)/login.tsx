@@ -12,6 +12,8 @@ import {
   ScrollView,
   ImageBackground,
   ActivityIndicator,
+  Alert,
+  Animated,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Link, router } from "expo-router"
@@ -22,6 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 // Components
 import { FormInput } from "../../components/FormInput"
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons"
+import Fireworks from "../../components/Fireworks"
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("")
@@ -29,18 +32,44 @@ export default function LoginScreen() {
   const { login } = useAuth()
   const { colors } = useTheme()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
+  const fadeAnim = React.useRef(new Animated.Value(0)).current
+
+  const showSuccessMessage = (name: string) => {
+    setSuccessMessage(`Chào mừng trở lại, ${name}!`)
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1500),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setSuccessMessage("")
+      router.replace('/(app)/home')
+    })
+  }
 
   const handleLogin = async () => {
     if (isLoading) return
+    setError("")
 
     setIsLoading(true)
     try {
       await login(email, password)
-      await AsyncStorage.setItem('user', JSON.stringify({ email }))
-      router.replace('/(app)/home')
+      const userData = await AsyncStorage.getItem('user')
+      if (userData) {
+        const parsedUser = JSON.parse(userData)
+        showSuccessMessage(parsedUser.name)
+      }
     } catch (error) {
-      console.error('Login error:', error)
-      alert('Có lỗi xảy ra khi đăng nhập')
+      setError((error as Error).message)
     } finally {
       setIsLoading(false)
     }
@@ -48,6 +77,13 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {successMessage ? (
+        <Animated.View style={[styles.successContainer, { opacity: fadeAnim }]}>
+          <Fireworks />
+          <Text style={styles.successText}>{successMessage}</Text>
+        </Animated.View>
+      ) : null}
+
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
         <ScrollView contentContainerStyle={styles.scrollView}>
           <View style={styles.logoContainer}>
@@ -71,7 +107,10 @@ export default function LoginScreen() {
                 <FormInput
                   label="Email"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text)
+                    setError("")
+                  }}
                   placeholder="Enter your email"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -81,23 +120,46 @@ export default function LoginScreen() {
                 <FormInput
                   label="Password"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text)
+                    setError("")
+                  }}
                   placeholder="Enter your password"
                   secureTextEntry
                   editable={!isLoading}
                 />
 
-                <PrimaryButton
-                  title={isLoading ? "Logging in..." : "Login"}
-                  onPress={handleLogin}
-                  disabled={isLoading}
-                  style={{
-                    backgroundColor: isLoading ? colors.background : colors.primary,
-                    opacity: isLoading ? 0.7 : 1
-                  }}
-                />
+                {error ? (
+                  <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                  </View>
+                ) : null}
 
-                <SecondaryButton title="Login with Google" onPress={() => {}} disabled={isLoading} icon="log-in" />
+                <View style={styles.buttonContainer}>
+                  <PrimaryButton
+                    title={isLoading ? "Logging in..." : "Login"}
+                    onPress={handleLogin}
+                    disabled={isLoading}
+                    style={{
+                      backgroundColor: isLoading ? colors.background : colors.primary,
+                      opacity: isLoading ? 0.7 : 1
+                    }}
+                  />
+                  {isLoading && (
+                    <ActivityIndicator
+                      size="small"
+                      color={colors.primary}
+                      style={styles.loadingIndicator}
+                    />
+                  )}
+                </View>
+
+                <SecondaryButton
+                  title="Login with Google"
+                  onPress={() => {}}
+                  disabled={isLoading}
+                  icon="log-in"
+                />
 
                 <View style={styles.registerContainer}>
                   <Text style={styles.registerText}>Don&apos;t have an account? </Text>
@@ -172,6 +234,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
+  errorContainer: {
+    backgroundColor: "#ffebee",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  errorText: {
+    color: "#d32f2f",
+    textAlign: "center",
+  },
   registerContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -182,5 +254,43 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     fontWeight: "bold",
+  },
+  successContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: 20,
+    right: 20,
+    transform: [{ translateY: -50 }],
+    backgroundColor: 'rgba(76, 175, 80, 0.9)',
+    padding: 20,
+    borderRadius: 12,
+    zIndex: 1000,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
+  buttonContainer: {
+    position: 'relative',
+    marginBottom: 15,
+  },
+  loadingIndicator: {
+    position: 'absolute',
+    right: 20,
+    top: '50%',
+    transform: [{ translateY: -10 }],
   },
 })
