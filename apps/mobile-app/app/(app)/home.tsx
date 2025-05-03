@@ -3,8 +3,11 @@ import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet } fr
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
+
   const handleLogout = async () => {
     await AsyncStorage.removeItem('user');
     router.replace('/(auth)/login');
@@ -43,16 +46,16 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>ITHotpot Staff</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>ITHotpot Staff</Text>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <Feather name="log-out" size={24} color="red" />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
         <View style={styles.tilesContainer}>
           {actionTiles.map((tile) => (
             <TouchableOpacity
@@ -61,10 +64,10 @@ export default function HomeScreen() {
               onPress={() => router.push(tile.screen as any)}
             >
               <Feather name={tile.icon as any} size={32} color="white" />
-              <Text style={styles.tileTitle}>{tile.title}</Text>
+              <Text style={[styles.tileTitle, { color: colors.text }]}>{tile.title}</Text>
               {tile.badge && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{tile.badge}</Text>
+                  <Text style={[styles.badgeText, { color: colors.text }]}>{tile.badge}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -78,7 +81,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
   },
   header: {
     flexDirection: 'row',

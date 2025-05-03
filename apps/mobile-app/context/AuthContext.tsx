@@ -1,15 +1,21 @@
 "use client"
 
-import  React from "react"
-import { createContext, useState, useEffect, useContext } from "react"
+import React, { createContext, useState, useEffect, useContext } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { Alert } from "react-native"
+import { config } from '../config/env'
 
 // Define the shape of our context
 type AuthContextType = {
   isLoggedIn: boolean
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<{
+    id: string
+    email: string
+    name: string
+    role: string
+    isActive: boolean
+  }>
   register: (fullName: string, email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   userEmail: string | null
@@ -19,7 +25,13 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   isLoading: true,
-  login: async () => {},
+  login: async () => ({
+    id: "",
+    email: "",
+    name: "",
+    role: "",
+    isActive: false
+  }),
   register: async () => {},
   logout: async () => {},
   userEmail: null,
@@ -55,26 +67,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login function
   const login = async (email: string, password: string) => {
     if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password")
-      return
+      throw new Error("Vui lòng nhập email và mật khẩu")
     }
 
     setIsLoading(true)
 
     try {
-      // This is where you would integrate your API
-      // For now, we'll just simulate a successful login
+      const response = await fetch(`${config.API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const data = await response.json()
 
-      // For demo purposes, any login succeeds
-      await AsyncStorage.setItem("userToken", "dummy-auth-token")
-      await AsyncStorage.setItem("userEmail", email)
-      setUserEmail(email)
+      if (!response.ok) {
+        throw new Error(data.message)
+      }
+
+      // Store user data
+      await AsyncStorage.setItem("userToken", data.id) // Using id as token for now
+      await AsyncStorage.setItem("userEmail", data.email)
+      await AsyncStorage.setItem("user", JSON.stringify({
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        isActive: data.isActive
+      }))
+
+      setUserEmail(data.email)
       setIsLoggedIn(true)
+
+      return {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        isActive: data.isActive
+      }
     } catch (error) {
-      Alert.alert("Login Failed", (error as Error).message)
+      throw error // Re-throw to let the component handle navigation
     } finally {
       setIsLoading(false)
     }
