@@ -81,14 +81,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email, password }),
       })
 
-      const data = await response.json()
-
       if (!response.ok) {
-        throw new Error(data.message)
+        const errorText = await response.text()
+        let errorMessage
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData.message || 'Đăng nhập thất bại'
+        } catch {
+          errorMessage = errorText || 'Đăng nhập thất bại'
+        }
+        throw new Error(errorMessage)
       }
 
+      const data = await response.json()
+
       // Store user data
-      await AsyncStorage.setItem("userToken", data.id) // Using id as token for now
+      await AsyncStorage.setItem("userToken", data.id)
       await AsyncStorage.setItem("userEmail", data.email)
       await AsyncStorage.setItem("user", JSON.stringify({
         id: data.id,
@@ -109,7 +117,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isActive: data.isActive
       }
     } catch (error) {
-      throw error // Re-throw to let the component handle navigation
+      if (error instanceof Error) {
+        throw new Error(error.message || 'Đăng nhập thất bại')
+      }
+      throw new Error('Đăng nhập thất bại')
     } finally {
       setIsLoading(false)
     }
