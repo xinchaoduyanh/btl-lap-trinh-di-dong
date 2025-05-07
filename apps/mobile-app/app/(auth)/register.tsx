@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   Image,
   ImageBackground,
+  ActivityIndicator,
+  Animated,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Link, useRouter } from "expo-router"
@@ -20,6 +22,7 @@ import { useTheme } from "../../context/ThemeContext"
 // Components
 import { FormInput } from "../../components/FormInput"
 import { PrimaryButton } from "../../components/Buttons"
+import Fireworks from "../../components/Fireworks"
 
 export default function RegisterScreen() {
   const router = useRouter()
@@ -29,19 +32,60 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const { register, isLoading } = useAuth()
   const { colors } = useTheme()
+  const [error, setError] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
+  const fadeAnim = React.useRef(new Animated.Value(0)).current
+
+  const showSuccessMessage = () => {
+    setSuccessMessage("Đăng ký thành công!")
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1500),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setSuccessMessage("")
+      router.replace("/login")
+    })
+  }
 
   const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match")
+    // Validation
+    if (!fullName || !email || !password || !confirmPassword) {
+      setError("Vui lòng điền đầy đủ thông tin")
       return
     }
 
-    await register(fullName, email, password)
-    router.replace("/login")
+    if (password !== confirmPassword) {
+      setError("Mật khẩu không khớp")
+      return
+    }
+
+    setError("")
+    try {
+      await register(fullName, email, password)
+      showSuccessMessage()
+    } catch (error: any) {
+      setError(error.message || "Có lỗi xảy ra, vui lòng thử lại")
+    }
   }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {successMessage ? (
+        <Animated.View style={[styles.successContainer, { opacity: fadeAnim }]}>
+          <Fireworks />
+          <Text style={styles.successText}>{successMessage}</Text>
+        </Animated.View>
+      ) : null}
+
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
         <ScrollView contentContainerStyle={styles.scrollView}>
           <View style={styles.logoContainer}>
@@ -62,43 +106,77 @@ export default function RegisterScreen() {
                 <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
 
                 <FormInput
-                  label="Full Name"
+                  label="Name"
                   value={fullName}
-                  onChangeText={setFullName}
-                  placeholder="Enter your full name"
+                  onChangeText={(text) => {
+                    setFullName(text)
+                    setError("")
+                  }}
+                  placeholder="Enter your name"
+                  editable={!isLoading}
                 />
 
                 <FormInput
                   label="Email"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text)
+                    setError("")
+                  }}
                   placeholder="Enter your email"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!isLoading}
                 />
 
                 <FormInput
                   label="Password"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text)
+                    setError("")
+                  }}
                   placeholder="Enter your password"
                   secureTextEntry
+                  editable={!isLoading}
                 />
 
                 <FormInput
                   label="Confirm Password"
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={(text) => {
+                    setConfirmPassword(text)
+                    setError("")
+                  }}
                   placeholder="Confirm your password"
                   secureTextEntry
+                  editable={!isLoading}
                 />
 
-                <PrimaryButton
-                  title={isLoading ? "Creating Account..." : "Register"}
-                  onPress={handleRegister}
-                  disabled={isLoading}
-                  style={{ backgroundColor: colors.primary }}
-                />
+                {error ? (
+                  <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                  </View>
+                ) : null}
+
+                <View style={styles.buttonContainer}>
+                  <PrimaryButton
+                    title={isLoading ? "Creating Account..." : "Register"}
+                    onPress={handleRegister}
+                    disabled={isLoading}
+                    style={{
+                      backgroundColor: isLoading ? colors.background : colors.primary,
+                      opacity: isLoading ? 0.7 : 1
+                    }}
+                  />
+                  {isLoading && (
+                    <ActivityIndicator
+                      size="small"
+                      color={colors.primary}
+                      style={styles.loadingIndicator}
+                    />
+                  )}
+                </View>
 
                 <View style={styles.loginContainer}>
                   <Text style={styles.loginText}>Already have an account? </Text>
@@ -178,5 +256,53 @@ const styles = StyleSheet.create({
   },
   loginLink: {
     fontWeight: "bold",
+  },
+  errorContainer: {
+    backgroundColor: "#ffebee",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  errorText: {
+    color: "#d32f2f",
+    textAlign: "center",
+  },
+  successContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: 20,
+    right: 20,
+    transform: [{ translateY: -50 }],
+    backgroundColor: 'rgba(76, 175, 80, 0.9)',
+    padding: 20,
+    borderRadius: 12,
+    zIndex: 1000,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
+  buttonContainer: {
+    position: 'relative',
+    marginBottom: 15,
+  },
+  loadingIndicator: {
+    position: 'absolute',
+    right: 20,
+    top: '50%',
+    transform: [{ translateY: -10 }],
   },
 })

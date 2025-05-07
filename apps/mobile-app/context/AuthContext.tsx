@@ -129,22 +129,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Register function
   const register = async (fullName: string, email: string, password: string) => {
     if (!fullName || !email || !password) {
-      Alert.alert("Error", "Please fill in all fields")
-      return
+      throw new Error("Vui lòng điền đầy đủ thông tin")
     }
 
     setIsLoading(true)
 
     try {
-      // This is where you would integrate your API
-      // For now, we'll just simulate a successful registration
+      const response = await fetch(`${config.API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: fullName, email, password }),
+      })
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const data = await response.json()
 
-      Alert.alert("Registration Successful", "Your account has been created successfully. Please login.")
-    } catch (error) {
-      Alert.alert("Registration Failed", (error as Error).message)
+      if (!response.ok) {
+        throw {
+          response: {
+            status: response.status,
+            data: data
+          }
+        }
+      }
+
+      return data
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      }
+      throw new Error('Đăng ký thất bại')
     } finally {
       setIsLoading(false)
     }
