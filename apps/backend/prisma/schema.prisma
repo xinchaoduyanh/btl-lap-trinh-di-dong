@@ -1,5 +1,3 @@
-// schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,88 +7,99 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  WAITER
-  CASHIER
-  MANAGER
-  ADMIN
-}
-
 model Employee {
-  id          String     @id @default(uuid())
-  email       String     @unique
-  password    String
-  name        String
-  role        String     // waiter, cashier, manager
-  isActive    Boolean    @default(true)
-  attendances Attendance[]
-  orders      Order[]
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  name          String
+  role          String
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  attendances   Attendance[]
   notifications Notification[]
-  createdAt   DateTime   @default(now())
+  orders        Order[]
+  checkouts     checkouts[]
 }
 
 model Shift {
-  id        String     @id @default(uuid())
-  name      String     // Morning, Afternoon, Evening
-  startTime DateTime
-  endTime   DateTime
+  id          String       @id @default(uuid())
+  name        String
+  startTime   DateTime
+  endTime     DateTime
   attendances Attendance[]
 }
 
 model Attendance {
-  id         String   @id @default(uuid())
-  employee   Employee @relation(fields: [employeeId], references: [id])
+  id         String    @id @default(uuid())
   employeeId String
-  shift      Shift    @relation(fields: [shiftId], references: [id])
   shiftId    String
   checkIn    DateTime
   checkOut   DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  shift      Shift     @relation(fields: [shiftId], references: [id])
 }
 
 model Table {
-  id        String   @id @default(uuid())
-  number    Int      @unique
-  status    String   // free, occupied, reserved
-  orders    Order[]
+  id     String  @id @default(uuid())
+  number Int     @unique
+  status String
+  orders Order[]
 }
 
 model MenuItem {
-  id        String      @id @default(uuid())
-  name      String
-  price     Float
-  isAvailable Boolean   @default(true)
-  orderItems OrderItem[]
+  id          String      @id @default(uuid())
+  name        String
+  price       Float
+  isAvailable Boolean     @default(true)
+  orderItems  OrderItem[]
 }
 
 model Order {
   id          String      @id @default(uuid())
-  table       Table       @relation(fields: [tableId], references: [id])
   tableId     String
-  employee    Employee    @relation(fields: [employeeId], references: [id])
   employeeId  String
-  status      String      // pending, processing, done, paid
+  status      String
   totalAmount Float
   createdAt   DateTime    @default(now())
+  employee    Employee    @relation(fields: [employeeId], references: [id])
+  table       Table       @relation(fields: [tableId], references: [id])
   orderItems  OrderItem[]
 }
 
 model OrderItem {
-  id        String    @id @default(uuid())
-  order     Order     @relation(fields: [orderId], references: [id])
-  orderId   String
-  menuItem  MenuItem  @relation(fields: [menuItemId], references: [id])
+  id         String   @id @default(uuid())
+  orderId    String
   menuItemId String
-  quantity  Int
-  unitPrice Float     // đơn giá lúc đặt
+  quantity   Int
+  unitPrice  Float
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  order      Order    @relation(fields: [orderId], references: [id])
 }
-
 
 model Notification {
   id         String   @id @default(uuid())
   message    String
   isRead     Boolean  @default(false)
-  employee   Employee @relation(fields: [employeeId], references: [id])
   employeeId String
   createdAt  DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+}
+
+model checkouts {
+  id          String   @id @default(uuid())
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  checkIn     DateTime @default(now())
+  checkOut    DateTime?
+  status      String   @default("CHECKED_IN")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Role {
+  WAITER
+  CASHIER
+  MANAGER
+  ADMIN
 }
