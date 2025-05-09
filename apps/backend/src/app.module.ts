@@ -6,8 +6,12 @@ import { PrismaModule } from './prisma/prisma.module'
 import { ZodValidationPipe } from 'nestjs-zod'
 import { APP_PIPE } from '@nestjs/core'
 import { CheckoutModule } from './checkout/checkout.module'
+import { TableModule } from './table/table.module'
+import { MenuModule } from './menu/menu.module'
+
+
 @Module({
-  imports: [AuthModule, PrismaModule, CheckoutModule],
+  imports: [AuthModule, PrismaModule, CheckoutModule, TableModule, MenuModule],
   controllers: [AppController],
   providers: [
     AppService,
