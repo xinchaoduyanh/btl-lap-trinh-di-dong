@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
-import { CreateTableDto, UpdateTableDto } from './schemas/table.schema'
-import { TableStatus } from './enums/table-status.enum'
+import { CreateTableDto, UpdateTableDto } from './table.dto'
+import { TableStatus } from './table.dto'
 import { Prisma } from '@prisma/client'
 
 @Injectable()
@@ -26,19 +26,6 @@ export class TableService {
 
     return this.prisma.table.findMany({
       where,
-      include: {
-        orders: true,
-      },
-    })
-  }
-
-  async findAvailable() {
-    return this.prisma.table.findMany({
-      where: {
-        status: {
-          not: TableStatus.INACTIVE,
-        },
-      },
       include: {
         orders: true,
       },

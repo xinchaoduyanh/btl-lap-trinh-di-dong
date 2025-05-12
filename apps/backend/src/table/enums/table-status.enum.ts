@@ -1,8 +1,0 @@
-export enum TableStatus {
-  ALL = 'ALL',
-  AVAILABLE = 'AVAILABLE',
-  OCCUPIED = 'OCCUPIED',
-  RESERVED = 'RESERVED',
-  CLEANING = 'CLEANING',
-  INACTIVE = 'INACTIVE',
-}
