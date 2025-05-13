@@ -1,52 +1,73 @@
 "use client"
-import React, { useState, useEffect } from "react"
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, Image } from "react-native"
+import React, { useEffect, useState } from "react"
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Image } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useTheme } from "../../context/ThemeContext"
+import { useCheckout } from "../../context/CheckoutContext"
+import { UserData } from "@/constants/interface"
+import { Feather } from "@expo/vector-icons"
 
 // Components
 import { Header } from "../../components/Header"
-import { AttendanceHistoryItem } from "../../components/AttendanceHistoryItem"
+
+interface HistoryItem {
+  checkIn: string
+  checkOut: string
+}
 
 export default function CheckInOutScreen() {
   const router = useRouter()
   const { colors } = useTheme()
-  const [isCheckedIn, setIsCheckedIn] = useState(false)
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [checkInTime, setCheckInTime] = useState<Date | null>(null)
-  const [checkOutTime, setCheckOutTime] = useState<Date | null>(null)
-  const [attendanceHistory, setAttendanceHistory] = useState([
-    {
-      date: "2023-05-01",
-      checkIn: "08:30 AM",
-      checkOut: "05:15 PM",
-      hoursWorked: "8h 45m",
-    },
-    {
-      date: "2023-05-02",
-      checkIn: "08:45 AM",
-      checkOut: "05:30 PM",
-      hoursWorked: "8h 45m",
-    },
-    {
-      date: "2023-05-03",
-      checkIn: "08:15 AM",
-      checkOut: "05:00 PM",
-      hoursWorked: "8h 45m",
-    },
-  ])
+  const [user, setUser] = useState<UserData | null>(null)
+  const { isCheckedIn, currentStatus, checkIn, checkOut, getCurrentStatus, loading, fetchHistory } = useCheckout()
+  const [history, setHistory] = useState<HistoryItem[]>([])
+  const [elapsedTime, setElapsedTime] = useState("0h 0m 0s")
 
   useEffect(() => {
-    // Update current time every minute
-    const interval = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 60000)
-
-    return () => clearInterval(interval)
+    const loadUser = async () => {
+      const userData = await AsyncStorage.getItem("user")
+      if (userData) {
+        setUser(JSON.parse(userData))
+      }
+    }
+    loadUser()
   }, [])
 
-  const formatTime = (date: Date) => {
+  useEffect(() => {
+    if (user?.id) {
+      getCurrentStatus(user.id)
+      loadHistory(user.id)
+    }
+  }, [user?.id])
+
+  // Update elapsed time every second when checked in
+  useEffect(() => {
+    let interval: number
+    if (isCheckedIn && currentStatus?.session?.checkIn) {
+      interval = setInterval(() => {
+        const checkInTime = new Date(currentStatus.session.checkIn).getTime()
+        const now = new Date().getTime()
+        const diff = now - checkInTime
+
+        const hours = Math.floor(diff / (1000 * 60 * 60))
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+        setElapsedTime(`${hours}h ${minutes}m ${seconds}s`)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [isCheckedIn, currentStatus?.session?.checkIn])
+
+  const loadHistory = async (userId: string) => {
+    const data = await fetchHistory(userId)
+    setHistory(data)
+  }
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString)
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
@@ -59,39 +80,26 @@ export default function CheckInOutScreen() {
     })
   }
 
-  const handleCheckInOut = () => {
+  const calculateDuration = (checkIn: string, checkOut: string) => {
+    const start = new Date(checkIn).getTime()
+    const end = new Date(checkOut).getTime()
+    const diff = end - start
+
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+    return `${hours}h ${minutes}m`
+  }
+
+  const handleCheckInOut = async () => {
+    if (!user?.id) return
+
     if (!isCheckedIn) {
-      // Check in
-      const now = new Date()
-      setCheckInTime(now)
-      setIsCheckedIn(true)
-      Alert.alert("Success", `Checked in at ${formatTime(now)}`)
-
-      // This is where you would call your API to record check-in
+      await checkIn(user.id)
     } else {
-      // Check out
-      const now = new Date()
-      setCheckOutTime(now)
-      setIsCheckedIn(false)
-
-      // Calculate hours worked
-      const hoursWorked = checkInTime ? ((now.getTime() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(2) : "0"
-
-      Alert.alert("Success", `Checked out at ${formatTime(now)}\nHours worked: ${hoursWorked}h`)
-
-      // This is where you would call your API to record check-out
-
-      // Add to history (in a real app, this would come from the API)
-      const newEntry = {
-        date: now.toISOString().split("T")[0],
-        checkIn: formatTime(checkInTime as Date),
-        checkOut: formatTime(now),
-        hoursWorked: `${Math.floor(Number(hoursWorked))}h ${Math.round((Number(hoursWorked) % 1) * 60)}m`,
-      }
-
-      setAttendanceHistory([newEntry, ...attendanceHistory])
-      setCheckInTime(null)
-      setCheckOutTime(null)
+      await checkOut(user.id)
+      // Refresh history after checkout
+      loadHistory(user.id)
     }
   }
 
@@ -101,43 +109,75 @@ export default function CheckInOutScreen() {
 
       <ScrollView style={styles.content}>
         <View style={styles.currentTimeContainer}>
-          <Image
-            source={{ uri: "https://img.freepik.com/free-vector/flat-design-clock-icon_23-2149155126.jpg" }}
-            style={styles.clockIcon}
-          />
-          <Text style={styles.currentDate}>{formatDate(currentTime)}</Text>
-          <Text style={[styles.currentTime, { color: colors.primary }]}>{formatTime(currentTime)}</Text>
+          <Feather name="clock" size={60} color={colors.primary} />
+          <Text style={styles.currentDate}>{formatDate(new Date())}</Text>
+          <Text style={[styles.currentTime, { color: colors.primary }]}>
+            {isCheckedIn ? elapsedTime : "0h 0m 0s"}
+          </Text>
         </View>
 
         <View style={styles.checkInOutContainer}>
           <View style={styles.statusContainer}>
             <View style={[styles.statusIndicator, { backgroundColor: isCheckedIn ? colors.success : colors.error }]} />
-            <Text style={styles.statusText}>{isCheckedIn ? "Currently Working" : "Not Checked In"}</Text>
+            <Text style={styles.statusText}>
+              {isCheckedIn ? "Currently Working" : "Not Checked In"}
+            </Text>
           </View>
 
-          {isCheckedIn && checkInTime && (
-            <Text style={styles.checkInTimeText}>Checked in at {formatTime(checkInTime)}</Text>
+          {isCheckedIn && currentStatus?.session?.checkIn && (
+            <Text style={styles.checkInTimeText}>
+              Checked in at {formatTime(currentStatus.session.checkIn)}
+            </Text>
           )}
 
           <TouchableOpacity
-            style={[styles.checkInOutButton, { backgroundColor: isCheckedIn ? colors.error : colors.success }]}
+            style={[
+              styles.checkInOutButton,
+              { backgroundColor: isCheckedIn ? colors.error : colors.success },
+              loading && styles.disabledButton
+            ]}
             onPress={handleCheckInOut}
+            disabled={loading}
           >
-            <Text style={styles.checkInOutButtonText}>{isCheckedIn ? "Check Out" : "Check In"}</Text>
+            <Text style={styles.checkInOutButtonText}>
+              {loading ? "Loading..." : isCheckedIn ? "Check Out" : "Check In"}
+            </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.historyContainer}>
           <View style={styles.historyHeader}>
-            <Text style={styles.historyTitle}>Attendance History</Text>
-            <Image
-              source={{ uri: "https://img.freepik.com/free-vector/calendar-icon-white-background_1308-84634.jpg" }}
-              style={styles.historyIcon}
-            />
+            <Text style={styles.historyTitle}>Recent Sessions</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity onPress={() => router.push('./session-detail')} style={styles.detailButton}>
+                <Text style={styles.detailButtonText}>Chi tiết</Text>
+              </TouchableOpacity>
+              <Feather name="clock" size={24} color={colors.primary} style={{ marginLeft: 8 }} />
+            </View>
           </View>
 
-          {attendanceHistory.map((record, index) => (
-            <AttendanceHistoryItem key={index} record={record} />
+          {history.map((item, index) => (
+            <View key={index} style={styles.historyItem}>
+              <Text style={styles.historyDate}>
+                {formatDate(new Date(item.checkIn))}
+              </Text>
+              <View style={styles.historyDetails}>
+                <View style={styles.historyTimeContainer}>
+                  <Feather name="log-in" size={16} color={colors.success} />
+                  <Text style={styles.historyTime}>{formatTime(item.checkIn)}</Text>
+                </View>
+                <View style={styles.historyTimeContainer}>
+                  <Feather name="log-out" size={16} color={colors.error} />
+                  <Text style={styles.historyTime}>{formatTime(item.checkOut)}</Text>
+                </View>
+                <View style={styles.historyTimeContainer}>
+                  <Feather name="clock" size={16} color={colors.primary} />
+                  <Text style={styles.historyTime}>
+                    {calculateDuration(item.checkIn, item.checkOut)}
+                  </Text>
+                </View>
+              </View>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -156,12 +196,6 @@ const styles = StyleSheet.create({
   currentTimeContainer: {
     alignItems: "center",
     marginBottom: 24,
-  },
-  clockIcon: {
-    width: 60,
-    height: 60,
-    marginBottom: 10,
-    borderRadius: 30,
   },
   currentDate: {
     fontSize: 16,
@@ -211,6 +245,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
+  disabledButton: {
+    opacity: 0.7,
+  },
   checkInOutButtonText: {
     color: "white",
     fontSize: 16,
@@ -237,9 +274,39 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
-  historyIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  historyItem: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingVertical: 12,
+  },
+  historyDate: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 8,
+    color: "#333",
+  },
+  historyDetails: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  historyTimeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  historyTime: {
+    marginLeft: 4,
+    fontSize: 14,
+    color: "#666",
+  },
+  detailButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 6,
+  },
+  detailButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 })
