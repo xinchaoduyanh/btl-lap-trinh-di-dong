@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  name          String
+  role          String
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  attendances   Attendance[]
+  notifications Notification[]
+  orders        Order[]
+  checkouts     checkouts[]
+}
+
+model Shift {
+  id          String       @id @default(uuid())
+  name        String
+  startTime   DateTime
+  endTime     DateTime
+  attendances Attendance[]
+}
+
+model Attendance {
+  id         String    @id @default(uuid())
+  employeeId String
+  shiftId    String
+  checkIn    DateTime
+  checkOut   DateTime?
+  createdAt  DateTime  @default(now())
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  shift      Shift     @relation(fields: [shiftId], references: [id])
+}
+
+model Table {
+  id     String  @id @default(uuid())
+  number Int     @unique
+  status String
+  orders Order[]
+}
+
+model MenuItem {
+  id          String      @id @default(uuid())
+  name        String
+  price       Float
+  isAvailable Boolean     @default(true)
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  tableId     String
+  employeeId  String
+  status      String
+  totalAmount Float
+  createdAt   DateTime    @default(now())
+  employee    Employee    @relation(fields: [employeeId], references: [id])
+  table       Table       @relation(fields: [tableId], references: [id])
+  orderItems  OrderItem[]
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  menuItemId String
+  quantity   Int
+  unitPrice  Float
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  order      Order    @relation(fields: [orderId], references: [id])
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  message    String
+  isRead     Boolean  @default(false)
+  employeeId String
+  createdAt  DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+}
+
+model checkouts {
+  id          String   @id @default(uuid())
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  checkIn     DateTime @default(now())
+  checkOut    DateTime?
+  status      String   @default("CHECKED_IN")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Role {
+  WAITER
+  CASHIER
+  MANAGER
+  ADMIN
+}
