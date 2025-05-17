@@ -1,43 +1,37 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Edit, Trash } from "lucide-react"
-
-// Mock data for tables
-const mockTables = [
-  { id: "1", number: 1, status: "AVAILABLE" },
-  { id: "2", number: 2, status: "OCCUPIED" },
-  { id: "3", number: 3, status: "AVAILABLE" },
-  { id: "4", number: 4, status: "RESERVED" },
-  { id: "5", number: 5, status: "AVAILABLE" },
-  { id: "6", number: 6, status: "OCCUPIED" },
-  { id: "7", number: 7, status: "AVAILABLE" },
-  { id: "8", number: 8, status: "AVAILABLE" },
-  { id: "9", number: 9, status: "OCCUPIED" },
-  { id: "10", number: 10, status: "RESERVED" },
-]
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Plus, Search, Edit, Trash } from 'lucide-react'
+import { useTables } from '@/hooks/use-tables'
 
 export default function TablesPage() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const { tables, isLoading, error, fetchTables } = useTables()
+  const [searchTerm, setSearchTerm] = useState('')
+
+  // Gọi API khi component mount
+  useEffect(() => {
+    fetchTables()
+  }, [fetchTables])
 
   // Filter tables based on search term
-  const filteredTables = mockTables.filter(
+  const filteredTables = tables.filter(
     (table) =>
-      table.number.toString().includes(searchTerm) || table.status.toLowerCase().includes(searchTerm.toLowerCase()),
+      table.number.toString().includes(searchTerm) ||
+      table.status.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "AVAILABLE":
-        return <Badge variant="success">Available</Badge>
-      case "OCCUPIED":
-        return <Badge variant="destructive">Occupied</Badge>
-      case "RESERVED":
-        return <Badge variant="warning">Reserved</Badge>
+      case 'AVAILABLE':
+        return <Badge className="badge-success">Available</Badge>
+      case 'OCCUPIED':
+        return <Badge className="badge-destructive">Occupied</Badge>
+      case 'RESERVED':
+        return <Badge className="badge-warning">Reserved</Badge>
       default:
         return <Badge>{status}</Badge>
     }
