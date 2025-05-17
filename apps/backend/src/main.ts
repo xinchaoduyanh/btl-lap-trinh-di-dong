@@ -12,9 +12,8 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: ['http://localhost:4000', 'http://127.0.0.1:4000'],
+    credentials: true,
   })
 
   // Log mỗi request đến server
