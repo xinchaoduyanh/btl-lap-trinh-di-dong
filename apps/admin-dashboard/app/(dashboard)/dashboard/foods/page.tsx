@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,16 +8,141 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Switch } from "@/components/ui/switch"
 import { Plus, Search, MoreHorizontal, Edit, Trash } from "lucide-react"
 import { useFood } from "@/hooks/use-foods"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { useForm } from "react-hook-form"
+import { CreateMenuItemRequest, UpdateMenuItemRequest } from "@/types/schema"
+
+// Enum FoodCategory từ schema Prisma
+enum FoodCategory {
+  MAIN_COURSE = "MAIN_COURSE",
+  APPETIZER = "APPETIZER",
+  DESSERT = "DESSERT",
+  BEVERAGE = "BEVERAGE",
+  SOUP = "SOUP",
+  SALAD = "SALAD",
+  SIDE_DISH = "SIDE_DISH"
+}
+
+// Hàm tiện ích để hiển thị tên danh mục dễ đọc
+const formatCategoryName = (category: string): string => {
+  return category.replace(/_/g, ' ');
+}
+
+// Mở rộng interface để thêm trường category
+interface CreateFoodRequest extends CreateMenuItemRequest {
+  category: FoodCategory
+}
+
+interface UpdateFoodRequest extends UpdateMenuItemRequest {
+  category?: FoodCategory
+}
 
 export default function MenuItemsPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const { 
-    menuItems, 
-    isLoading, 
-    error, 
-    toggleAvailability, 
-    deleteMenuItem 
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<any>(null)
+
+  const {
+    menuItems,
+    isLoading,
+    error,
+    toggleAvailability,
+    deleteMenuItem,
+    createMenuItem,
+    updateMenuItem
   } = useFood()
+
+  // Form cho thêm mới món ăn
+  const addForm = useForm<CreateFoodRequest>({
+    defaultValues: {
+      name: "",
+      price: 0,
+      category: FoodCategory.MAIN_COURSE,
+      isAvailable: true
+    }
+  })
+
+  // Form cho chỉnh sửa món ăn
+  const editForm = useForm<UpdateFoodRequest>({
+    defaultValues: {
+      name: "",
+      price: 0,
+      category: FoodCategory.MAIN_COURSE,
+      isAvailable: true
+    }
+  })
+
+  // Xử lý thêm mới món ăn
+  const handleAddFood = async (data: CreateFoodRequest) => {
+    try {
+      await createMenuItem(data)
+      setIsAddDialogOpen(false)
+      addForm.reset()
+    } catch (error) {
+      console.error("Lỗi khi thêm món ăn:", error)
+    }
+  }
+
+  // Xử lý chỉnh sửa món ăn
+  const handleEditFood = async (data: UpdateFoodRequest) => {
+    if (!editingItem) return
+
+    try {
+      await updateMenuItem(editingItem.id, data)
+      setIsEditDialogOpen(false)
+      setEditingItem(null)
+    } catch (error) {
+      console.error("Lỗi khi cập nhật món ăn:", error)
+    }
+  }
+
+  // Mở dialog chỉnh sửa và điền thông tin món ăn
+  const openEditDialog = (item: any) => {
+    setEditingItem(item)
+    editForm.reset({
+      name: item.name,
+      price: item.price,
+      category: item.category || FoodCategory.MAIN_COURSE,
+      isAvailable: item.isAvailable
+    })
+    setIsEditDialogOpen(true)
+  }
 
   // Xử lý thay đổi trạng thái món ăn
   const handleAvailabilityChange = async (id: string, isAvailable: boolean) => {
@@ -31,12 +155,10 @@ export default function MenuItemsPage() {
 
   // Xử lý xóa món ăn
   const handleDelete = async (id: string) => {
-    if (confirm("Bạn có chắc chắn muốn xóa món ăn này?")) {
-      try {
-        await deleteMenuItem(id)
-      } catch (error) {
-        console.error("Lỗi khi xóa món ăn:", error)
-      }
+    try {
+      await deleteMenuItem(id)
+    } catch (error) {
+      console.error("Lỗi khi xóa món ăn:", error)
     }
   }
 
@@ -52,12 +174,110 @@ export default function MenuItemsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Foods</h1>
           <p className="text-muted-foreground">Manage your restaurant menu</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/foods/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Menu Item
-          </Link>
-        </Button>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Menu Item
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Thêm món ăn mới</DialogTitle>
+              <DialogDescription>
+                Điền thông tin để thêm món ăn mới vào thực đơn.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...addForm}>
+              <form onSubmit={addForm.handleSubmit(handleAddFood)} className="space-y-4">
+                <FormField
+                  control={addForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tên món ăn</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập tên món ăn" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={addForm.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Giá</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Nhập giá món ăn"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={addForm.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Danh mục</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn danh mục món ăn" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.values(FoodCategory).map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {formatCategoryName(category)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={addForm.control}
+                  name="isAvailable"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>Trạng thái</FormLabel>
+                        <FormDescription>
+                          Món ăn có sẵn sàng để phục vụ không?
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    Hủy
+                  </Button>
+                  <Button type="submit">Thêm món ăn</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="flex items-center gap-2">
@@ -80,13 +300,13 @@ export default function MenuItemsPage() {
       )}
 
       <div className="rounded-md border">
-        <Table>
+        <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Availability</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-[40%]">Name</TableHead>
+              <TableHead className="w-[15%]">Price</TableHead>
+              <TableHead className="w-[25%]">Availability</TableHead>
+              <TableHead className="w-[20%] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -99,18 +319,18 @@ export default function MenuItemsPage() {
             ) : filteredMenuItems.length > 0 ? (
               filteredMenuItems.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell>${item.price.toFixed(2)}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium w-[40%]">{item.name}</TableCell>
+                  <TableCell className="w-[15%]">${item.price.toFixed(2)}</TableCell>
+                  <TableCell className="w-[25%]">
                     <div className="flex items-center space-x-2">
                       <Switch
                         checked={item.isAvailable}
                         onCheckedChange={(checked) => handleAvailabilityChange(item.id, checked)}
                       />
-                      <span>{item.isAvailable ? "Available" : "Unavailable"}</span>
+                      <span className="min-w-[80px]">{item.isAvailable ? "Available" : "Unavailable"}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="w-[20%] text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
@@ -119,19 +339,151 @@ export default function MenuItemsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/foods/${item.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-destructive"
-                          onClick={() => handleDelete(item.id)}
-                        >
-                          <Trash className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
+                        <Dialog open={isEditDialogOpen && editingItem?.id === item.id} onOpenChange={(open) => {
+                          if (!open) {
+                            setIsEditDialogOpen(false)
+                            setEditingItem(null)
+                          }
+                        }}>
+                          <DialogTrigger asChild>
+                            <DropdownMenuItem onSelect={(e) => {
+                              e.preventDefault()
+                              openEditDialog(item)
+                            }}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Chỉnh sửa món ăn</DialogTitle>
+                              <DialogDescription>
+                                Chỉnh sửa thông tin món ăn "{item.name}"
+                              </DialogDescription>
+                            </DialogHeader>
+                            {editingItem && (
+                              <Form {...editForm}>
+                                <form onSubmit={editForm.handleSubmit(handleEditFood)} className="space-y-4">
+                                  <FormField
+                                    control={editForm.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Tên món ăn</FormLabel>
+                                        <FormControl>
+                                          <Input placeholder="Nhập tên món ăn" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={editForm.control}
+                                    name="price"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Giá</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            type="number"
+                                            placeholder="Nhập giá món ăn"
+                                            {...field}
+                                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={editForm.control}
+                                    name="category"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Danh mục</FormLabel>
+                                        <Select
+                                          onValueChange={field.onChange}
+                                          defaultValue={field.value}
+                                        >
+                                          <FormControl>
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="Chọn danh mục món ăn" />
+                                            </SelectTrigger>
+                                          </FormControl>
+                                          <SelectContent>
+                                            {Object.values(FoodCategory).map((category) => (
+                                              <SelectItem key={category} value={category}>
+                                                {formatCategoryName(category)}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={editForm.control}
+                                    name="isAvailable"
+                                    render={({ field }) => (
+                                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                        <div className="space-y-0.5">
+                                          <FormLabel>Trạng thái</FormLabel>
+                                          <FormDescription>
+                                            Món ăn có sẵn sàng để phục vụ không?
+                                          </FormDescription>
+                                        </div>
+                                        <FormControl>
+                                          <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                          />
+                                        </FormControl>
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => {
+                                      setIsEditDialogOpen(false)
+                                      setEditingItem(null)
+                                    }}>
+                                      Hủy
+                                    </Button>
+                                    <Button type="submit">Lưu thay đổi</Button>
+                                  </DialogFooter>
+                                </form>
+                              </Form>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <Trash className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Bạn có chắc chắn muốn xóa món ăn "{item.name}"? Hành động này không thể hoàn tác.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(item.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Xóa
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
