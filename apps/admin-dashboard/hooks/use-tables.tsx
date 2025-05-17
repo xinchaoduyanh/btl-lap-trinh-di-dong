@@ -43,7 +43,6 @@ export function useTables() {
       setTables((prev) => [...prev, newTable])
       return newTable
     } catch (err) {
-      console.error(err)
       throw err
     }
   }, [])

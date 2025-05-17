@@ -33,6 +33,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { toast } from '@/components/ui/use-toast'
+
+function getApiErrorMessage(error: any): string {
+  if (error.response && error.response.data && error.response.data.message) {
+    return error.response.data.message
+  }
+  return 'An unexpected error occurred. Please try again later.'
+}
 
 export default function TablesPage() {
   const { tables, isLoading, error, fetchTables, createTable, updateTable, deleteTable } =
@@ -52,6 +60,8 @@ export default function TablesPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [tableToDelete, setTableToDelete] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState('ALL')
+  const [addFormError, setAddFormError] = useState<string | null>(null)
+  const [editFormError, setEditFormError] = useState<string | null>(null)
 
   // Gọi API khi component mount
   useEffect(() => {
@@ -98,6 +108,7 @@ export default function TablesPage() {
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setAddFormError(null)
 
     try {
       await createTable({
@@ -109,8 +120,13 @@ export default function TablesPage() {
       setAddFormData({
         number: '',
       })
+      toast({
+        title: 'Thành công',
+        description: 'Đã thêm bàn mới thành công',
+      })
     } catch (error) {
-      console.error('Lỗi khi tạo bàn:', error)
+      // Không log lỗi ra console
+      setAddFormError(getApiErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }
@@ -119,6 +135,7 @@ export default function TablesPage() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setEditFormError(null)
 
     try {
       await updateTable(editFormData.id, {
@@ -127,8 +144,13 @@ export default function TablesPage() {
       })
 
       setIsEditDialogOpen(false)
+      toast({
+        title: 'Thành công',
+        description: 'Đã cập nhật bàn thành công',
+      })
     } catch (error) {
       console.error('Lỗi khi cập nhật bàn:', error)
+      setEditFormError(getApiErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }
@@ -246,7 +268,13 @@ export default function TablesPage() {
       </div>
 
       {/* Dialog để thêm bàn mới */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <Dialog
+        open={isAddDialogOpen}
+        onOpenChange={(open) => {
+          setIsAddDialogOpen(open)
+          if (!open) setAddFormError(null)
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Thêm Bàn Mới</DialogTitle>
@@ -265,9 +293,22 @@ export default function TablesPage() {
                   required
                 />
               </div>
+
+              {addFormError && (
+                <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+                  {addFormError}
+                </div>
+              )}
             </div>
             <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => setIsAddDialogOpen(false)}>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  setIsAddDialogOpen(false)
+                  setAddFormError(null)
+                }}
+              >
                 Hủy
               </Button>
               <Button type="submit" disabled={isSubmitting}>
