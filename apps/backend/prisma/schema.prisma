@@ -64,6 +64,7 @@ model OrderItem {
   orderId    String
   foodId     String
   quantity   Int
+  status     OrderItemStatus @default(PENDING)
   food       Food     @relation(fields: [foodId], references: [id])
   order      Order    @relation(fields: [orderId], references: [id])
 }
@@ -119,4 +120,11 @@ enum FoodCategory {
   SOUP
   SALAD
   SIDE_DISH
+}
+
+enum OrderItemStatus {
+  PENDING
+  PREPARING
+  READY
+  COMPLETE
 }
