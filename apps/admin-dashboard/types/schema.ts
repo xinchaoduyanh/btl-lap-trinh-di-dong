@@ -74,6 +74,7 @@ export interface MenuItem {
 }
 
 export interface Order {
+  timeOut: string
   id: string
   tableId: string
   employeeId: string
