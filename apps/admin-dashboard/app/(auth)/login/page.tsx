@@ -1,9 +1,7 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,34 +9,22 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Image from "next/image"
+import { useAuth } from "@/hooks/useAuth"
+import { getApiErrorMessage } from "@/lib/error-handler"
 
 export default function LoginPage() {
-  const router = useRouter()
+  const { login, loading, error } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setError("")
-
+    setLocalError(null)
     try {
-      // In a real app, you would authenticate with your backend
-      // For demo purposes, we'll just redirect to dashboard
-      // Implement actual authentication logic here
-
-      // Mock login for demo
-      if (email === "admin@example.com" && password === "password") {
-        router.push("/dashboard")
-      } else {
-        setError("Invalid email or password")
-      }
-    } catch (error) {
-      setError("An error occurred during login")
-    } finally {
-      setIsLoading(false)
+      await login({ email, password })
+    } catch (err) {
+      // error đã được set trong hook, không cần xử lý thêm
     }
   }
 
@@ -65,10 +51,10 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && (
+          {(error || localError) && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{localError || error}</AlertDescription>
             </Alert>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -76,11 +62,10 @@ export default function LoginPage() {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                type="email"
+                type="text"
                 placeholder="admin@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 className="border-red-100 focus-visible:ring-red-500"
               />
             </div>
@@ -88,15 +73,14 @@ export default function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
-                type="password"
+                type="text"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
                 className="border-red-100 focus-visible:ring-red-500"
               />
             </div>
-            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700" disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
         </CardContent>
