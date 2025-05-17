@@ -47,21 +47,13 @@ model Table {
   orders Order[]
 }
 
-model MenuItem {
-  id          String      @id @default(uuid())
-  name        String
-  price       Float
-  isAvailable Boolean     @default(true)
-  orderItems  OrderItem[]
-}
-
 model Order {
   id          String      @id @default(uuid())
   tableId     String
   employeeId  String
   status      String
-  totalAmount Float
   createdAt   DateTime    @default(now())
+  timeOut     DateTime?   @default(null)
   employee    Employee    @relation(fields: [employeeId], references: [id])
   table       Table       @relation(fields: [tableId], references: [id])
   orderItems  OrderItem[]
@@ -70,11 +62,18 @@ model Order {
 model OrderItem {
   id         String   @id @default(uuid())
   orderId    String
-  menuItemId String
+  foodId     String
   quantity   Int
-  unitPrice  Float
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  food       Food     @relation(fields: [foodId], references: [id])
   order      Order    @relation(fields: [orderId], references: [id])
+}
+model Food {
+  id          String      @id @default(uuid())
+  name        String
+  price       Float
+  category    String
+  isAvailable Boolean     @default(true)
+  orderItems  OrderItem[]
 }
 
 model Notification {
