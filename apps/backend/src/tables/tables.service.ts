@@ -14,11 +14,12 @@ export class TablesService {
   constructor(private prisma: PrismaService) {}
 
   async create(createTableDto: CreateTableDto) {
+    const status = createTableDto.status ?? 'AVAILABLE'
     try {
       return await this.prisma.table.create({
         data: {
           ...createTableDto,
-          status: TableStatus.AVAILABLE,
+          status,
         },
       })
     } catch (error) {
@@ -32,7 +33,11 @@ export class TablesService {
   }
 
   async findAll() {
-    return await this.prisma.table.findMany()
+    return await this.prisma.table.findMany({
+      orderBy: {
+        number: 'asc',
+      },
+    })
   }
 
   async findOne(id: string) {
