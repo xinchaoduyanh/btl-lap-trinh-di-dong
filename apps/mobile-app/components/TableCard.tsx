@@ -3,47 +3,35 @@
 import React from 'react'
 import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native'
 import { useTheme } from '../context/ThemeContext'
-
-interface Table {
-  id: number
-  number: number
-  seats: number
-  status: string
-  type?: string
-}
+import type { Table, TableStatus } from '../constants/interface'
 
 interface TableCardProps {
   table: Table
   width: number
+  onPress?: () => void
 }
 
-export const TableCard: React.FC<TableCardProps> = ({ table, width }) => {
+export const TableCard: React.FC<TableCardProps> = ({ table, width, onPress }) => {
   const { colors } = useTheme()
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: TableStatus | string) => {
     switch (status) {
-      case 'Available':
+      case 'AVAILABLE':
         return colors.success
-      case 'Occupied':
+      case 'OCCUPIED':
         return colors.error
-      case 'Reserved':
+      case 'RESERVED':
         return colors.primary
-      case 'Cleaning':
+      case 'CLEANING':
         return colors.info
       default:
         return '#666'
     }
   }
 
-  const getTableIcon = (type = 'Regular') => {
-    if (type === 'Premium') {
-      return 'https://img.freepik.com/free-vector/hot-pot-concept-illustration_114360-8670.jpg'
-    }
-    return 'https://img.freepik.com/free-vector/hand-drawn-hot-pot-illustration_23-2149175802.jpg'
-  }
-
   return (
     <TouchableOpacity
+      onPress={onPress}
       style={[
         styles.tableCard,
         {
@@ -54,17 +42,9 @@ export const TableCard: React.FC<TableCardProps> = ({ table, width }) => {
       ]}
     >
       <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(table.status) }]} />
-      <Image source={{ uri: getTableIcon(table.type) }} style={styles.tableIcon} />
+      <Image source={{ uri: 'https://img.freepik.com/free-vector/hand-drawn-hot-pot-illustration_23-2149175802.jpg' }} style={styles.tableIcon} />
       <Text style={styles.tableNumber}>Table {table.number}</Text>
-      <Text style={styles.tableSeats}>{table.seats} Seats</Text>
-      {table.type === 'Premium' && (
-        <View style={[styles.premiumBadge, { backgroundColor: colors.primary }]}>
-          <Text style={styles.premiumText}>Premium</Text>
-        </View>
-      )}
-      <Text style={[styles.tableStatus, { color: getStatusColor(table.status) }]}>
-        {table.status}
-      </Text>
+      <Text style={[styles.tableStatus, { color: getStatusColor(table.status) }]}> {table.status} </Text>
     </TouchableOpacity>
   )
 }
@@ -96,25 +76,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  tableSeats: {
-    fontSize: 14,
-    color: '#666',
-    marginVertical: 4,
-  },
   tableStatus: {
     fontSize: 12,
     fontWeight: '500',
     marginTop: 'auto',
-  },
-  premiumBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  premiumText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
   },
 })

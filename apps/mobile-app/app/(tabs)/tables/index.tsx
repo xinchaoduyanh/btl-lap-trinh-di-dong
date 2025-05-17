@@ -1,49 +1,80 @@
 "use client"
-import React, { useState } from "react"
-import { StyleSheet, View, Text, ScrollView, Dimensions, Image } from "react-native"
+import { useEffect, useState } from "react"
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  Dimensions,
+  Image,
+  RefreshControl,
+  TouchableOpacity,
+  Alert,
+  Modal,
+} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { useTheme } from "../../../context/ThemeContext"
+import { useTable } from "../../../context/TableContext"
+import type { Table, TableStatus } from "../../../constants/interface"
 
 // Components
 import { Header } from "../../../components/Header"
 import { FilterButton } from "../../../components/FilterButton"
 import { TableCard } from "../../../components/TableCard"
 
+const STATUS_LABELS: Record<TableStatus, string> = {
+  AVAILABLE: "Available",
+  OCCUPIED: "Occupied",
+  RESERVED: "Reserved",
+  CLEANING: "Cleaning",
+}
+const STATUS_OPTIONS: TableStatus[] = ["AVAILABLE", "OCCUPIED", "RESERVED", "CLEANING"]
+const FILTERS = ["All", ...Object.values(STATUS_LABELS)]
+
 export default function TableManagementScreen() {
   const router = useRouter()
   const { colors } = useTheme()
+  const { tables, loading, fetchTables, updateTable } = useTable()
+  const [activeFilter, setActiveFilter] = useState<string>("All")
+  const [editingTable, setEditingTable] = useState<Table | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<TableStatus | null>(null)
 
-  // Mock data for tables
-  const initialTables = [
-    { id: 1, number: 1, seats: 2, status: "Available", type: "Regular" },
-    { id: 2, number: 2, seats: 4, status: "Occupied", type: "Regular" },
-    { id: 3, number: 3, seats: 4, status: "Reserved", type: "Regular" },
-    { id: 4, number: 4, seats: 6, status: "Available", type: "Premium" },
-    { id: 5, number: 5, seats: 2, status: "Occupied", type: "Regular" },
-    { id: 6, number: 6, seats: 8, status: "Cleaning", type: "Premium" },
-    { id: 7, number: 7, seats: 4, status: "Available", type: "Regular" },
-    { id: 8, number: 8, seats: 6, status: "Reserved", type: "Premium" },
-    { id: 9, number: 9, seats: 2, status: "Occupied", type: "Regular" },
-    { id: 10, number: 10, seats: 4, status: "Available", type: "Regular" },
-    { id: 11, number: 11, seats: 2, status: "Available", type: "Regular" },
-    { id: 12, number: 12, seats: 8, status: "Occupied", type: "Premium" },
-  ]
-
-  const [tables, setTables] = useState(initialTables)
-  const [activeFilter, setActiveFilter] = useState("All")
-
-  const filters = ["All", "Available", "Occupied", "Reserved", "Cleaning"]
+  useEffect(() => {
+    fetchTables()
+  }, [])
 
   const getFilteredTables = () => {
-    if (activeFilter === "All") {
-      return tables
-    }
-    return tables.filter((table) => table.status === activeFilter)
+    if (activeFilter === "All") return tables
+    const statusKey = Object.keys(STATUS_LABELS).find((key) => STATUS_LABELS[key as TableStatus] === activeFilter) as
+      | TableStatus
+      | undefined
+    return statusKey ? tables.filter((table) => table.status === statusKey) : tables
   }
 
   const windowWidth = Dimensions.get("window").width
   const tableWidth = (windowWidth - 48) / 3 // 3 tables per row with padding
+
+  const handleStatusChange = async () => {
+    if (!editingTable || !selectedStatus) return
+
+    if (selectedStatus === editingTable.status) {
+      setEditingTable(null)
+      setSelectedStatus(null)
+      return
+    }
+
+    try {
+      await updateTable(editingTable.id, { status: selectedStatus })
+      fetchTables()
+      Alert.alert("Success", "Table status updated successfully!")
+    } catch (error) {
+      Alert.alert("Error", "Failed to update table status")
+    } finally {
+      setEditingTable(null)
+      setSelectedStatus(null)
+    }
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -51,11 +82,11 @@ export default function TableManagementScreen() {
         title="Table Management"
         onBackPress={() => router.back()}
         rightIcon="refresh-cw"
-        onRightPress={() => {}}
+        onRightPress={fetchTables}
       />
 
       <View style={styles.restaurantMapContainer}>
-        <Text style={styles.mapTitle}>ITHotpot Restaurant Layout</Text>
+        <Text style={styles.mapTitle}>Hot Pot Paradise</Text>
         <Image
           source={{ uri: "https://img.freepik.com/free-vector/restaurant-floor-plan-template_23-2147980214.jpg" }}
           style={styles.restaurantMap}
@@ -65,7 +96,7 @@ export default function TableManagementScreen() {
 
       <View style={styles.filterContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {filters.map((filter) => (
+          {FILTERS.map((filter) => (
             <FilterButton
               key={filter}
               title={filter}
@@ -76,39 +107,118 @@ export default function TableManagementScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchTables} />}
+      >
         <View style={styles.tablesContainer}>
           {getFilteredTables().map((table) => (
-            <TableCard key={table.id} table={table} width={tableWidth} />
+            <TableCard
+              key={table.id}
+              table={table}
+              width={tableWidth}
+              onPress={() => {
+                setEditingTable(table)
+                setSelectedStatus(table.status)
+              }}
+            />
           ))}
+          {getFilteredTables().length === 0 && (
+            <Text style={{ textAlign: "center", color: colors.text, marginTop: 32, width: "100%" }}>
+              No tables found.
+            </Text>
+          )}
         </View>
       </ScrollView>
 
       <View style={styles.legend}>
         <Text style={styles.legendTitle}>Legend:</Text>
         <View style={styles.legendItems}>
-          {["Available", "Occupied", "Reserved", "Cleaning"].map((status) => (
+          {Object.entries(STATUS_LABELS).map(([status, label]) => (
             <View key={status} style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: getStatusColor(status) }]} />
-              <Text style={styles.legendText}>{status}</Text>
+              <View style={[styles.legendColor, { backgroundColor: getStatusColor(status as TableStatus) }]} />
+              <Text style={styles.legendText}>{label}</Text>
             </View>
           ))}
         </View>
       </View>
+
+      {/* Centered Modal Form */}
+      <Modal
+        visible={editingTable !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setEditingTable(null)
+          setSelectedStatus(null)
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingTable ? `Table ${editingTable.number} Status` : "Update Table"}
+              </Text>
+            </View>
+
+            <View style={styles.statusOptionsContainer}>
+              {STATUS_OPTIONS.map((status) => (
+                <TouchableOpacity
+                  key={status}
+                  style={[
+                    styles.statusOption,
+                    selectedStatus === status && styles.statusOptionActive,
+                    { backgroundColor: selectedStatus === status ? getStatusColor(status) : "#f8f8f8" },
+                  ]}
+                  onPress={() => setSelectedStatus(status)}
+                >
+                  <Text style={[styles.statusOptionText, { color: selectedStatus === status ? "white" : "#333" }]}>
+                    {STATUS_LABELS[status]}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setEditingTable(null)
+                  setSelectedStatus(null)
+                }}
+              >
+                <Text style={[styles.buttonText, { color: "#D02C1A" }]}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  styles.confirmButton,
+                  (!selectedStatus || selectedStatus === editingTable?.status) && styles.disabledButton,
+                ]}
+                disabled={!selectedStatus || selectedStatus === editingTable?.status}
+                onPress={handleStatusChange}
+              >
+                <Text style={[styles.buttonText, { color: "white" }]}>Update</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
 
 // Helper function to get status color
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: TableStatus | string) => {
   switch (status) {
-    case "Available":
+    case "AVAILABLE":
       return "#4CAF50"
-    case "Occupied":
+    case "OCCUPIED":
       return "#F44336"
-    case "Reserved":
+    case "RESERVED":
       return "#FF9800"
-    case "Cleaning":
+    case "CLEANING":
       return "#2196F3"
     default:
       return "#666"
@@ -133,9 +243,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   mapTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#FF8C00",
+    color: "#D02C1A", // Hot pot red color
     marginBottom: 8,
   },
   restaurantMap: {
@@ -190,5 +300,76 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 12,
     color: "#666",
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    width: "80%",
+    maxWidth: 400,
+    overflow: "hidden",
+    elevation: 5,
+  },
+  modalHeader: {
+    backgroundColor: "#D02C1A", // Hot pot red color
+    padding: 16,
+    alignItems: "center",
+  },
+  modalTitle: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  statusOptionsContainer: {
+    padding: 16,
+  },
+  statusOption: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  statusOptionActive: {
+    borderWidth: 0,
+  },
+  statusOptionText: {
+    fontWeight: "500",
+    fontSize: 16,
+  },
+  modalFooter: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  modalButton: {
+    flex: 1,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#fff",
+    borderRightWidth: 0.5,
+    borderRightColor: "#eee",
+  },
+  confirmButton: {
+    backgroundColor: "#D02C1A", // Hot pot red color
+    borderLeftWidth: 0.5,
+    borderLeftColor: "#eee",
+  },
+  disabledButton: {
+    backgroundColor: "#cccccc",
+  },
+  buttonText: {
+    fontWeight: "bold",
+    color: "#D02C1A", // Hot pot red color cho Cancel, trắng cho Confirm
   },
 })
