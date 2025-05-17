@@ -6,8 +6,9 @@ import React, { useEffect } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { AuthProvider } from '../context/AuthContext'
 import { ThemeProvider as CustomThemeProvider } from '../context/ThemeContext'
-
+import { TableProvider } from '../context/TableContext'
 import { useColorScheme } from '@/hooks/useColorScheme'
+import { CheckoutProvider } from '@/context/CheckoutContext'
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -46,17 +47,22 @@ export default function RootLayout() {
   }
 
   return (
-    <CustomThemeProvider>
-      <AuthProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(app)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </AuthProvider>
-    </CustomThemeProvider>
+    //Bọc TableProvider vào đây
+    <TableProvider>
+      <CheckoutProvider>
+        <CustomThemeProvider>
+          <AuthProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+             <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+           <StatusBar style="auto" />
+          </ThemeProvider>
+        </AuthProvider>
+        </CustomThemeProvider>
+      </CheckoutProvider>
+    </TableProvider>
   )
 }
