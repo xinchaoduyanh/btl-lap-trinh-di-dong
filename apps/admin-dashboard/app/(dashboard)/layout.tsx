@@ -1,14 +1,25 @@
-"use client"
+'use client'
 
-import type React from "react"
+import type React from 'react'
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Users, Coffee, ClipboardList, Calendar, Clock, Bell, LogOut, Home, ShoppingBag, Flame } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import {
+  Users,
+  Coffee,
+  ClipboardList,
+  Calendar,
+  Clock,
+  Bell,
+  LogOut,
+  Home,
+  ShoppingBag,
+  Flame,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   SidebarProvider,
   Sidebar,
@@ -22,13 +33,9 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar'
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [isMounted, setIsMounted] = useState(false)
 
@@ -61,7 +68,7 @@ export default function DashboardLayout({
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
+                    <SidebarMenuButton asChild isActive={pathname === '/dashboard'}>
                       <Link href="/dashboard">
                         <Home className="mr-2 h-4 w-4" />
                         <span>Dashboard</span>
@@ -77,7 +84,10 @@ export default function DashboardLayout({
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard/employees")}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith('/dashboard/employees')}
+                    >
                       <Link href="/dashboard/employees">
                         <Users className="mr-2 h-4 w-4" />
                         <span>Employees</span>
@@ -85,7 +95,7 @@ export default function DashboardLayout({
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard/tables")}>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/tables')}>
                       <Link href="/dashboard/tables">
                         <Coffee className="mr-2 h-4 w-4" />
                         <span>Tables</span>
@@ -93,7 +103,7 @@ export default function DashboardLayout({
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard/foods")}>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/foods')}>
                       <Link href="/dashboard/foods">
                         <ShoppingBag className="mr-2 h-4 w-4" />
                         <span>Foods</span>
@@ -101,7 +111,7 @@ export default function DashboardLayout({
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard/orders")}>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/orders')}>
                       <Link href="/dashboard/orders">
                         <ClipboardList className="mr-2 h-4 w-4" />
                         <span>Orders</span>
@@ -117,7 +127,7 @@ export default function DashboardLayout({
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard/shifts")}>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/shifts')}>
                       <Link href="/dashboard/shifts">
                         <Calendar className="mr-2 h-4 w-4" />
                         <span>Shifts</span>
@@ -125,7 +135,10 @@ export default function DashboardLayout({
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard/attendance")}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith('/dashboard/attendance')}
+                    >
                       <Link href="/dashboard/attendance">
                         <Clock className="mr-2 h-4 w-4" />
                         <span>Attendance</span>
@@ -141,7 +154,10 @@ export default function DashboardLayout({
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard/notifications")}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith('/dashboard/notifications')}
+                    >
                       <Link href="/dashboard/notifications">
                         <Bell className="mr-2 h-4 w-4" />
                         <span>Notifications</span>
@@ -168,7 +184,7 @@ export default function DashboardLayout({
           </SidebarFooter>
         </Sidebar>
 
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 min-w-[1070px]">
           <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
             <SidebarTrigger />
             <div className="flex-1" />
