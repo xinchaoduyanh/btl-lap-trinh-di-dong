@@ -6,7 +6,6 @@ import React, { useEffect } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { AuthProvider } from '../context/AuthContext'
 import { ThemeProvider as CustomThemeProvider } from '../context/ThemeContext'
-import { CheckoutProvider } from '../context/CheckoutContext'
 
 import { useColorScheme } from '@/hooks/useColorScheme'
 
@@ -47,19 +46,17 @@ export default function RootLayout() {
   }
 
   return (
-    <CheckoutProvider>
-      <CustomThemeProvider>
-        <AuthProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="(app)" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <StatusBar style="auto" />
-          </ThemeProvider>
-        </AuthProvider>
-      </CustomThemeProvider>
-    </CheckoutProvider>
+    <CustomThemeProvider>
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(app)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </AuthProvider>
+    </CustomThemeProvider>
   )
 }
