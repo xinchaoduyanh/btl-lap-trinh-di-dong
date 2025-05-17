@@ -1,21 +1,17 @@
 "use client"
-
-import { useState } from "react"
+import React, { useState } from "react"
 import { StyleSheet, View, Text, ScrollView, Alert } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Feather } from "@expo/vector-icons"
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import type { RootStackParamList } from "../../navigation/types"
+import { useRouter } from "expo-router"
 
 // Components
-import { Header } from "../../components/Header"
-import { NotificationItem } from "../../components/NotificationItem"
+import { Header } from "../../../components/Header"
+import { NotificationItem } from "../../../components/NotificationItem"
 
-type NotificationsScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "Notifications">
-}
+export default function NotificationsScreen() {
+  const router = useRouter()
 
-const NotificationsScreen = ({ navigation }: NotificationsScreenProps) => {
   // Mock data for notifications
   const initialNotifications = [
     {
@@ -81,7 +77,7 @@ const NotificationsScreen = ({ navigation }: NotificationsScreenProps) => {
     <SafeAreaView style={styles.container}>
       <Header
         title="Notifications"
-        onBackPress={() => navigation.goBack()}
+        onBackPress={() => router.back()}
         rightIcon="check-square"
         onRightPress={markAllAsRead}
       />
@@ -128,5 +124,3 @@ const styles = StyleSheet.create({
     color: "#999",
   },
 })
-
-export default NotificationsScreen

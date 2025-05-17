@@ -32,7 +32,7 @@ export default function RootLayout() {
     try {
       const user = await AsyncStorage.getItem('user')
       if (user) {
-        router.replace('/(app)/home')
+        router.replace('/(tabs)')
       } else {
         router.replace('/(auth)/login')
       }

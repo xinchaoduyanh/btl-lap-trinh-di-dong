@@ -3,8 +3,8 @@ import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { useTheme } from "../../context/ThemeContext"
-import { useCheckout } from "../../context/CheckoutContext"
+import { useTheme } from "../../../context/ThemeContext"
+import { useCheckout } from "../../../context/CheckoutContext"
 import { Feather } from "@expo/vector-icons"
 
 interface Session {

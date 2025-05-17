@@ -3,12 +3,12 @@ import React, { useState } from "react"
 import { StyleSheet, ScrollView, View, Image, Text } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
-import { useTheme } from "../../context/ThemeContext"
+import { useTheme } from "../../../context/ThemeContext"
 
 // Components
-import { Header } from "../../components/Header"
-import { OrderCard } from "../../components/OrderCard"
-import { TabBar } from "../../components/TabBar"
+import { Header } from "../../../components/Header"
+import { OrderCard } from "../../../components/OrderCard"
+import { TabBar } from "../../../components/TabBar"
 
 export default function OrderManagementScreen() {
   const router = useRouter()

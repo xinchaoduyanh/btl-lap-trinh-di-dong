@@ -52,7 +52,7 @@ export default function LoginScreen() {
       }),
     ]).start(() => {
       setSuccessMessage("")
-      router.replace('/(app)/home')
+      router.replace('/(tabs)')
     })
   }
 

@@ -4,13 +4,13 @@ import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Image } from "rea
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { useTheme } from "../../context/ThemeContext"
-import { useCheckout } from "../../context/CheckoutContext"
+import { useTheme } from "../../../context/ThemeContext"
+import { useCheckout } from "../../../context/CheckoutContext"
 import { UserData } from "@/constants/interface"
 import { Feather } from "@expo/vector-icons"
 
 // Components
-import { Header } from "../../components/Header"
+import { Header } from "../../../components/Header"
 
 interface HistoryItem {
   checkIn: string
@@ -105,7 +105,7 @@ export default function CheckInOutScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Attendance" onBackPress={() => router.back()} />
+      <Header title="Attendance" onBackPress={() => router.replace('/')} />
 
       <ScrollView style={styles.content}>
         <View style={styles.currentTimeContainer}>
@@ -149,7 +149,7 @@ export default function CheckInOutScreen() {
           <View style={styles.historyHeader}>
             <Text style={styles.historyTitle}>Recent Sessions</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity onPress={() => router.push('./session-detail')} style={styles.detailButton}>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/check-in/session-detail')} style={styles.detailButton}>
                 <Text style={styles.detailButtonText}>Chi tiết</Text>
               </TouchableOpacity>
               <Feather name="clock" size={24} color={colors.primary} style={{ marginLeft: 8 }} />

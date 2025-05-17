@@ -1,35 +1,33 @@
 "use client"
-
-import { useState } from "react"
-import { StyleSheet, View, Text, ScrollView, Dimensions } from "react-native"
+import React, { useState } from "react"
+import { StyleSheet, View, Text, ScrollView, Dimensions, Image } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import type { RootStackParamList } from "../../navigation/types"
+import { useRouter } from "expo-router"
+import { useTheme } from "../../../context/ThemeContext"
 
 // Components
-import { Header } from "../../components/Header"
-import { FilterButton } from "../../components/FilterButton"
-import { TableCard } from "../../components/TableCard"
+import { Header } from "../../../components/Header"
+import { FilterButton } from "../../../components/FilterButton"
+import { TableCard } from "../../../components/TableCard"
 
-type TableManagementScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "TableManagement">
-}
+export default function TableManagementScreen() {
+  const router = useRouter()
+  const { colors } = useTheme()
 
-const TableManagementScreen = ({ navigation }: TableManagementScreenProps) => {
   // Mock data for tables
   const initialTables = [
-    { id: 1, number: 1, seats: 2, status: "Available" },
-    { id: 2, number: 2, seats: 4, status: "Occupied" },
-    { id: 3, number: 3, seats: 4, status: "Reserved" },
-    { id: 4, number: 4, seats: 6, status: "Available" },
-    { id: 5, number: 5, seats: 2, status: "Occupied" },
-    { id: 6, number: 6, seats: 8, status: "Cleaning" },
-    { id: 7, number: 7, seats: 4, status: "Available" },
-    { id: 8, number: 8, seats: 6, status: "Reserved" },
-    { id: 9, number: 9, seats: 2, status: "Occupied" },
-    { id: 10, number: 10, seats: 4, status: "Available" },
-    { id: 11, number: 11, seats: 2, status: "Available" },
-    { id: 12, number: 12, seats: 8, status: "Occupied" },
+    { id: 1, number: 1, seats: 2, status: "Available", type: "Regular" },
+    { id: 2, number: 2, seats: 4, status: "Occupied", type: "Regular" },
+    { id: 3, number: 3, seats: 4, status: "Reserved", type: "Regular" },
+    { id: 4, number: 4, seats: 6, status: "Available", type: "Premium" },
+    { id: 5, number: 5, seats: 2, status: "Occupied", type: "Regular" },
+    { id: 6, number: 6, seats: 8, status: "Cleaning", type: "Premium" },
+    { id: 7, number: 7, seats: 4, status: "Available", type: "Regular" },
+    { id: 8, number: 8, seats: 6, status: "Reserved", type: "Premium" },
+    { id: 9, number: 9, seats: 2, status: "Occupied", type: "Regular" },
+    { id: 10, number: 10, seats: 4, status: "Available", type: "Regular" },
+    { id: 11, number: 11, seats: 2, status: "Available", type: "Regular" },
+    { id: 12, number: 12, seats: 8, status: "Occupied", type: "Premium" },
   ]
 
   const [tables, setTables] = useState(initialTables)
@@ -48,13 +46,22 @@ const TableManagementScreen = ({ navigation }: TableManagementScreenProps) => {
   const tableWidth = (windowWidth - 48) / 3 // 3 tables per row with padding
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         title="Table Management"
-        onBackPress={() => navigation.goBack()}
+        onBackPress={() => router.back()}
         rightIcon="refresh-cw"
         onRightPress={() => {}}
       />
+
+      <View style={styles.restaurantMapContainer}>
+        <Text style={styles.mapTitle}>ITHotpot Restaurant Layout</Text>
+        <Image
+          source={{ uri: "https://img.freepik.com/free-vector/restaurant-floor-plan-template_23-2147980214.jpg" }}
+          style={styles.restaurantMap}
+          resizeMode="contain"
+        />
+      </View>
 
       <View style={styles.filterContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -111,7 +118,30 @@ const getStatusColor = (status: string) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+  },
+  restaurantMapContainer: {
+    backgroundColor: "white",
+    margin: 16,
+    marginBottom: 8,
+    borderRadius: 10,
+    padding: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  mapTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FF8C00",
+    marginBottom: 8,
+  },
+  restaurantMap: {
+    width: "100%",
+    height: 120,
+    borderRadius: 5,
   },
   filterContainer: {
     backgroundColor: "white",
@@ -162,5 +192,3 @@ const styles = StyleSheet.create({
     color: "#666",
   },
 })
-
-export default TableManagementScreen
