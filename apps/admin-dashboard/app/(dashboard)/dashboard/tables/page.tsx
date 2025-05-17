@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -52,18 +51,20 @@ export default function TablesPage() {
   })
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [tableToDelete, setTableToDelete] = useState<string | null>(null)
+  const [statusFilter, setStatusFilter] = useState('ALL')
 
   // Gọi API khi component mount
   useEffect(() => {
     fetchTables()
   }, [fetchTables])
 
-  // Filter tables based on search term
-  const filteredTables = tables.filter(
-    (table) =>
-      table.number.toString().includes(searchTerm) ||
-      table.status.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Filter tables based on search term and status filter
+  const filteredTables = tables.filter((table) => {
+    const matchesSearch = table.number.toString().includes(searchTerm)
+    const matchesStatus = statusFilter === 'ALL' || table.status === statusFilter
+
+    return matchesSearch && matchesStatus
+  })
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -171,38 +172,77 @@ export default function TablesPage() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search tables..."
+            placeholder="Search tables base on number..."
             className="pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <div className="flex items-center gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All</SelectItem>
+              <SelectItem value="AVAILABLE">Available</SelectItem>
+              <SelectItem value="OCCUPIED">Occupied</SelectItem>
+              <SelectItem value="RESERVED">Reserved</SelectItem>
+              <SelectItem value="CLEANING">Cleaning</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredTables.map((table) => (
-          <div key={table.id} className="rounded-lg border bg-card text-card-foreground shadow-sm">
-            <div className="p-6 flex flex-col items-center text-center">
-              <h3 className="text-2xl font-bold">Table {table.number}</h3>
-              <div className="mt-2">{getStatusBadge(table.status)}</div>
-              <div className="mt-4 flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => openEditDialog(table)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-                <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(table.id)}>
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
-                </Button>
+        {filteredTables.length > 0 ? (
+          filteredTables.map((table) => (
+            <div
+              key={table.id}
+              className="rounded-lg border bg-card text-card-foreground shadow-sm"
+            >
+              <div className="p-6 flex flex-col items-center text-center">
+                <h3 className="text-2xl font-bold">Table {table.number}</h3>
+                <div className="mt-2">{getStatusBadge(table.status)}</div>
+                <div className="mt-4 flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => openEditDialog(table)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => openDeleteDialog(table.id)}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="col-span-full h-[300px] flex items-center justify-center rounded-lg border border-dashed">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-4 rounded-full bg-muted">
+                <Search className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">No tables found</h3>
+              <p className="mt-2 text-sm text-muted-foreground max-w-xs">
+                No tables match your search criteria. Try adjusting your filters or add a new table.
+              </p>
+              <Button className="mt-4" onClick={() => setIsAddDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Table
+              </Button>
+            </div>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Dialog để thêm bàn mới */}
