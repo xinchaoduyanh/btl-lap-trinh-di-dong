@@ -8,43 +8,52 @@ import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
 import { Plus, Search, MoreHorizontal, Edit, Trash } from "lucide-react"
-
-// Mock data for menu items
-const mockMenuItems = [
-  { id: "1", name: "Burger", price: 9.99, isAvailable: true },
-  { id: "2", name: "Pizza", price: 12.99, isAvailable: true },
-  { id: "3", name: "Pasta", price: 8.99, isAvailable: true },
-  { id: "4", name: "Salad", price: 6.99, isAvailable: false },
-  { id: "5", name: "Steak", price: 19.99, isAvailable: true },
-  { id: "6", name: "Fish & Chips", price: 14.99, isAvailable: true },
-  { id: "7", name: "Sushi", price: 16.99, isAvailable: false },
-  { id: "8", name: "Chicken Wings", price: 10.99, isAvailable: true },
-  { id: "9", name: "Soup", price: 5.99, isAvailable: true },
-  { id: "10", name: "Ice Cream", price: 4.99, isAvailable: true },
-]
+import { useFood } from "@/hooks/use-foods"
 
 export default function MenuItemsPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [menuItems, setMenuItems] = useState(mockMenuItems)
+  const { 
+    menuItems, 
+    isLoading, 
+    error, 
+    toggleAvailability, 
+    deleteMenuItem 
+  } = useFood()
 
-  // Filter menu items based on search term
+  // Xử lý thay đổi trạng thái món ăn
+  const handleAvailabilityChange = async (id: string, isAvailable: boolean) => {
+    try {
+      await toggleAvailability(id, isAvailable)
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái món ăn:", error)
+    }
+  }
+
+  // Xử lý xóa món ăn
+  const handleDelete = async (id: string) => {
+    if (confirm("Bạn có chắc chắn muốn xóa món ăn này?")) {
+      try {
+        await deleteMenuItem(id)
+      } catch (error) {
+        console.error("Lỗi khi xóa món ăn:", error)
+      }
+    }
+  }
+
+  // Lọc món ăn theo từ khóa tìm kiếm
   const filteredMenuItems = menuItems.filter(
     (item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.price.toString().includes(searchTerm),
   )
-
-  const handleAvailabilityChange = (id: string, isAvailable: boolean) => {
-    setMenuItems((prev) => prev.map((item) => (item.id === id ? { ...item, isAvailable } : item)))
-  }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Menu Items</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Foods</h1>
           <p className="text-muted-foreground">Manage your restaurant menu</p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/menu-items/new">
+          <Link href="/dashboard/foods/new">
             <Plus className="mr-2 h-4 w-4" />
             Add Menu Item
           </Link>
@@ -64,6 +73,12 @@ export default function MenuItemsPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          Error: {error}
+        </div>
+      )}
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -75,7 +90,13 @@ export default function MenuItemsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredMenuItems.length > 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">
+                  Loading...
+                </TableCell>
+              </TableRow>
+            ) : filteredMenuItems.length > 0 ? (
               filteredMenuItems.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.name}</TableCell>
@@ -99,12 +120,15 @@ export default function MenuItemsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/menu-items/${item.id}/edit`}>
+                          <Link href={`/dashboard/foods/${item.id}/edit`}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => handleDelete(item.id)}
+                        >
                           <Trash className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>

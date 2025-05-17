@@ -93,10 +93,10 @@ export default function DashboardLayout({
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard/menu-items")}>
-                      <Link href="/dashboard/menu-items">
+                    <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard/foods")}>
+                      <Link href="/dashboard/foods">
                         <ShoppingBag className="mr-2 h-4 w-4" />
-                        <span>Menu Items</span>
+                        <span>Foods</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
