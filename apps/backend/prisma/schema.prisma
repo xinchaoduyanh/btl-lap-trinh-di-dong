@@ -41,9 +41,9 @@ model Attendance {
 }
 
 model Table {
-  id     String  @id @default(uuid())
-  number Int     @unique
-  status String
+  id     String      @id @default(uuid())
+  number Int         @unique
+  status TableStatus @default(AVAILABLE)
   orders Order[]
 }
 
@@ -67,11 +67,12 @@ model OrderItem {
   food       Food     @relation(fields: [foodId], references: [id])
   order      Order    @relation(fields: [orderId], references: [id])
 }
+
 model Food {
   id          String      @id @default(uuid())
   name        String
   price       Float
-  category    String
+  category    FoodCategory
   isAvailable Boolean     @default(true)
   orderItems  OrderItem[]
 }
@@ -101,4 +102,21 @@ enum Role {
   CASHIER
   MANAGER
   ADMIN
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  CLEANING
+}
+
+enum FoodCategory {
+  MAIN_COURSE
+  APPETIZER
+  DESSERT
+  BEVERAGE
+  SOUP
+  SALAD
+  SIDE_DISH
 }
