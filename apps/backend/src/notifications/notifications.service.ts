@@ -12,11 +12,6 @@ export class NotificationsService {
       const notification = await this.prisma.notification.create({
         data: {
           message: createNotificationDto.message,
-          NotificationAssignments: {
-            create: {
-              employeeId: createNotificationDto.employeeId,
-            },
-          },
         },
         include: {
           NotificationAssignments: true,
