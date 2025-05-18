@@ -43,6 +43,8 @@ export interface Food {
   price: number;
   category: FoodCategory;
   isAvailable: boolean;
+  image?: string;
+  orderItems?: OrderItem[];
 }
 
 // OrderItemStatus enum
@@ -125,4 +127,10 @@ export interface CheckoutError {
   message: string;
   error: string;
   statusCode: number;
+}
+
+export interface CreateOrderRequest {
+  tableId: string;
+  employeeId: string;
+  status: "RESERVED" | "PAID";
 }

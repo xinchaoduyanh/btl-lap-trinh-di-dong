@@ -9,6 +9,13 @@ import { config } from '../config/env'
 type AuthContextType = {
   isLoggedIn: boolean
   isLoading: boolean
+  user: {
+    id: string
+    email: string
+    name: string
+    role: string
+    isActive: boolean
+  } | null
   login: (email: string, password: string) => Promise<{
     id: string
     email: string
@@ -25,6 +32,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   isLoading: true,
+  user: null,
   login: async () => ({
     id: "",
     email: "",
@@ -45,6 +53,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [user, setUser] = useState<{
+    id: string
+    email: string
+    name: string
+    role: string
+    isActive: boolean
+  } | null>(null)
 
   // Check if user is logged in on mount
   useEffect(() => {
@@ -52,8 +67,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const userToken = await AsyncStorage.getItem("userToken")
         const email = await AsyncStorage.getItem("userEmail")
+        const userData = await AsyncStorage.getItem("user")
         setIsLoggedIn(userToken !== null)
         setUserEmail(email)
+        if (userData) {
+          setUser(JSON.parse(userData))
+        }
       } catch (error) {
         console.log("Error checking login status:", error)
       } finally {
@@ -98,24 +117,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Store user data
       await AsyncStorage.setItem("userToken", data.id)
       await AsyncStorage.setItem("userEmail", data.email)
-      await AsyncStorage.setItem("user", JSON.stringify({
-        id: data.id,
-        email: data.email,
-        name: data.name,
-        role: data.role,
-        isActive: data.isActive
-      }))
-
-      setUserEmail(data.email)
-      setIsLoggedIn(true)
-
-      return {
+      const userData = {
         id: data.id,
         email: data.email,
         name: data.name,
         role: data.role,
         isActive: data.isActive
       }
+      await AsyncStorage.setItem("user", JSON.stringify(userData))
+
+      setUserEmail(data.email)
+      setUser(userData)
+      setIsLoggedIn(true)
+
+      return userData
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(error.message || 'Đăng nhập thất bại')
@@ -170,8 +185,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await AsyncStorage.removeItem("userToken")
       await AsyncStorage.removeItem("userEmail")
+      await AsyncStorage.removeItem("user")
       setIsLoggedIn(false)
       setUserEmail(null)
+      setUser(null)
     } catch (error) {
       Alert.alert("Error", "Failed to log out")
     }
@@ -181,6 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     isLoggedIn,
     isLoading,
+    user,
     login,
     register,
     logout,
