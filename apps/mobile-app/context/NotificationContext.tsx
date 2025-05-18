@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { config } from '../config/env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -35,11 +35,13 @@ export interface NotificationItem {
 interface NotificationContextType {
   notifications: NotificationItem[];
   loading: boolean;
+  unreadCount: number;
   fetchNotifications: () => Promise<void>;
   markAsRead: (assignmentId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (assignmentId: string) => Promise<void>;
   countUnread: () => Promise<number>;
+  refreshUnreadCount: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -47,56 +49,100 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  // Cập nhật số lượng thông báo chưa đọc khi component được mount
+  useEffect(() => {
+    refreshUnreadCount();
+
+    // Thiết lập interval để cập nhật số lượng thông báo chưa đọc mỗi 30 giây
+    const intervalId = setInterval(() => {
+      refreshUnreadCount();
+    }, 30000);
+
+    // Cleanup interval khi component unmount
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Hàm chuyển đổi từ NotificationAssignment sang NotificationItem
   const mapToNotificationItem = (assignment: NotificationAssignment): NotificationItem => {
-    // Xác định loại thông báo dựa trên nội dung
-    let type = 'message';
-    const message = assignment.notification.message.toLowerCase();
+    try {
+      // Kiểm tra dữ liệu đầu vào
+      if (!assignment || !assignment.notification) {
+        console.log('Dữ liệu thông báo không hợp lệ:', assignment);
+        return {
+          id: assignment?.id || '0',
+          title: 'Thông báo không xác định',
+          message: 'Không thể hiển thị nội dung thông báo',
+          time: 'Không xác định',
+          read: assignment?.isRead || false,
+          type: 'message',
+          assignmentId: assignment?.id || '0'
+        };
+      }
 
-    if (message.includes('order') || message.includes('đơn hàng')) {
-      type = 'order';
-    } else if (message.includes('schedule') || message.includes('lịch')) {
-      type = 'schedule';
-    } else if (message.includes('table') || message.includes('bàn')) {
-      type = 'table';
-    } else if (message.includes('inventory') || message.includes('kho')) {
-      type = 'inventory';
+      // Xác định loại thông báo dựa trên nội dung
+      let type = 'message';
+      const message = assignment.notification.message?.toLowerCase() || '';
+
+      if (message.includes('order') || message.includes('đơn hàng')) {
+        type = 'order';
+      } else if (message.includes('schedule') || message.includes('lịch')) {
+        type = 'schedule';
+      } else if (message.includes('table') || message.includes('bàn')) {
+        type = 'table';
+      } else if (message.includes('inventory') || message.includes('kho')) {
+        type = 'inventory';
+      }
+
+      // Tạo tiêu đề từ nội dung thông báo
+      let title = 'Thông báo mới';
+      if (type === 'order') title = 'Đơn hàng mới';
+      if (type === 'schedule') title = 'Cập nhật lịch';
+      if (type === 'table') title = 'Thông báo bàn';
+      if (type === 'inventory') title = 'Cảnh báo kho';
+
+      // Định dạng thời gian
+      let timeString = 'Vừa xong';
+
+      if (assignment.notification.createdAt) {
+        const createdAt = new Date(assignment.notification.createdAt);
+        const now = new Date();
+        const diffMs = now.getTime() - createdAt.getTime();
+        const diffMins = Math.round(diffMs / 60000);
+        const diffHours = Math.round(diffMs / 3600000);
+        const diffDays = Math.round(diffMs / 86400000);
+
+        if (diffMins < 60) {
+          timeString = `${diffMins} phút trước`;
+        } else if (diffHours < 24) {
+          timeString = `${diffHours} giờ trước`;
+        } else {
+          timeString = `${diffDays} ngày trước`;
+        }
+      }
+
+      return {
+        id: assignment.notification.id || '0',
+        title,
+        message: assignment.notification.message || 'Không có nội dung',
+        time: timeString,
+        read: assignment.isRead || false,
+        type,
+        assignmentId: assignment.id || '0'
+      };
+    } catch (error) {
+      console.error('Lỗi khi chuyển đổi thông báo:', error);
+      return {
+        id: '0',
+        title: 'Lỗi thông báo',
+        message: 'Đã xảy ra lỗi khi hiển thị thông báo này',
+        time: 'Không xác định',
+        read: false,
+        type: 'message',
+        assignmentId: '0'
+      };
     }
-
-    // Tạo tiêu đề từ nội dung thông báo
-    let title = 'Thông báo mới';
-    if (type === 'order') title = 'Đơn hàng mới';
-    if (type === 'schedule') title = 'Cập nhật lịch';
-    if (type === 'table') title = 'Thông báo bàn';
-    if (type === 'inventory') title = 'Cảnh báo kho';
-
-    // Định dạng thời gian
-    const createdAt = new Date(assignment.notification.createdAt);
-    const now = new Date();
-    const diffMs = now.getTime() - createdAt.getTime();
-    const diffMins = Math.round(diffMs / 60000);
-    const diffHours = Math.round(diffMs / 3600000);
-    const diffDays = Math.round(diffMs / 86400000);
-
-    let timeString = '';
-    if (diffMins < 60) {
-      timeString = `${diffMins} phút trước`;
-    } else if (diffHours < 24) {
-      timeString = `${diffHours} giờ trước`;
-    } else {
-      timeString = `${diffDays} ngày trước`;
-    }
-
-    return {
-      id: assignment.notification.id,
-      title,
-      message: assignment.notification.message,
-      time: timeString,
-      read: assignment.isRead,
-      type,
-      assignmentId: assignment.id
-    };
   };
 
   // Lấy danh sách thông báo từ API
@@ -121,7 +167,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       try {
         // Gọi API để lấy thông báo
         const response = await fetch(
-          `${config.API_URL}/notification-assignments/employee/${employeeId}`,
+          `${config.API_URL}/notification-assignments/employee/${employeeId}/all`,
           { signal: controller.signal }
         );
 
@@ -141,17 +187,40 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
               assignmentId: '1'
             }
           ]);
+          setUnreadCount(1);
           return;
         }
 
         const data = await response.json();
+        console.log('Dữ liệu thông báo từ API:', JSON.stringify(data, null, 2));
+
+        // Kiểm tra xem data có phải là mảng không
+        if (!Array.isArray(data)) {
+          console.log('Dữ liệu từ API không phải là mảng:', data);
+          setNotifications([
+            {
+              id: '1',
+              title: 'Lỗi dữ liệu',
+              message: 'Dữ liệu thông báo không đúng định dạng',
+              time: 'Vừa xong',
+              read: false,
+              type: 'message',
+              assignmentId: '1'
+            }
+          ]);
+          setUnreadCount(1);
+          return;
+        }
 
         // Lọc ra các thông báo chưa bị xóa và chuyển đổi sang định dạng NotificationItem
         const notificationItems = data
-          .filter((item: NotificationAssignment) => !item.isDelete)
+          .filter((item: NotificationAssignment) => item && !item.isDelete)
           .map(mapToNotificationItem);
 
         setNotifications(notificationItems);
+
+        // Cập nhật số lượng thông báo chưa đọc
+        await refreshUnreadCount();
       } catch (fetchError) {
         console.log('Lỗi khi fetch:', fetchError);
         // Sử dụng dữ liệu giả nếu không thể kết nối với API
@@ -166,6 +235,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             assignmentId: '1'
           }
         ]);
+        setUnreadCount(1);
       }
     } catch (error) {
       console.log('Lỗi:', error);
@@ -181,6 +251,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           assignmentId: '1'
         }
       ]);
+      setUnreadCount(1);
     } finally {
       setLoading(false);
     }
@@ -205,6 +276,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             : notification
         )
       );
+
+      // Cập nhật số lượng thông báo chưa đọc
+      await refreshUnreadCount();
     } catch (error) {
       Alert.alert('Lỗi', (error as Error).message);
     }
@@ -234,6 +308,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         prevNotifications.map(notification => ({ ...notification, read: true }))
       );
 
+      // Cập nhật số lượng thông báo chưa đọc
+      setUnreadCount(0);
+
       Alert.alert('Thành công', 'Tất cả thông báo đã được đánh dấu là đã đọc');
     } catch (error) {
       Alert.alert('Lỗi', (error as Error).message);
@@ -243,6 +320,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Xóa thông báo
   const deleteNotification = async (assignmentId: string) => {
     try {
+      // Kiểm tra xem thông báo có đang ở trạng thái chưa đọc không
+      const notification = notifications.find(n => n.assignmentId === assignmentId);
+      const wasUnread = notification && !notification.read;
+
       const response = await fetch(`${config.API_URL}/notification-assignments/${assignmentId}`, {
         method: 'PATCH',
         headers: {
@@ -259,6 +340,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setNotifications(prevNotifications =>
         prevNotifications.filter(notification => notification.assignmentId !== assignmentId)
       );
+
+      // Nếu thông báo đã xóa là thông báo chưa đọc, cập nhật số lượng thông báo chưa đọc
+      if (wasUnread) {
+        await refreshUnreadCount();
+      }
     } catch (error) {
       Alert.alert('Lỗi', (error as Error).message);
     }
@@ -291,15 +377,27 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
+  // Cập nhật số lượng thông báo chưa đọc
+  const refreshUnreadCount = async (): Promise<void> => {
+    try {
+      const count = await countUnread();
+      setUnreadCount(count);
+    } catch (error) {
+      console.error('Lỗi khi cập nhật số lượng thông báo chưa đọc:', error);
+    }
+  };
+
   return (
     <NotificationContext.Provider value={{
       notifications,
       loading,
+      unreadCount,
       fetchNotifications,
       markAsRead,
       markAllAsRead,
       deleteNotification,
-      countUnread
+      countUnread,
+      refreshUnreadCount
     }}>
       {children}
     </NotificationContext.Provider>
