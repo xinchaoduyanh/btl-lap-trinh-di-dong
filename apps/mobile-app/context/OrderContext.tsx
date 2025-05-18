@@ -52,7 +52,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setLoading(false);
     }
   };
-
   const createOrder = async (order: Partial<Order>) => {
     setLoading(true);
     try {
