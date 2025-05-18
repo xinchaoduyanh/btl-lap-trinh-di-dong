@@ -90,6 +90,7 @@ model NotificationAssignment {
   notificationId String
   employeeId    String
   isRead        Boolean  @default(false)
+  isDelete      Boolean  @default(false)
   notification  Notification @relation(fields: [notificationId], references: [id])
   employee      Employee   @relation(fields: [employeeId], references: [id])
 }
