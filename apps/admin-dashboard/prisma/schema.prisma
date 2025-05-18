@@ -80,6 +80,7 @@ model Food {
 
 model Notification {
   id         String   @id @default(uuid())
+  title      String
   message    String
   createdAt  DateTime @default(now())
   NotificationAssignments NotificationAssignment[]
@@ -109,6 +110,7 @@ model checkouts {
 model slogan {
   id          String   @id @default(uuid())
   content     String
+  isVisible   Boolean  @default(true)
   createdAt   DateTime @default(now())
 }
 
