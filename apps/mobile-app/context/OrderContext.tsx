@@ -38,7 +38,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const fetchOrder = async (id: string) => {
+  const fetchOrder = useCallback(async (id: string) => {
     setLoading(true);
     try {
       const res = await fetch(`${config.API_URL}/orders/${id}`);
@@ -51,7 +51,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
   const createOrder = async (order: Partial<Order>) => {
     setLoading(true);
     try {
