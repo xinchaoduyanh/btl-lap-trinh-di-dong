@@ -16,7 +16,7 @@ model Employee {
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   attendances   Attendance[]
-  notifications Notification[]
+  notifications NotificationAssignment[]
   orders        Order[]
   checkouts     checkouts[]
 }
@@ -81,10 +81,17 @@ model Food {
 model Notification {
   id         String   @id @default(uuid())
   message    String
-  isRead     Boolean  @default(false)
-  employeeId String
   createdAt  DateTime @default(now())
-  employee   Employee @relation(fields: [employeeId], references: [id])
+  NotificationAssignments NotificationAssignment[]
+}
+
+model NotificationAssignment {
+  id            String   @id @default(uuid())
+  notificationId String
+  employeeId    String
+  isRead        Boolean  @default(false)
+  notification  Notification @relation(fields: [notificationId], references: [id])
+  employee      Employee   @relation(fields: [employeeId], references: [id])
 }
 
 model checkouts {
