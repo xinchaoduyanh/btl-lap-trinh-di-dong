@@ -51,10 +51,7 @@ export default function NotificationsPage() {
       await createNotification({
         message: newNotification.message,
         employeeId: newNotification.employeeId,
-        employeeName:
-          newNotification.employeeId === "all"
-            ? "All Employees"
-            : employees.find((e) => e.id === newNotification.employeeId)?.name || "",
+        isRead: false
       })
 
       setNewNotification({
@@ -237,7 +234,7 @@ export default function NotificationsPage() {
                         New
                       </Badge>
                     )}
-                    {notification.employeeName === "All Employees" ? "Broadcast" : `To: ${notification.employeeName}`}
+                    {notification.employeeId === "all" ? "Broadcast" : `To: ${notification.employee?.name || "Employee"}`}
                   </CardTitle>
                 </div>
                 <CardDescription>{formatDate(notification.createdAt)}</CardDescription>
