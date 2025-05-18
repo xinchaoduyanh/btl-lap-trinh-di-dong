@@ -69,7 +69,10 @@ export class NotificationAssignmentsService {
 
   async findByEmployee(employeeId: string) {
     return await this.prisma.notificationAssignment.findMany({
-      where: { employeeId },
+      where: {
+        employeeId,
+        isDelete: false, // Chỉ lấy thông báo chưa xóa
+      },
       include: {
         notification: true,
       },
@@ -159,10 +162,37 @@ export class NotificationAssignmentsService {
       where: {
         employeeId,
         isRead: false,
-        isDelete: false,
+        isDelete: false, // Chỉ đếm thông báo chưa xóa
       },
     })
 
     return { count }
+  }
+
+  async findAllByEmployee(employeeId: string, includeDeleted: boolean = false) {
+    const whereCondition: any = { employeeId }
+
+    // Mặc định loại bỏ các thông báo đã xóa
+    if (!includeDeleted) {
+      whereCondition.isDelete = false
+    }
+
+    return await this.prisma.notificationAssignment.findMany({
+      where: whereCondition,
+      include: {
+        notification: {
+          select: {
+            id: true,
+            message: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: {
+        notification: {
+          createdAt: 'desc',
+        },
+      },
+    })
   }
 }

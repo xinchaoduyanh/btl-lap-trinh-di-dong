@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common'
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common'
 import { NotificationAssignmentsService } from './notification-assignments.service'
 import {
   CreateNotificationAssignmentDto,
@@ -22,6 +22,16 @@ export class NotificationAssignmentsController {
   @Get('employee/:employeeId/unread-count')
   countUnreadByEmployee(@Param('employeeId') employeeId: string) {
     return this.notificationAssignmentsService.countUnreadByEmployee(employeeId)
+  }
+
+  @Get('employee/:employeeId/all')
+  findAllByEmployee(
+    @Param('employeeId') employeeId: string,
+    @Query('includeDeleted') includeDeleted?: string
+  ) {
+    // Chuyển đổi query param string thành boolean
+    const includeDeletedBool = includeDeleted === 'true'
+    return this.notificationAssignmentsService.findAllByEmployee(employeeId, includeDeletedBool)
   }
 
   @Get('employee/:employeeId')
