@@ -2,45 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import type { Notification, CreateNotificationRequest, UpdateNotificationRequest } from "@/types/schema"
-
-// Mock data for development
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    message: "New order placed at Table 3",
-    isRead: false,
-    employeeId: "all",
-    createdAt: "2023-05-01T12:30:00.000Z",
-  },
-  {
-    id: "2",
-    message: "Employee John Doe checked in",
-    isRead: false,
-    employeeId: "1",
-    createdAt: "2023-05-01T08:00:00.000Z",
-  },
-  {
-    id: "3",
-    message: "Table 5 order is ready for service",
-    isRead: true,
-    employeeId: "all",
-    createdAt: "2023-05-01T13:15:00.000Z",
-  },
-  {
-    id: "4",
-    message: "Employee Jane Smith checked out",
-    isRead: true,
-    employeeId: "2",
-    createdAt: "2023-05-01T16:00:00.000Z",
-  },
-  {
-    id: "5",
-    message: "Inventory alert: Low stock on menu item 'Beef Hotpot'",
-    isRead: false,
-    employeeId: "all",
-    createdAt: "2023-05-01T14:45:00.000Z",
-  },
-]
+import api from "@/lib/axios"
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -52,13 +14,8 @@ export function useNotifications() {
     setIsLoading(true)
     setError(null)
     try {
-      // In a real app, this would be an API call
-      // const response = await fetch('/api/notifications')
-      // const data = await response.json()
-
-      // Using mock data for now
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
-      setNotifications(mockNotifications)
+      const response = await api.get('/notifications')
+      setNotifications(response.data)
     } catch (err) {
       setError("Failed to fetch notifications")
       console.error(err)
@@ -70,15 +27,8 @@ export function useNotifications() {
   // Get a single notification by ID
   const getNotification = useCallback(async (id: string) => {
     try {
-      // In a real app, this would be an API call
-      // const response = await fetch(`/api/notifications/${id}`)
-      // const data = await response.json()
-
-      // Using mock data for now
-      await new Promise((resolve) => setTimeout(resolve, 300)) // Simulate network delay
-      const notification = mockNotifications.find((n) => n.id === id)
-      if (!notification) throw new Error("Notification not found")
-      return notification
+      const response = await api.get(`/notifications/${id}`)
+      return response.data
     } catch (err) {
       console.error(err)
       throw err
@@ -88,24 +38,9 @@ export function useNotifications() {
   // Create a new notification
   const createNotification = useCallback(async (notificationData: CreateNotificationRequest) => {
     try {
-      // In a real app, this would be an API call
-      // const response = await fetch('/api/notifications', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(notificationData)
-      // })
-      // const data = await response.json()
-
-      // Using mock data for now
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
-      const newNotification: Notification = {
-        ...notificationData,
-        id: Date.now().toString(),
-        isRead: notificationData.isRead ?? false,
-        createdAt: new Date().toISOString(),
-      }
-      setNotifications((prev) => [newNotification, ...prev])
-      return newNotification
+      const response = await api.post('/notifications', notificationData)
+      setNotifications((prev) => [response.data, ...prev])
+      return response.data
     } catch (err) {
       console.error(err)
       throw err
@@ -115,20 +50,11 @@ export function useNotifications() {
   // Update an existing notification
   const updateNotification = useCallback(async (id: string, notificationData: UpdateNotificationRequest) => {
     try {
-      // In a real app, this would be an API call
-      // const response = await fetch(`/api/notifications/${id}`, {
-      //   method: 'PATCH',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(notificationData)
-      // })
-      // const data = await response.json()
-
-      // Using mock data for now
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
+      const response = await api.patch(`/notifications/${id}`, notificationData)
       setNotifications((prev) =>
-        prev.map((notification) => (notification.id === id ? { ...notification, ...notificationData } : notification)),
+        prev.map((notification) => (notification.id === id ? { ...notification, ...response.data } : notification)),
       )
-      return { id, ...notificationData }
+      return response.data
     } catch (err) {
       console.error(err)
       throw err
@@ -138,11 +64,7 @@ export function useNotifications() {
   // Delete a notification
   const deleteNotification = useCallback(async (id: string) => {
     try {
-      // In a real app, this would be an API call
-      // await fetch(`/api/notifications/${id}`, { method: 'DELETE' })
-
-      // Using mock data for now
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
+      await api.delete(`/notifications/${id}`)
       setNotifications((prev) => prev.filter((notification) => notification.id !== id))
       return true
     } catch (err) {
@@ -152,49 +74,57 @@ export function useNotifications() {
   }, [])
 
   // Mark a notification as read
-  const markAsRead = useCallback(
-    async (id: string) => {
-      try {
-        return await updateNotification(id, { isRead: true })
-      } catch (err) {
-        console.error(err)
-        throw err
-      }
-    },
-    [updateNotification],
-  )
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      const response = await api.patch(`/notifications/${id}`, { isRead: true })
+      setNotifications((prev) =>
+        prev.map((notification) => (notification.id === id ? { ...notification, isRead: true } : notification)),
+      )
+      return response.data
+    } catch (err) {
+      console.error(err)
+      throw err
+    }
+  }, [])
 
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
     try {
-      // In a real app, this would be an API call
-      // await fetch('/api/notifications/mark-all-read', { method: 'POST' })
-
-      // Using mock data for now
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
+      // Since there's no specific endpoint for marking all as read,
+      // we'll update each unread notification individually
+      const unreadNotifications = notifications.filter(n => !n.isRead)
+      await Promise.all(
+        unreadNotifications.map(notification => 
+          api.patch(`/notifications/${notification.id}`, { isRead: true })
+        )
+      )
+      
       setNotifications((prev) => prev.map((notification) => ({ ...notification, isRead: true })))
       return true
     } catch (err) {
       console.error(err)
       throw err
     }
-  }, [])
+  }, [notifications])
 
   // Delete all notifications
   const deleteAllNotifications = useCallback(async () => {
     try {
-      // In a real app, this would be an API call
-      // await fetch('/api/notifications', { method: 'DELETE' })
-
-      // Using mock data for now
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
+      // Since there's no specific endpoint for deleting all,
+      // we'll delete each notification individually
+      await Promise.all(
+        notifications.map(notification => 
+          api.delete(`/notifications/${notification.id}`)
+        )
+      )
+      
       setNotifications([])
       return true
     } catch (err) {
       console.error(err)
       throw err
     }
-  }, [])
+  }, [notifications])
 
   // Load notifications on initial mount
   useEffect(() => {
