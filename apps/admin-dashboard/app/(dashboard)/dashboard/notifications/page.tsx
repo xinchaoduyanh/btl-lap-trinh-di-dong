@@ -3,10 +3,9 @@
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Bell, Check, Trash, Plus, Send } from "lucide-react"
+import { Bell, Trash, Plus, Send, Edit } from "lucide-react"
 import { useNotifications } from "@/hooks/use-notifications"
-import { useEmployees } from "@/hooks/use-employees"
+import { useToast } from "@/hooks/use-toast"
 import {
   Dialog,
   DialogContent,
@@ -17,31 +16,30 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function NotificationsPage() {
+  const { toast } = useToast()
   const {
     notifications,
     isLoading,
-    markAsRead,
-    markAllAsRead,
     deleteNotification,
-    deleteAllNotifications,
     createNotification,
+    updateNotification,
   } = useNotifications()
 
-  const { employees, isLoading: isLoadingEmployees } = useEmployees()
-
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [newNotification, setNewNotification] = useState({
-    title: "",
     message: "",
-    employeeId: "all",
+  })
+  const [editingNotification, setEditingNotification] = useState({
+    id: "",
+    message: "",
   })
   const [isSending, setIsSending] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const handleCreateNotification = async () => {
     if (!newNotification.message) return
@@ -50,23 +48,78 @@ export default function NotificationsPage() {
     try {
       await createNotification({
         message: newNotification.message,
-        employeeId: newNotification.employeeId,
-        employeeName:
-          newNotification.employeeId === "all"
-            ? "All Employees"
-            : employees.find((e) => e.id === newNotification.employeeId)?.name || "",
+        employeeId: ""
       })
 
       setNewNotification({
-        title: "",
         message: "",
-        employeeId: "all",
       })
       setIsDialogOpen(false)
+      toast({
+        title: "Success",
+        description: "Notification sent successfully",
+      })
     } catch (error) {
       console.error("Failed to create notification:", error)
+      toast({
+        title: "Error",
+        description: "Failed to send notification",
+        variant: "destructive",
+      })
     } finally {
       setIsSending(false)
+    }
+  }
+
+  const handleEditNotification = (notification: any) => {
+    setEditingNotification({
+      id: notification.id,
+      message: notification.message,
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleUpdateNotification = async () => {
+    if (!editingNotification.message) return
+
+    setIsUpdating(true)
+    try {
+      await updateNotification(editingNotification.id, {
+        message: editingNotification.message,
+      })
+
+      setIsEditDialogOpen(false)
+      toast({
+        title: "Success",
+        description: "Notification updated successfully",
+      })
+    } catch (error) {
+      console.error("Failed to update notification:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update notification",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+
+
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      await deleteNotification(id)
+      toast({
+        description: "Notification deleted",
+      })
+    } catch (error) {
+      console.error("Failed to delete notification:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete notification",
+        variant: "destructive",
+      })
     }
   }
 
@@ -87,7 +140,7 @@ export default function NotificationsPage() {
     }
   }
 
-  const unreadCount = notifications.filter((notification) => !notification.isRead).length
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -113,35 +166,6 @@ export default function NotificationsPage() {
                 <DialogDescription>Create a notification to send to employees</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="recipient">Recipient</Label>
-                  <Select
-                    value={newNotification.employeeId}
-                    onValueChange={(value) => setNewNotification({ ...newNotification, employeeId: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select recipient" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Employees</SelectItem>
-                      {!isLoadingEmployees &&
-                        employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id}>
-                            {employee.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="title">Title (Optional)</Label>
-                  <Input
-                    id="title"
-                    value={newNotification.title}
-                    onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
-                    placeholder="Notification title"
-                  />
-                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="message">Message</Label>
                   <Textarea
@@ -175,29 +199,9 @@ export default function NotificationsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          <Button variant="outline" onClick={() => markAllAsRead()} disabled={unreadCount === 0 || isLoading}>
-            <Check className="mr-2 h-4 w-4" />
-            Mark All as Read
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => deleteAllNotifications()}
-            disabled={notifications.length === 0 || isLoading}
-          >
-            <Trash className="mr-2 h-4 w-4" />
-            Clear All
-          </Button>
         </div>
       </div>
 
-      {unreadCount > 0 && !isLoading && (
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-            {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
-          </Badge>
-        </div>
-      )}
 
       {isLoading ? (
         <div className="space-y-4">
@@ -227,32 +231,25 @@ export default function NotificationsPage() {
       ) : notifications.length > 0 ? (
         <div className="space-y-4">
           {notifications.map((notification) => (
-            <Card key={notification.id} className={notification.isRead ? "bg-muted/40" : ""}>
+            <Card key={notification.id}>
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                 <div className="flex items-center gap-2">
-                  <Bell className={`h-4 w-4 ${notification.isRead ? "text-muted-foreground" : "text-red-600"}`} />
+                  <Bell className="h-4 w-4 text-red-600" />
                   <CardTitle className="text-sm font-medium">
-                    {!notification.isRead && (
-                      <Badge variant="default" className="mr-2 bg-red-600">
-                        New
-                      </Badge>
-                    )}
-                    {notification.employeeName === "All Employees" ? "Broadcast" : `To: ${notification.employeeName}`}
+                    Notification
                   </CardTitle>
                 </div>
                 <CardDescription>{formatDate(notification.createdAt)}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className={notification.isRead ? "text-muted-foreground" : ""}>{notification.message}</p>
+                <p>{notification.message}</p>
               </CardContent>
               <CardFooter className="flex justify-end gap-2">
-                {!notification.isRead && (
-                  <Button variant="outline" size="sm" onClick={() => markAsRead(notification.id)}>
-                    <Check className="mr-2 h-4 w-4" />
-                    Mark as Read
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={() => deleteNotification(notification.id)}>
+                <Button variant="outline" size="sm" onClick={() => handleEditNotification(notification)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleDeleteNotification(notification.id)}>
                   <Trash className="mr-2 h-4 w-4" />
                   Delete
                 </Button>
@@ -273,6 +270,48 @@ export default function NotificationsPage() {
           </div>
         </div>
       )}
+
+      {/* Edit Notification Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Notification</DialogTitle>
+            <DialogDescription>Update the notification message</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-message">Message</Label>
+              <Textarea
+                id="edit-message"
+                value={editingNotification.message}
+                onChange={(e) => setEditingNotification({ ...editingNotification, message: e.target.value })}
+                placeholder="Enter your notification message here"
+                rows={4}
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleUpdateNotification}
+              disabled={!editingNotification.message || isUpdating}
+            >
+              {isUpdating ? (
+                <>Updating...</>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Update Notification
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
