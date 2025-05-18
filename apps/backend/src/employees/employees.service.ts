@@ -1,19 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/employee.dto'
-import * as bcrypt from 'bcrypt'
+
 
 @Injectable()
 export class EmployeesService {
   constructor(private prisma: PrismaService) {}
 
   async create(createEmployeeDto: CreateEmployeeDto) {
-    const hashedPassword = await bcrypt.hash(createEmployeeDto.password, 10)
+
 
     return this.prisma.employee.create({
       data: {
         ...createEmployeeDto,
-        password: hashedPassword,
+        password: createEmployeeDto.password,
       },
     })
   }
@@ -62,10 +62,6 @@ export class EmployeesService {
 
     let data = { ...updateEmployeeDto }
 
-    if (updateEmployeeDto.password) {
-      data.password = await bcrypt.hash(updateEmployeeDto.password, 10)
-    }
-
     return this.prisma.employee.update({
       where: { id },
       data,
@@ -76,6 +72,7 @@ export class EmployeesService {
         role: true,
         isActive: true,
         createdAt: true,
+        password: true,
       },
     })
   }
