@@ -7,13 +7,22 @@ import { ZodValidationPipe } from 'nestjs-zod'
 import { APP_PIPE } from '@nestjs/core'
 import { CheckoutModule } from './checkout/checkout.module'
 import { TablesModule } from './tables/tables.module'
-
 import { FoodsModule } from './foods/foods.module'
 import { OrdersModule } from './orders/orders.module'
 import { OrderItemsModule } from './order-items/order-items.module'
-  
+import { EmployeesModule } from './employees/employees.module'
+
 @Module({
-  imports: [AuthModule, PrismaModule, CheckoutModule, TablesModule, FoodsModule, OrdersModule, OrderItemsModule,],
+  imports: [
+    AuthModule,
+    PrismaModule,
+    CheckoutModule,
+    TablesModule,
+    FoodsModule,
+    OrdersModule,
+    OrderItemsModule,
+    EmployeesModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,
