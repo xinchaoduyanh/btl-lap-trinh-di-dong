@@ -1,67 +1,13 @@
-"use client"
+'use client'
 
-import { useState, useEffect, useCallback } from "react"
-import { type Employee, Role, type CreateEmployeeRequest, type UpdateEmployeeRequest } from "@/types/schema"
-
-// Mock data for development - will be replaced with API calls in production
-const mockEmployees: Employee[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    role: Role.MANAGER,
-    isActive: true,
-    createdAt: "2023-01-15T00:00:00.000Z",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane@example.com",
-    role: Role.WAITER,
-    isActive: true,
-    createdAt: "2023-02-20T00:00:00.000Z",
-  },
-  {
-    id: "3",
-    name: "Mike Johnson",
-    email: "mike@example.com",
-    role: Role.CASHIER,
-    isActive: true,
-    createdAt: "2023-03-10T00:00:00.000Z",
-  },
-  {
-    id: "4",
-    name: "Sarah Williams",
-    email: "sarah@example.com",
-    role: Role.WAITER,
-    isActive: false,
-    createdAt: "2023-04-05T00:00:00.000Z",
-  },
-  {
-    id: "5",
-    name: "David Brown",
-    email: "david@example.com",
-    role: Role.CASHIER,
-    isActive: true,
-    createdAt: "2023-05-12T00:00:00.000Z",
-  },
-  {
-    id: "6",
-    name: "Emily Davis",
-    email: "emily@example.com",
-    role: Role.WAITER,
-    isActive: true,
-    createdAt: "2023-06-18T00:00:00.000Z",
-  },
-  {
-    id: "7",
-    name: "Robert Wilson",
-    email: "robert@example.com",
-    role: Role.ADMIN,
-    isActive: true,
-    createdAt: "2023-07-22T00:00:00.000Z",
-  },
-]
+import { useState, useEffect, useCallback } from 'react'
+import {
+  type Employee,
+  Role,
+  type CreateEmployeeRequest,
+  type UpdateEmployeeRequest,
+} from '@/types/schema'
+import api from '@/lib/axios'
 
 export function useEmployees() {
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -73,15 +19,10 @@ export function useEmployees() {
     setIsLoading(true)
     setError(null)
     try {
-      // In production, use the API client
-      // const data = await employeeAPI.getAll()
-      // setEmployees(data)
-
-      // Using mock data for development
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
-      setEmployees(mockEmployees)
+      const response = await api.get('/employees')
+      setEmployees(response.data)
     } catch (err) {
-      setError("Failed to fetch employees")
+      setError('Failed to fetch employees')
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -91,14 +32,8 @@ export function useEmployees() {
   // Get a single employee by ID
   const getEmployee = useCallback(async (id: string) => {
     try {
-      // In production, use the API client
-      // return await employeeAPI.getById(id)
-
-      // Using mock data for development
-      await new Promise((resolve) => setTimeout(resolve, 300)) // Simulate network delay
-      const employee = mockEmployees.find((emp) => emp.id === id)
-      if (!employee) throw new Error("Employee not found")
-      return employee
+      const response = await api.get(`/employees/${id}`)
+      return response.data
     } catch (err) {
       console.error(err)
       throw err
@@ -108,17 +43,8 @@ export function useEmployees() {
   // Create a new employee
   const createEmployee = useCallback(async (employeeData: CreateEmployeeRequest) => {
     try {
-      // In production, use the API client
-      // return await employeeAPI.create(employeeData)
-
-      // Using mock data for development
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
-      const newEmployee: Employee = {
-        ...employeeData,
-        id: Date.now().toString(),
-        isActive: employeeData.isActive ?? true,
-        createdAt: new Date().toISOString(),
-      }
+      const response = await api.post('/employees', employeeData)
+      const newEmployee = response.data
       setEmployees((prev) => [...prev, newEmployee])
       return newEmployee
     } catch (err) {
@@ -130,13 +56,10 @@ export function useEmployees() {
   // Update an existing employee
   const updateEmployee = useCallback(async (id: string, employeeData: UpdateEmployeeRequest) => {
     try {
-      // In production, use the API client
-      // return await employeeAPI.update(id, employeeData)
-
-      // Using mock data for development
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
-      setEmployees((prev) => prev.map((emp) => (emp.id === id ? { ...emp, ...employeeData } : emp)))
-      return { id, ...employeeData }
+      const response = await api.patch(`/employees/${id}`, employeeData)
+      const updatedEmployee = response.data
+      setEmployees((prev) => prev.map((emp) => (emp.id === id ? updatedEmployee : emp)))
+      return updatedEmployee
     } catch (err) {
       console.error(err)
       throw err
@@ -146,11 +69,7 @@ export function useEmployees() {
   // Delete an employee
   const deleteEmployee = useCallback(async (id: string) => {
     try {
-      // In production, use the API client
-      // await employeeAPI.delete(id)
-
-      // Using mock data for development
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
+      await api.delete(`/employees/${id}`)
       setEmployees((prev) => prev.filter((emp) => emp.id !== id))
       return true
     } catch (err) {

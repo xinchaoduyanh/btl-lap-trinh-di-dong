@@ -1,85 +1,108 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import Link from "next/link"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Search, MoreHorizontal, Edit, Trash, Eye, ChevronLeft, ChevronRight } from "lucide-react"
-
-// Mock data for employees
-const mockEmployees = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    role: "MANAGER",
-    isActive: true,
-    createdAt: "2023-01-15T00:00:00.000Z",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane@example.com",
-    role: "WAITER",
-    isActive: true,
-    createdAt: "2023-02-20T00:00:00.000Z",
-  },
-  {
-    id: "3",
-    name: "Mike Johnson",
-    email: "mike@example.com",
-    role: "CASHIER",
-    isActive: true,
-    createdAt: "2023-03-10T00:00:00.000Z",
-  },
-  {
-    id: "4",
-    name: "Sarah Williams",
-    email: "sarah@example.com",
-    role: "WAITER",
-    isActive: false,
-    createdAt: "2023-04-05T00:00:00.000Z",
-  },
-  {
-    id: "5",
-    name: "David Brown",
-    email: "david@example.com",
-    role: "CASHIER",
-    isActive: true,
-    createdAt: "2023-05-12T00:00:00.000Z",
-  },
-  {
-    id: "6",
-    name: "Emily Davis",
-    email: "emily@example.com",
-    role: "WAITER",
-    isActive: true,
-    createdAt: "2023-06-18T00:00:00.000Z",
-  },
-  {
-    id: "7",
-    name: "Robert Wilson",
-    email: "robert@example.com",
-    role: "ADMIN",
-    isActive: true,
-    createdAt: "2023-07-22T00:00:00.000Z",
-  },
-]
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Badge } from '@/components/ui/badge'
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Edit,
+  Trash,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
+import { useEmployees } from '@/hooks/use-employees'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { toast } from '@/components/ui/use-toast'
+import { Role } from '@/types/schema'
+import { getApiErrorMessage } from '@/lib/error-handler'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function EmployeesPage() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
+  // Dialog states
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Form states
+  const [addFormData, setAddFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'WAITER',
+    isActive: true,
+  })
+  const [editFormData, setEditFormData] = useState({
+    id: '',
+    name: '',
+    email: '',
+    role: '',
+    isActive: true,
+  })
+
+  // Error states
+  const [addFormError, setAddFormError] = useState<string | null>(null)
+  const [editFormError, setEditFormError] = useState<string | null>(null)
+
+  const { employees, isLoading, error, createEmployee, updateEmployee, deleteEmployee } =
+    useEmployees()
+
   // Filter employees based on search term
-  const filteredEmployees = mockEmployees.filter(
+  const filteredEmployees = employees.filter(
     (employee) =>
       employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.role.toLowerCase().includes(searchTerm.toLowerCase()),
+      employee.role.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   // Paginate employees
@@ -96,6 +119,206 @@ export default function EmployeesPage() {
     return new Date(dateString).toLocaleDateString()
   }
 
+  // Handle form changes
+  const handleAddChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target
+    setAddFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }))
+  }
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }))
+  }
+
+  // Handle role selection
+  const handleAddRoleChange = (value: string) => {
+    setAddFormData((prev) => ({ ...prev, role: value }))
+  }
+
+  const handleEditRoleChange = (value: string) => {
+    setEditFormData((prev) => ({ ...prev, role: value }))
+  }
+
+  // Handle status change
+  const handleAddStatusChange = (value: string) => {
+    setAddFormData((prev) => ({ ...prev, isActive: value === 'true' }))
+  }
+
+  const handleEditStatusChange = (value: string) => {
+    setEditFormData((prev) => ({ ...prev, isActive: value === 'true' }))
+  }
+
+  // Handle form submissions
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setAddFormError(null)
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(addFormData.email)) {
+      setAddFormError('Invalid email format. Please enter a valid email (e.g., user@example.com)')
+      setIsSubmitting(false)
+      return
+    }
+
+    // Validate password length
+    if (addFormData.password.length < 6) {
+      setAddFormError('Password must be at least 6 characters')
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
+      await createEmployee({
+        name: addFormData.name,
+        email: addFormData.email,
+        password: addFormData.password,
+        role: addFormData.role as Role,
+        isActive: addFormData.isActive,
+      })
+
+      setIsAddDialogOpen(false)
+      setAddFormData({
+        name: '',
+        email: '',
+        password: '',
+        role: 'WAITER',
+        isActive: true,
+      })
+      toast({
+        title: 'Success',
+        description: 'Employee added successfully',
+      })
+    } catch (error) {
+      // Xử lý lỗi từ server
+      const errorMsg = getApiErrorMessage(error)
+
+      // Làm rõ lỗi email nếu có
+      if (errorMsg.toLowerCase().includes('email')) {
+        if (errorMsg.toLowerCase().includes('exists')) {
+          setAddFormError('Email already exists. Please use a different email address.')
+        } else if (
+          errorMsg.toLowerCase().includes('invalid') ||
+          errorMsg.toLowerCase().includes('format')
+        ) {
+          setAddFormError(
+            'Invalid email format. Please enter a valid email (e.g., user@example.com)'
+          )
+        } else {
+          setAddFormError(`Email error: ${errorMsg}`)
+        }
+      } else {
+        setAddFormError(errorMsg)
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setEditFormError(null)
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(editFormData.email)) {
+      setEditFormError('Invalid email format. Please enter a valid email (e.g., user@example.com)')
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
+      await updateEmployee(editFormData.id, {
+        name: editFormData.name,
+        email: editFormData.email,
+        role: editFormData.role as Role,
+        isActive: editFormData.isActive,
+      })
+
+      setIsEditDialogOpen(false)
+      toast({
+        title: 'Success',
+        description: 'Employee updated successfully',
+      })
+    } catch (error) {
+      // Xử lý lỗi từ server
+      const errorMsg = getApiErrorMessage(error)
+
+      // Làm rõ lỗi email nếu có
+      if (errorMsg.toLowerCase().includes('email')) {
+        if (errorMsg.toLowerCase().includes('exists')) {
+          setEditFormError('Email already exists. Please use a different email address.')
+        } else if (
+          errorMsg.toLowerCase().includes('invalid') ||
+          errorMsg.toLowerCase().includes('format')
+        ) {
+          setEditFormError(
+            'Invalid email format. Please enter a valid email (e.g., user@example.com)'
+          )
+        } else {
+          setEditFormError(`Email error: ${errorMsg}`)
+        }
+      } else {
+        setEditFormError(errorMsg)
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDeleteSubmit = async () => {
+    if (!selectedEmployee) return
+
+    setIsSubmitting(true)
+    try {
+      await deleteEmployee(selectedEmployee.id)
+      setIsDeleteDialogOpen(false)
+      toast({
+        title: 'Success',
+        description: 'Employee deleted successfully',
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: getApiErrorMessage(error),
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Open dialogs
+  const openViewDialog = (employee: any) => {
+    setSelectedEmployee(employee)
+    setIsViewDialogOpen(true)
+  }
+
+  const openEditDialog = (employee: any) => {
+    setSelectedEmployee(employee)
+    setEditFormData({
+      id: employee.id,
+      name: employee.name,
+      email: employee.email,
+      role: employee.role,
+      isActive: employee.isActive,
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const openDeleteDialog = (employee: any) => {
+    setSelectedEmployee(employee)
+    setIsDeleteDialogOpen(true)
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -103,11 +326,9 @@ export default function EmployeesPage() {
           <h1 className="text-3xl font-bold tracking-tight">Employees</h1>
           <p className="text-muted-foreground">Manage your restaurant staff</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/employees/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Employee
-          </Link>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Employee
         </Button>
       </div>
 
@@ -137,15 +358,27 @@ export default function EmployeesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentEmployees.length > 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  Loading employees...
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-destructive">
+                  Error loading employees: {error}
+                </TableCell>
+              </TableRow>
+            ) : currentEmployees.length > 0 ? (
               currentEmployees.map((employee) => (
                 <TableRow key={employee.id}>
                   <TableCell className="font-medium">{employee.name}</TableCell>
                   <TableCell>{employee.email}</TableCell>
                   <TableCell>{employee.role}</TableCell>
                   <TableCell>
-                    <Badge variant={employee.isActive ? "default" : "secondary"}>
-                      {employee.isActive ? "Active" : "Inactive"}
+                    <Badge variant={employee.isActive ? 'default' : 'secondary'}>
+                      {employee.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
                   <TableCell>{formatDate(employee.createdAt)}</TableCell>
@@ -158,19 +391,31 @@ export default function EmployeesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/employees/${employee.id}`}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View
-                          </Link>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            openViewDialog(employee)
+                          }}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/employees/${employee.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </Link>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            openEditDialog(employee)
+                          }}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            openDeleteDialog(employee)
+                          }}
+                        >
                           <Trash className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
@@ -206,7 +451,7 @@ export default function EmployeesPage() {
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <Button
                 key={page}
-                variant={currentPage === page ? "default" : "outline"}
+                variant={currentPage === page ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handlePageChange(page)}
               >
@@ -225,6 +470,286 @@ export default function EmployeesPage() {
           </Button>
         </div>
       )}
+
+      {/* View Employee Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Employee Details</DialogTitle>
+          </DialogHeader>
+          {selectedEmployee && (
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Name</p>
+                      <p>{selectedEmployee.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Email</p>
+                      <p>{selectedEmployee.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Role</p>
+                      <p>{selectedEmployee.role}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Status</p>
+                      <Badge variant={selectedEmployee.isActive ? 'default' : 'secondary'}>
+                        {selectedEmployee.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Created</p>
+                      <p>{formatDate(selectedEmployee.createdAt)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">ID</p>
+                      <p className="text-xs text-muted-foreground">{selectedEmployee.id}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                  Close
+                </Button>
+                <Button
+                  onClick={() => {
+                    setIsViewDialogOpen(false)
+                    openEditDialog(selectedEmployee)
+                  }}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Employee Dialog */}
+      <Dialog
+        open={isAddDialogOpen}
+        onOpenChange={(open) => {
+          setIsAddDialogOpen(open)
+          if (!open) setAddFormError(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Employee</DialogTitle>
+            <DialogDescription>Enter the details for the new employee</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddSubmit} autoComplete="off">
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={addFormData.name}
+                  onChange={handleAddChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={addFormData.email}
+                  onChange={handleAddChange}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">Example: user@example.com</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={addFormData.password}
+                  onChange={handleAddChange}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Password must be at least 6 characters
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select value={addFormData.role} onValueChange={handleAddRoleChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="MANAGER">Manager</SelectItem>
+                    <SelectItem value="CASHIER">Cashier</SelectItem>
+                    <SelectItem value="WAITER">Waiter</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={addFormData.isActive ? 'true' : 'false'}
+                  onValueChange={handleAddStatusChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Active</SelectItem>
+                    <SelectItem value="false">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {addFormError && (
+                <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+                  {addFormError}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  setIsAddDialogOpen(false)
+                  setAddFormError(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating...' : 'Create Employee'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Employee Dialog */}
+      <Dialog
+        open={isEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open)
+          if (!open) setEditFormError(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Employee</DialogTitle>
+            <DialogDescription>Update employee information</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  name="name"
+                  value={editFormData.name}
+                  onChange={handleEditChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  name="email"
+                  type="email"
+                  value={editFormData.email}
+                  onChange={handleEditChange}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">Example: user@example.com</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-role">Role</Label>
+                <Select value={editFormData.role} onValueChange={handleEditRoleChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="MANAGER">Manager</SelectItem>
+                    <SelectItem value="CASHIER">Cashier</SelectItem>
+                    <SelectItem value="WAITER">Waiter</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select
+                  value={editFormData.isActive ? 'true' : 'false'}
+                  onValueChange={handleEditStatusChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Active</SelectItem>
+                    <SelectItem value="false">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {editFormError && (
+                <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+                  {editFormError}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  setIsEditDialogOpen(false)
+                  setEditFormError(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Updating...' : 'Update Employee'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Employee Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the employee
+              {selectedEmployee && <strong> {selectedEmployee.name}</strong>} from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSubmit}
+              disabled={isSubmitting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isSubmitting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
