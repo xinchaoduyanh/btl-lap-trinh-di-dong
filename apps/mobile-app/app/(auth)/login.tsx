@@ -12,7 +12,6 @@ import {
   ScrollView,
   ImageBackground,
   ActivityIndicator,
-  Alert,
   Animated,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"

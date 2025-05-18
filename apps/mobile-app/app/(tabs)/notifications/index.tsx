@@ -1,13 +1,17 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { StyleSheet, View, Text, ScrollView, Alert } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Feather } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
+import axios from "axios"
 
 // Components
 import { Header } from "../../../components/Header"
 import { NotificationItem } from "../../../components/NotificationItem"
+
+// Định nghĩa API URL
+const API_URL = "http://your-backend-url/api" // Thay thế bằng URL thực tế của backend
 
 export default function NotificationsScreen() {
   const router = useRouter()

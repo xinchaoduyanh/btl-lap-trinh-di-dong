@@ -65,12 +65,23 @@ export interface Table {
   orders?: Order[]
 }
 
-export interface MenuItem {
+export interface Food {
   id: string
   name: string
   price: number
+  category: FoodCategory
   isAvailable: boolean
   orderItems?: OrderItem[]
+}
+
+export enum FoodCategory {
+  MAIN_COURSE = "MAIN_COURSE",
+  APPETIZER = "APPETIZER",
+  DESSERT = "DESSERT",
+  BEVERAGE = "BEVERAGE",
+  SOUP = "SOUP",
+  SALAD = "SALAD",
+  SIDE_DISH = "SIDE_DISH"
 }
 
 export interface Order {
@@ -89,10 +100,9 @@ export interface Order {
 export interface OrderItem {
   id: string
   orderId: string
-  menuItemId: string
+  foodId: string
   quantity: number
-  unitPrice: number
-  menuItem?: MenuItem
+  food?: Food
   order?: Order
 }
 
@@ -169,15 +179,17 @@ export interface UpdateTableRequest {
   status?: TableStatus
 }
 
-export interface CreateMenuItemRequest {
+export interface CreateFoodRequest {
   name: string
   price: number
+  category: FoodCategory
   isAvailable?: boolean
 }
 
-export interface UpdateMenuItemRequest {
+export interface UpdateFoodRequest {
   name?: string
   price?: number
+  category?: FoodCategory
   isAvailable?: boolean
 }
 
@@ -197,15 +209,13 @@ export interface UpdateOrderRequest {
 }
 
 export interface CreateOrderItemRequest {
-  menuItemId: string
+  foodId: string
   quantity: number
-  unitPrice: number
 }
 
 export interface UpdateOrderItemRequest {
-  menuItemId?: string
+  foodId?: string
   quantity?: number
-  unitPrice?: number
 }
 
 export interface CreateNotificationRequest {

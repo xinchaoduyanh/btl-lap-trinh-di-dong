@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Table,
   TableBody,
@@ -55,37 +55,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { useForm } from 'react-hook-form'
-import { CreateMenuItemRequest, UpdateMenuItemRequest } from '@/types/schema'
-
-// Enum FoodCategory từ schema Prisma
-enum FoodCategory {
-  MAIN_COURSE = 'MAIN_COURSE',
-  APPETIZER = 'APPETIZER',
-  DESSERT = 'DESSERT',
-  BEVERAGE = 'BEVERAGE',
-  SOUP = 'SOUP',
-  SALAD = 'SALAD',
-  SIDE_DISH = 'SIDE_DISH',
-}
+} from "@/components/ui/form"
+import { useForm } from "react-hook-form"
+import { CreateFoodRequest, UpdateFoodRequest, FoodCategory } from "@/types/schema"
 
 // Hàm tiện ích để hiển thị tên danh mục dễ đọc
 const formatCategoryName = (category: string): string => {
   return category.replace(/_/g, ' ')
 }
 
-// Mở rộng interface để thêm trường category
-interface CreateFoodRequest extends CreateMenuItemRequest {
-  category: FoodCategory
-}
-
-interface UpdateFoodRequest extends UpdateMenuItemRequest {
-  category?: FoodCategory
-}
-
-export default function MenuItemsPage() {
-  const [searchTerm, setSearchTerm] = useState('')
+export default function FoodsPage() {
+  const [searchTerm, setSearchTerm] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
@@ -93,13 +73,13 @@ export default function MenuItemsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(5) // Giảm xuống 5 item mỗi trang
 
   const {
-    menuItems,
+    foods,
     isLoading,
     error,
     toggleAvailability,
-    deleteMenuItem,
-    createMenuItem,
-    updateMenuItem,
+    deleteFood,
+    createFood,
+    updateFood
   } = useFood()
 
   // Form cho thêm mới món ăn
@@ -125,7 +105,7 @@ export default function MenuItemsPage() {
   // Xử lý thêm mới món ăn
   const handleAddFood = async (data: CreateFoodRequest) => {
     try {
-      await createMenuItem(data)
+      await createFood(data)
       setIsAddDialogOpen(false)
       addForm.reset()
     } catch (error) {
@@ -138,7 +118,7 @@ export default function MenuItemsPage() {
     if (!editingItem) return
 
     try {
-      await updateMenuItem(editingItem.id, data)
+      await updateFood(editingItem.id, data)
       setIsEditDialogOpen(false)
       setEditingItem(null)
     } catch (error) {
@@ -170,24 +150,22 @@ export default function MenuItemsPage() {
   // Xử lý xóa món ăn
   const handleDelete = async (id: string) => {
     try {
-      await deleteMenuItem(id)
+      await deleteFood(id)
     } catch (error) {
       console.error('Lỗi khi xóa món ăn:', error)
     }
   }
 
   // Lọc món ăn theo từ khóa tìm kiếm
-  const filteredMenuItems = menuItems.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.price.toString().includes(searchTerm)
+  const filteredFoods = foods.filter(
+    (item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.price.toString().includes(searchTerm)
   )
 
   // Phân trang
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentItems = filteredMenuItems.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(filteredMenuItems.length / itemsPerPage)
+  const currentItems = filteredFoods.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredFoods.length / itemsPerPage)
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -204,7 +182,7 @@ export default function MenuItemsPage() {
           <DialogTrigger asChild>
             <Button onClick={() => setIsAddDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Menu Item
+              Add Food
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -301,7 +279,7 @@ export default function MenuItemsPage() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search menu items..."
+            placeholder="Search foods..."
             className="pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -332,7 +310,7 @@ export default function MenuItemsPage() {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : filteredMenuItems.length > 0 ? (
+            ) : filteredFoods.length > 0 ? (
               currentItems.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium w-[40%]">{item.name}</TableCell>
@@ -525,7 +503,7 @@ export default function MenuItemsPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
-                  No menu items found.
+                  No foods found.
                 </TableCell>
               </TableRow>
             )}
@@ -537,8 +515,8 @@ export default function MenuItemsPage() {
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center space-x-2">
           <p className="text-sm text-muted-foreground">
-            Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredMenuItems.length)} of{' '}
-            {filteredMenuItems.length} items
+            Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredFoods.length)} of{' '}
+            {filteredFoods.length} items
           </p>
           <Select
             value={itemsPerPage.toString()}

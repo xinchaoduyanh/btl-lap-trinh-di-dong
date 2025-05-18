@@ -34,10 +34,11 @@ export interface Table {
   status: string;
 }
 
-export interface MenuItem {
+export interface Food {
   id: string;
   name: string;
   price: number;
+  category: string;
   isAvailable: boolean;
 }
 
@@ -56,10 +57,9 @@ export interface Order {
 export interface OrderItem {
   id: string;
   orderId: string;
-  menuItemId: string;
+  foodId: string;
   quantity: number;
-  unitPrice: number;
-  menuItem?: MenuItem;
+  food?: Food;
   order?: Order;
 }
 

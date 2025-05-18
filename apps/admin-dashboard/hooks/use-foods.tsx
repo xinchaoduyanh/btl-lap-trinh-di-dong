@@ -1,31 +1,31 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import type { MenuItem, CreateMenuItemRequest, UpdateMenuItemRequest } from "@/types/schema"
+import type { Food, CreateFoodRequest, UpdateFoodRequest } from "@/types/schema"
 import api from "@/lib/axios"
 
 export function useFood() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [foods, setFoods] = useState<Food[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch all menu items
-  const fetchMenuItems = useCallback(async () => {
+  // Fetch all foods
+  const fetchFoods = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
       const response = await api.get('/foods')
-      setMenuItems(response.data)
+      setFoods(response.data)
     } catch (err) {
-      setError("Failed to fetch menu items")
+      setError("Failed to fetch foods")
       console.error(err)
     } finally {
       setIsLoading(false)
     }
   }, [])
 
-  // Get a single menu item by ID
-  const getMenuItem = useCallback(async (id: string) => {
+  // Get a single food by ID
+  const getFood = useCallback(async (id: string) => {
     try {
       const response = await api.get(`/foods/${id}`)
       return response.data
@@ -35,12 +35,12 @@ export function useFood() {
     }
   }, [])
 
-  // Create a new menu item
-  const createMenuItem = useCallback(async (itemData: CreateMenuItemRequest) => {
+  // Create a new food
+  const createFood = useCallback(async (itemData: CreateFoodRequest) => {
     try {
       const response = await api.post('/foods', itemData)
       const newItem = response.data
-      setMenuItems((prev) => [...prev, newItem])
+      setFoods((prev) => [...prev, newItem])
       return newItem
     } catch (err) {
       console.error(err)
@@ -48,12 +48,12 @@ export function useFood() {
     }
   }, [])
 
-  // Update an existing menu item
-  const updateMenuItem = useCallback(async (id: string, itemData: UpdateMenuItemRequest) => {
+  // Update an existing food
+  const updateFood = useCallback(async (id: string, itemData: UpdateFoodRequest) => {
     try {
       const response = await api.patch(`/foods/${id}`, itemData)
       const updatedItem = response.data
-      setMenuItems((prev) => prev.map((item) => (item.id === id ? updatedItem : item)))
+      setFoods((prev) => prev.map((item) => (item.id === id ? updatedItem : item)))
       return updatedItem
     } catch (err) {
       console.error(err)
@@ -61,11 +61,11 @@ export function useFood() {
     }
   }, [])
 
-  // Delete a menu item
-  const deleteMenuItem = useCallback(async (id: string) => {
+  // Delete a food
+  const deleteFood = useCallback(async (id: string) => {
     try {
       await api.delete(`/foods/${id}`)
-      setMenuItems((prev) => prev.filter((item) => item.id !== id))
+      setFoods((prev) => prev.filter((item) => item.id !== id))
       return true
     } catch (err) {
       console.error(err)
@@ -73,33 +73,33 @@ export function useFood() {
     }
   }, [])
 
-  // Toggle menu item availability
+  // Toggle food availability
   const toggleAvailability = useCallback(
     async (id: string, isAvailable: boolean) => {
       try {
-        return await updateMenuItem(id, { isAvailable })
+        return await updateFood(id, { isAvailable })
       } catch (err) {
         console.error(err)
         throw err
       }
     },
-    [updateMenuItem],
+    [updateFood],
   )
 
-  // Load menu items on initial mount
+  // Load foods on initial mount
   useEffect(() => {
-    fetchMenuItems()
-  }, [fetchMenuItems])
+    fetchFoods()
+  }, [fetchFoods])
 
   return {
-    menuItems,
+    foods,
     isLoading,
     error,
-    fetchMenuItems,
-    getMenuItem,
-    createMenuItem,
-    updateMenuItem,
-    deleteMenuItem,
+    fetchFoods,
+    getFood,
+    createFood,
+    updateFood,
+    deleteFood,
     toggleAvailability,
   }
 }
