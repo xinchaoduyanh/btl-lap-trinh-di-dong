@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const createSloganSchema = z.object({
   content: z.string().min(1),
+  isVisible: z.boolean().optional().default(true),
 })
 
 export const updateSloganSchema = createSloganSchema.partial()
