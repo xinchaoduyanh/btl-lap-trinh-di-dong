@@ -9,6 +9,8 @@ import { ThemeProvider as CustomThemeProvider } from '../context/ThemeContext'
 import { TableProvider } from '../context/TableContext'
 import { useColorScheme } from '@/hooks/useColorScheme'
 import { CheckoutProvider } from '@/context/CheckoutContext'
+import { OrderProvider } from '@/context/OrderContext'
+import { OrderItemProvider } from '../context/OrderItemContext'
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -47,22 +49,25 @@ export default function RootLayout() {
   }
 
   return (
-    //Bọc TableProvider vào đây
-    <TableProvider>
-      <CheckoutProvider>
-        <CustomThemeProvider>
-          <AuthProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-             <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-           <StatusBar style="auto" />
-          </ThemeProvider>
-        </AuthProvider>
-        </CustomThemeProvider>
-      </CheckoutProvider>
-    </TableProvider>
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <OrderItemProvider>
+      <OrderProvider>
+          <TableProvider>
+            <CheckoutProvider>
+              <CustomThemeProvider>
+                <AuthProvider>
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                  <StatusBar style="auto" />
+                </AuthProvider>
+              </CustomThemeProvider>
+            </CheckoutProvider>
+          </TableProvider>
+      </OrderProvider>
+        </OrderItemProvider>
+    </ThemeProvider>
   )
 }

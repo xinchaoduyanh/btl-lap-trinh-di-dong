@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 import {
   Table,
   TableBody,
@@ -64,6 +66,14 @@ const formatCategoryName = (category: string): string => {
   return category.replace(/_/g, ' ')
 }
 
+// Schema validation cho form thêm món ăn
+const foodFormSchema = z.object({
+  name: z.string().min(1, { message: "Tên món ăn không được để trống" }),
+  price: z.number().min(0.01, { message: "Giá phải lớn hơn 0" }),
+  category: z.nativeEnum(FoodCategory),
+  isAvailable: z.boolean().default(true),
+})
+
 export default function FoodsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -83,7 +93,8 @@ export default function FoodsPage() {
   } = useFood()
 
   // Form cho thêm mới món ăn
-  const addForm = useForm<CreateFoodRequest>({
+  const addForm = useForm<z.infer<typeof foodFormSchema>>({
+    resolver: zodResolver(foodFormSchema),
     defaultValues: {
       name: '',
       price: 0,
@@ -93,7 +104,8 @@ export default function FoodsPage() {
   })
 
   // Form cho chỉnh sửa món ăn
-  const editForm = useForm<UpdateFoodRequest>({
+  const editForm = useForm<z.infer<typeof foodFormSchema>>({
+    resolver: zodResolver(foodFormSchema),
     defaultValues: {
       name: '',
       price: 0,
@@ -103,9 +115,15 @@ export default function FoodsPage() {
   })
 
   // Xử lý thêm mới món ăn
-  const handleAddFood = async (data: CreateFoodRequest) => {
+  const handleAddFood = async (data: z.infer<typeof foodFormSchema>) => {
     try {
-      await createFood(data)
+      const foodData: CreateFoodRequest = {
+        name: data.name,
+        price: data.price,
+        category: data.category,
+        isAvailable: data.isAvailable
+      }
+      await createFood(foodData)
       setIsAddDialogOpen(false)
       addForm.reset()
     } catch (error) {
@@ -114,11 +132,17 @@ export default function FoodsPage() {
   }
 
   // Xử lý chỉnh sửa món ăn
-  const handleEditFood = async (data: UpdateFoodRequest) => {
+  const handleEditFood = async (data: z.infer<typeof foodFormSchema>) => {
     if (!editingItem) return
 
     try {
-      await updateFood(editingItem.id, data)
+      const foodData: UpdateFoodRequest = {
+        name: data.name,
+        price: data.price,
+        category: data.category,
+        isAvailable: data.isAvailable
+      }
+      await updateFood(editingItem.id, foodData)
       setIsEditDialogOpen(false)
       setEditingItem(null)
     } catch (error) {
@@ -216,7 +240,12 @@ export default function FoodsPage() {
                           type="number"
                           placeholder="Nhập giá món ăn"
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          onFocus={(e) => {
+                            if (e.target.value === '0') {
+                              e.target.value = ''
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -266,7 +295,12 @@ export default function FoodsPage() {
                   <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     Hủy
                   </Button>
-                  <Button type="submit">Thêm món ăn</Button>
+                  <Button
+                    type="submit"
+                    disabled={!addForm.formState.isValid || addForm.formState.isSubmitting}
+                  >
+                    {addForm.formState.isSubmitting ? 'Đang thêm...' : 'Thêm món ăn'}
+                  </Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -393,8 +427,13 @@ export default function FoodsPage() {
                                             placeholder="Nhập giá món ăn"
                                             {...field}
                                             onChange={(e) =>
-                                              field.onChange(parseFloat(e.target.value))
+                                              field.onChange(parseFloat(e.target.value) || 0)
                                             }
+                                            onFocus={(e) => {
+                                              if (e.target.value === '0') {
+                                                e.target.value = ''
+                                              }
+                                            }}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -459,7 +498,12 @@ export default function FoodsPage() {
                                     >
                                       Hủy
                                     </Button>
-                                    <Button type="submit">Lưu thay đổi</Button>
+                                    <Button
+                                      type="submit"
+                                      disabled={!editForm.formState.isValid || editForm.formState.isSubmitting}
+                                    >
+                                      {editForm.formState.isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                    </Button>
                                   </DialogFooter>
                                 </form>
                               </Form>

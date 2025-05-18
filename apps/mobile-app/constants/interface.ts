@@ -68,7 +68,7 @@ export interface Order {
   timeOut?: string;
   employee?: Employee;
   table?: Table;
-  orderItems?: OrderItem[];
+  orderItems?: OrderItem[] ;
 }
 
 // Notification

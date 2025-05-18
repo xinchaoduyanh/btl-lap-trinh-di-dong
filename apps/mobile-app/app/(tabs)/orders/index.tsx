@@ -1,17 +1,19 @@
 "use client"
-import { useState, useMemo, useCallback } from "react"
-import { StyleSheet, ScrollView, View, Image, Text, TouchableOpacity, RefreshControl } from "react-native"
+import { useState, useMemo, useCallback, useEffect } from "react"
+import { StyleSheet, ScrollView, View, Image, Text, TouchableOpacity, RefreshControl, ActivityIndicator, Modal, TextInput, Alert, LogBox } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { useTheme } from "../../../context/ThemeContext"
 import { Feather } from "@expo/vector-icons"
+import { usePreparingOrders } from "../../../context/OrderContext"
+import { useOrderItem } from "../../../context/OrderItemContext"
 
 // Components
 import { Header } from "../../../components/Header"
 import { TabBar } from "../../../components/TabBar"
 
 // Import interfaces
-import { Table, Food, OrderItem, Order, OrderItemStatus } from "../../../constants/interface"
+import { OrderItemStatus, Order } from "../../../constants/interface"
 
 // Order status colors
 const STATUS_COLORS: Record<OrderItemStatus | 'DELIVERED' | 'COMPLETED', string> = {
@@ -23,127 +25,321 @@ const STATUS_COLORS: Record<OrderItemStatus | 'DELIVERED' | 'COMPLETED', string>
   COMPLETE: "#4CAF50"
 }
 
-// Mock data based on your schema
-const TABLES: Table[] = [
-  { id: "t1", number: 1, status: "AVAILABLE" },
-  { id: "t2", number: 2, status: "OCCUPIED" },
-  { id: "t3", number: 3, status: "OCCUPIED" },
-  { id: "t4", number: 4, status: "RESERVED" },
-  { id: "t5", number: 5, status: "OCCUPIED" },
-  { id: "t6", number: 6, status: "CLEANING" },
-  { id: "t7", number: 7, status: "AVAILABLE" },
-  { id: "t8", number: 8, status: "OCCUPIED" },
-]
+const EditOrderForm = ({ order, onClose, onSave }: { order: Order | null, onClose: () => void, onSave: () => void }) => {
+  const [editedItems, setEditedItems] = useState<any[]>([])
+  const [hasChanges, setHasChanges] = useState(false)
+  const [showUpdateForm, setShowUpdateForm] = useState(false)
+  const { updateOrderItem, deleteOrderItem, loading: orderItemLoading } = useOrderItem()
 
-const FOODS: Food[] = [
-  { id: "f1", name: "Spicy Sichuan Hot Pot", price: 25.99, category: "MAIN_COURSE", isAvailable: true },
-  { id: "f2", name: "Beef Slices", price: 12.99, category: "MAIN_COURSE", isAvailable: true },
-  { id: "f3", name: "Tofu", price: 5.99, category: "SIDE_DISH", isAvailable: true },
-  { id: "f4", name: "Vegetables", price: 7.99, category: "SIDE_DISH", isAvailable: true },
-  { id: "f5", name: "Seafood Mix", price: 18.99, category: "MAIN_COURSE", isAvailable: true },
-  { id: "f6", name: "Mushroom Platter", price: 8.99, category: "APPETIZER", isAvailable: true },
-  { id: "f7", name: "Noodles", price: 4.99, category: "SIDE_DISH", isAvailable: true },
-  { id: "f8", name: "Pork Slices", price: 11.99, category: "MAIN_COURSE", isAvailable: true },
-  { id: "f9", name: "Tomato Hot Pot", price: 23.99, category: "MAIN_COURSE", isAvailable: true },
-  { id: "f10", name: "Soft Drinks", price: 2.99, category: "BEVERAGE", isAvailable: true },
-]
+  useEffect(() => {
+    if (order) {
+      setEditedItems(order.orderItems || [])
+    }
+  }, [order])
 
-// Mock orders with OrderItems based on your schema
-const ORDERS: Order[] = [
-  {
-    id: "ord1",
-    tableId: "t5",
-    employeeId: "emp1",
-    status: "PENDING",
-    createdAt: "2023-05-17T10:30:00Z",
-    timeOut: undefined,
-    orderItems: [
-      { id: "oi1", orderId: "ord1", foodId: "f1", quantity: 1, status: "PENDING" },
-      { id: "oi2", orderId: "ord1", foodId: "f2", quantity: 2, status: "PENDING" },
-      { id: "oi3", orderId: "ord1", foodId: "f3", quantity: 1, status: "PENDING" },
-      { id: "oi4", orderId: "ord1", foodId: "f4", quantity: 1, status: "PENDING" },
-    ],
-  },
-  {
-    id: "ord2",
-    tableId: "t3",
-    employeeId: "emp2",
-    status: "PREPARING",
-    createdAt: "2023-05-17T10:15:00Z",
-    timeOut: undefined,
-    orderItems: [
-      { id: "oi5", orderId: "ord2", foodId: "f9", quantity: 1, status: "PREPARING" },
-      { id: "oi6", orderId: "ord2", foodId: "f8", quantity: 1, status: "PENDING" },
-    ],
-  },
-  {
-    id: "ord3",
-    tableId: "t8",
-    employeeId: "emp1",
-    status: "READY",
-    createdAt: "2023-05-17T10:10:00Z",
-    timeOut: undefined,
-    orderItems: [
-      { id: "oi7", orderId: "ord3", foodId: "f1", quantity: 1, status: "READY" },
-      { id: "oi8", orderId: "ord3", foodId: "f2", quantity: 1, status: "READY" },
-      { id: "oi9", orderId: "ord3", foodId: "f7", quantity: 1, status: "READY" },
-      { id: "oi10", orderId: "ord3", foodId: "f4", quantity: 1, status: "READY" },
-      { id: "oi11", orderId: "ord3", foodId: "f7", quantity: 1, status: "READY" },
-      { id: "oi12", orderId: "ord3", foodId: "f3", quantity: 1, status: "READY" },
-    ],
-  },
-  {
-    id: "ord4",
-    tableId: "t1",
-    employeeId: "emp3",
-    status: "DELIVERED",
-    createdAt: "2023-05-17T10:00:00Z",
-    timeOut: "2023-05-17T10:45:00Z",
-    orderItems: [
-      { id: "oi13", orderId: "ord4", foodId: "f9", quantity: 1, status: "COMPLETE" },
-      { id: "oi14", orderId: "ord4", foodId: "f3", quantity: 2, status: "COMPLETE" },
-      { id: "oi15", orderId: "ord4", foodId: "f6", quantity: 1, status: "COMPLETE" },
-    ],
-  },
-  {
-    id: "ord5",
-    tableId: "t7",
-    employeeId: "emp2",
-    status: "COMPLETED",
-    createdAt: "2023-05-17T09:45:00Z",
-    timeOut: "2023-05-17T11:15:00Z",
-    orderItems: [
-      { id: "oi16", orderId: "ord5", foodId: "f9", quantity: 1, status: "COMPLETE" },
-      { id: "oi17", orderId: "ord5", foodId: "f2", quantity: 1, status: "COMPLETE" },
-      { id: "oi18", orderId: "ord5", foodId: "f5", quantity: 1, status: "COMPLETE" },
-      { id: "oi19", orderId: "ord5", foodId: "f6", quantity: 1, status: "COMPLETE" },
-      { id: "oi20", orderId: "ord5", foodId: "f7", quantity: 1, status: "COMPLETE" },
-    ],
-  },
-]
+  const handleUpdateItemStatus = useCallback(async (itemId: string, newStatus: OrderItemStatus) => {
+    setEditedItems(prev => prev.map(item =>
+      item && item.id === itemId ? { ...item, status: newStatus } : item
+    ))
+    setHasChanges(true)
+  }, [])
+
+  const handleUpdateItemQuantity = useCallback(async (itemId: string, newQuantity: number) => {
+    if (newQuantity < 1) return
+    setEditedItems(prev => prev.map(item =>
+      item && item.id === itemId ? { ...item, quantity: newQuantity } : item
+    ))
+    setHasChanges(true)
+  }, [])
+
+  const handleRemoveItem = useCallback(async (itemId: string) => {
+    setEditedItems(prev => prev.filter(item => item && item.id !== itemId))
+    setHasChanges(true)
+  }, [])
+
+  const handleSaveChanges = useCallback(async () => {
+    if (!order || !hasChanges) return
+
+    try {
+      for (const item of editedItems) {
+        if (!item) continue
+        const originalItem = order.orderItems?.find(oi => oi && oi.id === item.id)
+        if (!originalItem) {
+          // Handle new item if needed
+        } else if (JSON.stringify(originalItem) !== JSON.stringify(item)) {
+          await updateOrderItem(item.id, {
+            status: item.status,
+            quantity: item.quantity
+          })
+        }
+      }
+
+      const deletedItems = order.orderItems?.filter(
+        oi => oi && !editedItems.find(ti => ti && ti.id === oi.id)
+      ) || []
+
+      for (const item of deletedItems) {
+        if (!item) continue
+        await deleteOrderItem(item.id)
+      }
+
+      setHasChanges(false)
+      setShowUpdateForm(false)
+      onSave()
+    } catch (error) {
+      console.error('Error updating order items:', error)
+      Alert.alert('Error', 'Failed to save changes')
+    }
+  }, [order, hasChanges, editedItems, updateOrderItem, deleteOrderItem, onSave])
+
+  const handlePayment = useCallback(() => {
+    // Implement payment logic here
+    Alert.alert('Thanh toán', 'Xác nhận thanh toán đơn hàng này?', [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Xác nhận',
+        onPress: () => {
+          // Add payment logic here
+          Alert.alert('Thành công', 'Đơn hàng đã được thanh toán')
+          onClose()
+        }
+      }
+    ])
+  }, [onClose])
+
+  const handleToggleEditForm = useCallback(() => {
+    if (showUpdateForm && hasChanges) {
+      Alert.alert(
+        'Xác nhận',
+        'Bạn có muốn hủy các thay đổi?',
+        [
+          { text: 'Không', style: 'cancel' },
+          {
+            text: 'Có',
+            onPress: () => {
+              setEditedItems(order?.orderItems || [])
+              setHasChanges(false)
+              setShowUpdateForm(false)
+            }
+          }
+        ]
+      )
+    } else {
+      setShowUpdateForm(!showUpdateForm)
+    }
+  }, [showUpdateForm, hasChanges, order])
+
+  if (!order) return null
+
+  return (
+    <View style={styles.modalContainer}>
+      <View style={styles.modalContent}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Chỉnh sửa đơn hàng</Text>
+          <View style={styles.modalHeaderButtons}>
+            <TouchableOpacity onPress={onClose}>
+              <Feather name="x" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.modalBody}>
+          <Text style={styles.tableInfo}>
+            Bàn: {order.table?.number || 'Unknown'}
+          </Text>
+
+          {showUpdateForm ? (
+            <ScrollView style={styles.itemsList}>
+              {editedItems.map((item) => (
+                <View key={item.id} style={styles.editItemContainer}>
+                  <View style={styles.editItemInfo}>
+                    <Text style={styles.editItemName}>{item.food?.name}</Text>
+                    <Text style={styles.editItemPrice}>${item.food?.price}</Text>
+                  </View>
+
+                  <View style={styles.editItemControls}>
+                    <View style={styles.quantityControl}>
+                      <TouchableOpacity
+                        onPress={() => handleUpdateItemQuantity(item.id, item.quantity - 1)}
+                        style={styles.quantityButton}
+                        disabled={orderItemLoading}
+                      >
+                        <Feather name="minus" size={16} color="#D02C1A" />
+                      </TouchableOpacity>
+                      <Text style={styles.quantityText}>{item.quantity}</Text>
+                      <TouchableOpacity
+                        onPress={() => handleUpdateItemQuantity(item.id, item.quantity + 1)}
+                        style={styles.quantityButton}
+                        disabled={orderItemLoading}
+                      >
+                        <Feather name="plus" size={16} color="#D02C1A" />
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.statusControl}>
+                      <TouchableOpacity
+                        style={[styles.statusButton, { backgroundColor: STATUS_COLORS[item.status as OrderItemStatus] }]}
+                        onPress={() => {
+                          const statuses: OrderItemStatus[] = ['PENDING', 'PREPARING', 'READY']
+                          const currentIndex = statuses.indexOf(item.status)
+                          const nextStatus = statuses[(currentIndex + 1) % statuses.length]
+                          handleUpdateItemStatus(item.id, nextStatus)
+                        }}
+                        disabled={orderItemLoading}
+                      >
+                        <Text style={styles.statusButtonText}>{item.status}</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={() => handleRemoveItem(item.id)}
+                      style={styles.removeButton}
+                      disabled={orderItemLoading}
+                    >
+                      <Feather name="trash-2" size={16} color="#D02C1A" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <ScrollView style={styles.itemsList}>
+              {editedItems.map((item) => (
+                <View key={item.id} style={styles.orderItemCard}>
+                  <View style={styles.orderItemHeader}>
+                    <Text style={styles.itemName}>{item.food?.name}</Text>
+                    <View style={[styles.itemStatusBadge, { backgroundColor: STATUS_COLORS[item.status as OrderItemStatus] }]}>
+                      <Text style={styles.itemStatusText}>{item.status}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.orderItemDetailsInner}>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Số lượng:</Text>
+                      <Text style={styles.detailValue}>x{item.quantity}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Đơn giá:</Text>
+                      <Text style={styles.detailValue}>${item.food?.price}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Thành tiền:</Text>
+                      <Text style={styles.detailValue}>${((item.food?.price || 0) * item.quantity).toFixed(2)}</Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        <View style={styles.modalFooter}>
+          <TouchableOpacity
+            style={[styles.modalButton, styles.backButton]}
+            onPress={() => {
+              if (hasChanges) {
+                Alert.alert(
+                  'Xác nhận',
+                  'Bạn có muốn hủy các thay đổi?',
+                  [
+                    { text: 'Không', style: 'cancel' },
+                    {
+                      text: 'Có',
+                      onPress: () => {
+                        setEditedItems(order.orderItems || [])
+                        setHasChanges(false)
+                        onClose()
+                      }
+                    }
+                  ]
+                )
+              } else {
+                onClose()
+              }
+            }}
+          >
+            <Text style={styles.backButtonText}>Hủy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modalButton, styles.updateButton]}
+            onPress={handleToggleEditForm}
+          >
+            <Text style={styles.updateButtonText}>
+              {showUpdateForm ? 'Xem chi tiết' : 'Chỉnh sửa'}
+            </Text>
+          </TouchableOpacity>
+          {showUpdateForm && hasChanges && (
+            <TouchableOpacity
+              style={[styles.modalButton, styles.saveButton]}
+              onPress={handleSaveChanges}
+              disabled={orderItemLoading}
+            >
+              <Text style={styles.saveButtonText}>
+                {orderItemLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </Text>
+            </TouchableOpacity>
+          )}
+          {!showUpdateForm && (
+            <TouchableOpacity
+              style={[styles.modalButton, styles.paymentButton]}
+              onPress={handlePayment}
+            >
+              <Text style={styles.paymentButtonText}>Thanh toán</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    </View>
+  )
+}
 
 export default function OrderManagementScreen() {
   const router = useRouter()
   const { colors } = useTheme()
   const [activeTab, setActiveTab] = useState("All Orders")
   const [refreshing, setRefreshing] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [editedItems, setEditedItems] = useState<any[]>([])
+  const [showOrderItemsForm, setShowOrderItemsForm] = useState(false)
+  const [hasChanges, setHasChanges] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [tempEditedItems, setTempEditedItems] = useState<any[]>([])
+
+  const {
+    preparingOrders: orders,
+    loading,
+    fetchPreparingOrders: fetchOrders,
+    getOrderItemsByStatus,
+    getTotalItems,
+    getTotalAmount,
+    getOrderStatus,
+  } = usePreparingOrders()
+
+  const {
+    loading: orderItemLoading,
+    updateOrderItem,
+    deleteOrderItem,
+    createOrderItem,
+  } = useOrderItem()
 
   const tabs = ["All Orders", "PENDING", "PREPARING", "READY", "DELIVERED"]
 
   const filteredOrders = useMemo(() => {
-    return activeTab === "All Orders"
-      ? ORDERS
-      : ORDERS.filter((order) => order.status === activeTab)
-  }, [activeTab])
+    if (!orders) return [];
+    console.warn('All Orders:', orders);
+    const filtered = activeTab === "All Orders"
+      ? orders
+      : orders.filter((order) => order && getOrderStatus(order) === activeTab);
+    console.warn('Filtered Orders:', filtered);
+    return filtered;
+  }, [activeTab, orders, getOrderStatus])
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
-    // Simulate a data refresh
-    setTimeout(() => {
+    fetchOrders().finally(() => {
       setRefreshing(false)
-    }, 1000)
-  }, [])
+    })
+  }, [fetchOrders])
 
   const formatTime = useCallback((dateString: string) => {
     try {
@@ -165,33 +361,102 @@ export default function OrderManagementScreen() {
     }
   }, [])
 
-  const getTableNumber = useCallback((tableId: string) => {
-    const table = TABLES.find((t) => t.id === tableId)
-    return table ? table.number : "Unknown"
-  }, [])
-
-  const getFoodDetails = useCallback((foodId: string) => {
-    return FOODS.find((f) => f.id === foodId) || { name: "Unknown Item", price: 0 }
-  }, [])
-
-  const calculateOrderTotal = useCallback((orderItems: OrderItem[]) => {
-    return orderItems.reduce((total: number, item: OrderItem) => {
-      const food = getFoodDetails(item.foodId)
-      return total + food.price * item.quantity
-    }, 0)
-  }, [getFoodDetails])
-
   const handleAddOrder = useCallback(() => {
     router.push("/(tabs)/orders/add-order")
   }, [router])
+
+  const handleEditOrder = useCallback((order: Order | null) => {
+    if (!order) return;
+
+    // Ensure we have a valid order with orderItems
+    const orderItems = Array.isArray(order.orderItems) ? order.orderItems : [];
+
+    setSelectedOrder(order);
+    setEditedItems(orderItems);
+    setTempEditedItems(orderItems);
+    setHasChanges(false);
+    setIsModalVisible(true);
+  }, []);
+
+  const handleUpdateItemStatus = useCallback(async (itemId: string, newStatus: OrderItemStatus) => {
+    if (!selectedOrder) return;
+    setTempEditedItems(prev => prev.map(item =>
+      item && item.id === itemId ? { ...item, status: newStatus } : item
+    ));
+    setHasChanges(true);
+  }, [selectedOrder]);
+
+  const handleUpdateItemQuantity = useCallback(async (itemId: string, newQuantity: number) => {
+    if (!selectedOrder || newQuantity < 1) return;
+    setTempEditedItems(prev => prev.map(item =>
+      item && item.id === itemId ? { ...item, quantity: newQuantity } : item
+    ));
+    setHasChanges(true);
+  }, [selectedOrder]);
+
+  const handleRemoveItem = useCallback(async (itemId: string) => {
+    if (!selectedOrder) return;
+    setTempEditedItems(prev => prev.filter(item => item && item.id !== itemId));
+    setHasChanges(true);
+  }, [selectedOrder]);
+
+  const handleSaveChanges = useCallback(async () => {
+    if (!selectedOrder || !hasChanges) return;
+
+    try {
+      for (const item of tempEditedItems) {
+        if (!item) continue;
+        const originalItem = editedItems.find(oi => oi && oi.id === item.id);
+        if (!originalItem) {
+          await createOrderItem(item);
+        } else if (JSON.stringify(originalItem) !== JSON.stringify(item)) {
+          await updateOrderItem(item.id, {
+            status: item.status,
+            quantity: item.quantity
+          });
+        }
+      }
+
+      const deletedItems = editedItems.filter(
+        oi => oi && !tempEditedItems.find(ti => ti && ti.id === oi.id)
+      );
+      for (const item of deletedItems) {
+        if (!item) continue;
+        await deleteOrderItem(item.id);
+      }
+
+      await fetchOrders();
+      setIsModalVisible(false);
+      setShowEditForm(true);
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Error updating order items:', error);
+      Alert.alert('Error', 'Failed to save changes');
+    }
+  }, [selectedOrder, hasChanges, tempEditedItems, editedItems, createOrderItem, updateOrderItem, deleteOrderItem, fetchOrders]);
+
+  const handleCancelChanges = useCallback(() => {
+    setTempEditedItems([...editedItems])
+    setHasChanges(false)
+  }, [editedItems])
+
+  useEffect(() => {
+    fetchOrders()
+  }, [fetchOrders])
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#D02C1A" />
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         title="Order Management"
         onBackPress={() => router.back()}
-        rightIcon="plus"
-        onRightPress={handleAddOrder}
       />
 
       <View style={styles.bannerContainer}>
@@ -211,91 +476,90 @@ export default function OrderManagementScreen() {
         style={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {filteredOrders.length > 0 ? (
-          filteredOrders.map((order) => (
-            <View key={order.id} style={styles.orderCardContainer}>
-              <View style={styles.orderCardHeader}>
-                <View style={styles.orderIdContainer}>
-                  <Text style={styles.orderId}>{order.id}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[order.status as keyof typeof STATUS_COLORS] }]}>
-                    <Text style={styles.statusText}>{order.status}</Text>
-                  </View>
-                </View>
-                <Text style={styles.orderTime}>{formatTime(order.createdAt)}</Text>
-              </View>
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <ActivityIndicator size="large" color="#D02C1A" />
+          </View>
+        ) : filteredOrders && filteredOrders.length > 0 ? (
+          filteredOrders.map((order) => {
+            // Add null check for order
+            if (!order) return null;
 
-              <View style={styles.orderCardBody}>
-                <View style={styles.orderInfoRow}>
-                  <View style={styles.orderInfoItem}>
-                    <Feather name="users" size={16} color="#D02C1A" />
-                    <Text style={styles.orderInfoText}>Table {getTableNumber(order.tableId)}</Text>
-                  </View>
-                  <View style={styles.orderInfoItem}>
-                    <Feather name="clock" size={16} color="#D02C1A" />
-                    <Text style={styles.orderInfoText}>
-                      {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  </View>
-                </View>
+            // Ensure orderItems is an array and handle all possible cases
+            const orderItems = Array.isArray(order.orderItems) ? order.orderItems : [];
 
-                <View style={styles.divider} />
-
-                <Text style={styles.itemsTitle}>Order Items:</Text>
-                {order.orderItems?.map((item) => {
-                  const food = getFoodDetails(item.foodId)
-                  return (
-                    <View key={item.id} style={styles.orderItem}>
-                      <View style={styles.orderItemDetails}>
-                        <View style={styles.itemNameContainer}>
-                          <Text style={styles.itemName}>{food.name}</Text>
-                          <View style={[styles.itemStatusBadge, { backgroundColor: STATUS_COLORS[item.status] }]}>
-                            <Text style={styles.itemStatusText}>{item.status}</Text>
-                          </View>
-                        </View>
-                        <Text style={styles.itemQuantity}>x{item.quantity}</Text>
-                      </View>
-                      <Text style={styles.itemPrice}>${(food.price * item.quantity).toFixed(2)}</Text>
+            return (
+              <View key={order.id} style={styles.orderCardContainer}>
+                <View style={styles.orderCardHeader}>
+                  <View style={styles.orderIdContainer}>
+                    <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[getOrderStatus(order) as keyof typeof STATUS_COLORS] }]}>
+                      <Text style={styles.statusText}>{getOrderStatus(order)}</Text>
                     </View>
-                  )
-                })}
+                  </View>
+                  <Text style={styles.orderTime}>{formatTime(order.createdAt || '')}</Text>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleEditOrder(order)}
+                  >
+                    <Text style={styles.actionButtonText}>Thao tác</Text>
+                  </TouchableOpacity>
+                </View>
 
-                <View style={styles.divider} />
+                <View style={styles.orderCardBody}>
+                  <View style={styles.orderInfoRow}>
+                    <View style={styles.orderInfoItem}>
+                      <Feather name="users" size={16} color="#D02C1A" />
+                      <Text style={styles.orderInfoText}>Table {order.table?.number || 'Unknown'}</Text>
+                    </View>
+                    <View style={styles.orderInfoItem}>
+                      <Feather name="clock" size={16} color="#D02C1A" />
+                      <Text style={styles.orderInfoText}>
+                        {new Date(order.createdAt || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </Text>
+                    </View>
+                  </View>
 
-                <View style={styles.totalContainer}>
-                  <Text style={styles.totalLabel}>Total Amount:</Text>
-                  <Text style={styles.totalAmount}>${calculateOrderTotal(order.orderItems ?? []).toFixed(2)}</Text>
+                  <View style={styles.divider} />
+
+                  <Text style={styles.itemsTitle}>Order Items:</Text>
+                  {orderItems.length > 0 ? (
+                    orderItems.map((item) => {
+                      if (!item) return null;
+
+                      return (
+                        <View key={item.id} style={styles.orderItem}>
+                          <View style={styles.orderItemDetailsCard}>
+                            <View style={styles.itemNameContainer}>
+                              <Text style={styles.itemName}>{item.food?.name || 'Unknown Item'}</Text>
+                              <View style={[styles.itemStatusBadge, { backgroundColor: STATUS_COLORS[item.status || 'PENDING'] }]}>
+                                <Text style={styles.itemStatusText}>{item.status || 'PENDING'}</Text>
+                              </View>
+                            </View>
+                            <Text style={styles.itemQuantity}>x{item.quantity || 0}</Text>
+                          </View>
+                          <Text style={styles.itemPrice}>${((item.food?.price || 0) * (item.quantity || 0)).toFixed(2)}</Text>
+                        </View>
+                      );
+                    })
+                  ) : (
+                    <Text style={styles.emptyText}>No items in this order</Text>
+                  )}
+
+                  <View style={styles.divider} />
+
+                  <View style={styles.totalContainer}>
+                    <Text style={styles.totalLabelText}>Total Amount:</Text>
+                    <Text style={styles.totalAmount}>${getTotalAmount(order).toFixed(2)}</Text>
+                  </View>
                 </View>
               </View>
-
-              <View style={styles.orderCardFooter}>
-                <TouchableOpacity style={styles.actionButton}>
-                  <Feather name="edit-2" size={16} color="#fff" />
-                  <Text style={styles.actionButtonText}>Edit</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    { backgroundColor: order.status === "COMPLETED" ? "#607D8B" : "#4CAF50" },
-                  ]}
-                  disabled={order.status === "COMPLETED"}
-                >
-                  <Feather
-                    name={order.status === "COMPLETED" ? "check-circle" : "arrow-right"}
-                    size={16}
-                    color="#fff"
-                  />
-                  <Text style={styles.actionButtonText}>
-                    {order.status === "COMPLETED" ? "Completed" : "Next Status"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))
+            );
+          })
         ) : (
           <View style={styles.emptyContainer}>
-            <Feather name="inbox" size={50} color="#ccc" />
-            <Text style={styles.emptyText}>No orders found</Text>
+            <Feather name="coffee" size={50} color="#ccc" />
+            <Text style={styles.emptyText}>Hiện tại không có khách</Text>
+            <Text style={styles.emptySubText}>Hãy chờ đợi khách hàng đặt món</Text>
           </View>
         )}
       </ScrollView>
@@ -303,6 +567,229 @@ export default function OrderManagementScreen() {
       <TouchableOpacity style={styles.fabButton} onPress={handleAddOrder}>
         <Feather name="plus" size={24} color="#fff" />
       </TouchableOpacity>
+
+      <Modal
+        visible={isModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <EditOrderForm
+          order={selectedOrder}
+          onClose={() => {
+            setIsModalVisible(false)
+            setSelectedOrder(null)
+          }}
+          onSave={() => {
+            setIsModalVisible(false)
+            setSelectedOrder(null)
+            fetchOrders()
+          }}
+        />
+      </Modal>
+
+      {/* Order Items Form Modal */}
+      <Modal
+        visible={showOrderItemsForm}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowOrderItemsForm(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Chi tiết đơn hàng</Text>
+              <View style={styles.modalHeaderButtons}>
+                <TouchableOpacity onPress={() => setShowOrderItemsForm(false)}>
+                  <Feather name="x" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.modalBody}>
+              <View style={styles.orderInfoSection}>
+                <Text style={styles.sectionTitle}>Thông tin đơn hàng</Text>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Bàn số:</Text>
+                  <Text style={styles.infoValue}>{selectedOrder?.table?.number || 'Unknown'}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Thời gian:</Text>
+                  <Text style={styles.infoValue}>
+                    {new Date(selectedOrder?.createdAt || '').toLocaleString()}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Trạng thái:</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[getOrderStatus(selectedOrder!) as keyof typeof STATUS_COLORS] }]}>
+                    <Text style={styles.statusText}>{getOrderStatus(selectedOrder!)}</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.itemsSection}>
+                <Text style={styles.sectionTitle}>Danh sách món ăn</Text>
+                <ScrollView style={styles.itemsList}>
+                  {editedItems.map((item) => (
+                    <View key={item.id} style={styles.orderItemCard}>
+                      <View style={styles.orderItemHeader}>
+                        <Text style={styles.itemName}>{item.food?.name}</Text>
+                        <View style={[styles.itemStatusBadge, { backgroundColor: STATUS_COLORS[item.status as OrderItemStatus] }]}>
+                          <Text style={styles.itemStatusText}>{item.status}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.orderItemDetailsInner}>
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Số lượng:</Text>
+                          <Text style={styles.detailValue}>x{item.quantity}</Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Đơn giá:</Text>
+                          <Text style={styles.detailValue}>${item.food?.price}</Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Thành tiền:</Text>
+                          <Text style={styles.detailValue}>${((item.food?.price || 0) * item.quantity).toFixed(2)}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.totalSection}>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabelText}>Tổng số món:</Text>
+                  <Text style={styles.totalValue}>{getTotalItems(selectedOrder!)}</Text>
+                </View>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabelText}>Tổng tiền:</Text>
+                  <Text style={[styles.totalValue, { color: '#D02C1A' }]}>
+                    ${getTotalAmount(selectedOrder!).toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.backButton]}
+                onPress={() => setShowOrderItemsForm(false)}
+              >
+                <Text style={styles.modalButtonText}>Đóng</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.paymentButton]}
+              >
+                <Text style={styles.modalButtonText}>Thanh toán</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Form Modal */}
+      <Modal
+        visible={showEditForm && !!selectedOrder}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowEditForm(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Chỉnh sửa đơn hàng</Text>
+              <View style={styles.modalHeaderButtons}>
+                <TouchableOpacity onPress={() => setShowEditForm(false)}>
+                  <Feather name="x" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={styles.tableInfo}>
+                Bàn: {selectedOrder?.table?.number || 'Unknown'}
+              </Text>
+
+              <ScrollView style={styles.itemsList}>
+                {tempEditedItems?.map((item) => (
+                  <View key={item.id} style={styles.editItemContainer}>
+                    <View style={styles.editItemInfo}>
+                      <Text style={styles.editItemName}>{item.food?.name}</Text>
+                      <Text style={styles.editItemPrice}>${item.food?.price}</Text>
+                    </View>
+
+                    <View style={styles.editItemControls}>
+                      <View style={styles.quantityControl}>
+                        <TouchableOpacity
+                          onPress={() => handleUpdateItemQuantity(item.id, item.quantity - 1)}
+                          style={styles.quantityButton}
+                          disabled={orderItemLoading}
+                        >
+                          <Feather name="minus" size={16} color="#D02C1A" />
+                        </TouchableOpacity>
+                        <Text style={styles.quantityText}>{item.quantity}</Text>
+                        <TouchableOpacity
+                          onPress={() => handleUpdateItemQuantity(item.id, item.quantity + 1)}
+                          style={styles.quantityButton}
+                          disabled={orderItemLoading}
+                        >
+                          <Feather name="plus" size={16} color="#D02C1A" />
+                        </TouchableOpacity>
+                      </View>
+
+                      <View style={styles.statusControl}>
+                        <TouchableOpacity
+                          style={[styles.statusButton, { backgroundColor: STATUS_COLORS[item.status as OrderItemStatus] }]}
+                          onPress={() => {
+                            const statuses: OrderItemStatus[] = ['PENDING', 'PREPARING', 'READY']
+                            const currentIndex = statuses.indexOf(item.status)
+                            const nextStatus = statuses[(currentIndex + 1) % statuses.length]
+                            handleUpdateItemStatus(item.id, nextStatus)
+                          }}
+                          disabled={orderItemLoading}
+                        >
+                          <Text style={styles.statusButtonText}>{item.status}</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={() => handleRemoveItem(item.id)}
+                        style={styles.removeButton}
+                        disabled={orderItemLoading}
+                      >
+                        <Feather name="trash-2" size={16} color="#D02C1A" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.backButton]}
+                onPress={() => setShowEditForm(false)}
+              >
+                <Text style={styles.modalButtonText}>Đóng</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.acceptButton]}
+                onPress={handleSaveChanges}
+                disabled={orderItemLoading || !hasChanges}
+              >
+                <Text style={styles.modalButtonText}>
+                  {orderItemLoading ? 'Đang xử lý...' : 'Lưu thay đổi'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -372,11 +859,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  orderId: {
-    fontWeight: "bold",
-    fontSize: 16,
-    marginRight: 8,
-  },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -425,8 +907,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  orderItemDetails: {
+  orderItemDetailsCard: {
     flex: 1,
+  },
+  orderItemDetailsInner: {
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    padding: 8,
   },
   itemNameContainer: {
     flexDirection: "row",
@@ -463,43 +950,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 4,
   },
-  totalLabel: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#333",
+  totalLabelText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
   },
   totalAmount: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#D02C1A", // Hot pot red color
   },
-  orderCardFooter: {
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-    backgroundColor: "#D02C1A", // Hot pot red color
-  },
-  actionButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    marginLeft: 6,
-  },
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
     padding: 40,
+    marginTop: 20,
   },
   emptyText: {
     marginTop: 10,
     color: "#666",
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  emptySubText: {
+    marginTop: 5,
+    color: "#999",
+    fontSize: 14,
   },
   fabButton: {
     position: "absolute",
@@ -516,5 +992,245 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
+  },
+  actionButton: {
+    backgroundColor: "#D02C1A",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  actionButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    width: '90%',
+    maxHeight: '80%',
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalBody: {
+    flex: 1,
+  },
+  tableInfo: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+  },
+  itemsList: {
+    maxHeight: '70%',
+  },
+  editItemContainer: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+  },
+  editItemInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  editItemName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+  },
+  editItemPrice: {
+    fontSize: 16,
+    color: '#D02C1A',
+    fontWeight: '500',
+  },
+  editItemControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  quantityControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  quantityButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D02C1A',
+  },
+  quantityText: {
+    marginHorizontal: 10,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  statusControl: {
+    flex: 1,
+    marginHorizontal: 10,
+  },
+  statusButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  statusButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  removeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D02C1A',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 8,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  backButton: {
+    backgroundColor: '#607D8B',
+  },
+  acceptButton: {
+    backgroundColor: '#4CAF50',
+  },
+  paymentButton: {
+    backgroundColor: '#D02C1A',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  modalHeaderButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  orderInfoSection: {
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  itemsSection: {
+    flex: 1,
+  },
+  orderItemCard: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+  },
+  orderItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  totalSection: {
+    marginTop: 15,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  totalValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  backButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  updateButton: {
+    backgroundColor: '#2196F3',
+  },
+  updateButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  saveButton: {
+    backgroundColor: '#4CAF50',
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  paymentButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 })

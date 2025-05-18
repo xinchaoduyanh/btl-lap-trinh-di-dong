@@ -49,6 +49,8 @@ export default function NotificationsPage() {
       await createNotification({
         message: newNotification.message,
         employeeId: ""
+        employeeId: newNotification.employeeId,
+        isRead: false
       })
 
       setNewNotification({
@@ -237,6 +239,12 @@ export default function NotificationsPage() {
                   <Bell className="h-4 w-4 text-red-600" />
                   <CardTitle className="text-sm font-medium">
                     Notification
+                    {!notification.isRead && (
+                      <Badge variant="default" className="mr-2 bg-red-600">
+                        New
+                      </Badge>
+                    )}
+                    {notification.employeeId === "all" ? "Broadcast" : `To: ${notification.employee?.name || "Employee"}`}
                   </CardTitle>
                 </div>
                 <CardDescription>{formatDate(notification.createdAt)}</CardDescription>
