@@ -4,12 +4,14 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../context/ThemeContext';
+import { useNotification } from '../../context/NotificationContext';
 import { UserData } from '@/constants/interface';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const { colors } = useTheme();
+  const { unreadCount, refreshUnreadCount } = useNotification();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -33,6 +35,19 @@ export default function HomeScreen() {
 
     fetchUserData();
   }, []);
+
+  // Cập nhật số lượng thông báo chưa đọc khi component được mount
+  useEffect(() => {
+    refreshUnreadCount();
+
+    // Thiết lập interval để cập nhật số lượng thông báo chưa đọc mỗi 30 giây
+    const intervalId = setInterval(() => {
+      refreshUnreadCount();
+    }, 30000);
+
+    // Cleanup interval khi component unmount
+    return () => clearInterval(intervalId);
+  }, [refreshUnreadCount]);
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem('user');
@@ -71,7 +86,7 @@ export default function HomeScreen() {
       icon: 'bell',
       color: '#6D4C41', // Brown for hotpot theme
       screen: '/(tabs)/notifications',
-      badge: '3'
+      badge: unreadCount > 0 ? unreadCount.toString() : undefined
     }
   ];
 
