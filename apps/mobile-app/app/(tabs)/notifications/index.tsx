@@ -1,6 +1,6 @@
 "use client"
-import React, { useState } from "react"
-import { StyleSheet, View, Text, ScrollView, Alert } from "react-native"
+import React, { useState, useEffect } from "react"
+import { StyleSheet, View, Text, ScrollView, Alert, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Feather } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
@@ -8,94 +8,59 @@ import { useRouter } from "expo-router"
 // Components
 import { Header } from "../../../components/Header"
 import { NotificationItem } from "../../../components/NotificationItem"
+import { useNotification } from "../../../context/NotificationContext"
 
 export default function NotificationsScreen() {
   const router = useRouter()
+  const {
+    notifications,
+    loading,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification
+  } = useNotification()
 
-  // Mock data for notifications
-  const initialNotifications = [
-    {
-      id: 1,
-      title: "New Order",
-      message: "Table 5 has placed a new order.",
-      time: "10 minutes ago",
-      read: false,
-      type: "order",
-    },
-    {
-      id: 2,
-      title: "Schedule Update",
-      message: "Your shift for tomorrow has been updated.",
-      time: "1 hour ago",
-      read: false,
-      type: "schedule",
-    },
-    {
-      id: 3,
-      title: "Table Ready",
-      message: "Table 3 is ready for service.",
-      time: "2 hours ago",
-      read: true,
-      type: "table",
-    },
-    {
-      id: 4,
-      title: "Inventory Alert",
-      message: "Wine stock is running low.",
-      time: "3 hours ago",
-      read: true,
-      type: "inventory",
-    },
-    {
-      id: 5,
-      title: "New Message",
-      message: "You have a new message from the manager.",
-      time: "1 day ago",
-      read: true,
-      type: "message",
-    },
-  ]
-
-  const [notifications, setNotifications] = useState(initialNotifications)
-
-  const markAsRead = (id: number) => {
-    setNotifications(
-      notifications.map((notification) => (notification.id === id ? { ...notification, read: true } : notification)),
-    )
-  }
-
-  const markAllAsRead = () => {
-    setNotifications(notifications.map((notification) => ({ ...notification, read: true })))
-    Alert.alert("Success", "All notifications marked as read")
-  }
-
-  const deleteNotification = (id: number) => {
-    setNotifications(notifications.filter((notification) => notification.id !== id))
-  }
+  // Lấy thông báo khi component được mount
+  useEffect(() => {
+    fetchNotifications()
+  }, [])
 
   return (
     <SafeAreaView style={styles.container}>
       <Header
-        title="Notifications"
+        title="Thông báo"
         onBackPress={() => router.back()}
         rightIcon="check-square"
         onRightPress={markAllAsRead}
       />
 
       <ScrollView style={styles.content}>
-        {notifications.length > 0 ? (
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <ActivityIndicator size="large" color="#FF8C00" />
+            <Text style={styles.loadingText}>Đang tải thông báo...</Text>
+          </View>
+        ) : notifications.length > 0 ? (
           notifications.map((notification) => (
             <NotificationItem
               key={notification.id}
-              notification={notification}
-              onPress={() => markAsRead(notification.id)}
-              onDelete={() => deleteNotification(notification.id)}
+              notification={{
+                id: parseInt(notification.id) || 0,
+                title: notification.title,
+                message: notification.message,
+                time: notification.time,
+                read: notification.read,
+                type: notification.type
+              }}
+              onPress={() => markAsRead(notification.assignmentId)}
+              onDelete={() => deleteNotification(notification.assignmentId)}
             />
           ))
         ) : (
           <View style={styles.emptyContainer}>
             <Feather name="bell-off" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>No notifications</Text>
+            <Text style={styles.emptyText}>Không có thông báo</Text>
           </View>
         )}
       </ScrollView>
@@ -122,5 +87,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: "#999",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666",
   },
 })

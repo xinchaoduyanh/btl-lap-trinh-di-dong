@@ -11,6 +11,7 @@ import { useColorScheme } from '@/hooks/useColorScheme'
 import { CheckoutProvider } from '@/context/CheckoutContext'
 import { OrderProvider } from '@/context/OrderContext'
 import { OrderItemProvider } from '../context/OrderItemContext'
+import { NotificationProvider } from '../context/NotificationContext'
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -50,24 +51,26 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <OrderItemProvider>
-      <OrderProvider>
+      <OrderItemProvider>
+        <OrderProvider>
           <TableProvider>
             <CheckoutProvider>
-              <CustomThemeProvider>
-                <AuthProvider>
-                  <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="+not-found" />
-                  </Stack>
-                  <StatusBar style="auto" />
-                </AuthProvider>
-              </CustomThemeProvider>
+              <NotificationProvider>
+                <CustomThemeProvider>
+                  <AuthProvider>
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                      <Stack.Screen name="+not-found" />
+                    </Stack>
+                    <StatusBar style="auto" />
+                  </AuthProvider>
+                </CustomThemeProvider>
+              </NotificationProvider>
             </CheckoutProvider>
           </TableProvider>
-      </OrderProvider>
-        </OrderItemProvider>
+        </OrderProvider>
+      </OrderItemProvider>
     </ThemeProvider>
   )
 }
