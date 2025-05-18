@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Edit, Trash } from 'lucide-react'
+import { Plus, Search, Edit, Trash, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTables } from '@/hooks/use-tables'
 import {
   Dialog,
@@ -62,6 +62,8 @@ export default function TablesPage() {
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [addFormError, setAddFormError] = useState<string | null>(null)
   const [editFormError, setEditFormError] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(8) // 8 bàn mỗi trang phù hợp với grid layout
 
   // Gọi API khi component mount
   useEffect(() => {
@@ -75,6 +77,16 @@ export default function TablesPage() {
 
     return matchesSearch && matchesStatus
   })
+
+  // Phân trang
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentTables = filteredTables.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredTables.length / itemsPerPage)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -223,7 +235,7 @@ export default function TablesPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filteredTables.length > 0 ? (
-          filteredTables.map((table) => (
+          currentTables.map((table) => (
             <div
               key={table.id}
               className="rounded-lg border bg-card text-card-foreground shadow-sm"
@@ -263,6 +275,69 @@ export default function TablesPage() {
                 Add Table
               </Button>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between py-4">
+        <div className="flex items-center space-x-2">
+          <p className="text-sm text-muted-foreground">
+            Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredTables.length)} of{' '}
+            {filteredTables.length} tables
+          </p>
+          <Select
+            value={itemsPerPage.toString()}
+            onValueChange={(value) => {
+              setItemsPerPage(parseInt(value))
+              setCurrentPage(1) // Reset to first page when changing items per page
+            }}
+          >
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={itemsPerPage.toString()} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="4">4</SelectItem>
+              <SelectItem value="8">8</SelectItem>
+              <SelectItem value="12">12</SelectItem>
+              <SelectItem value="16">16</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground">per page</p>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Previous Page</span>
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span className="sr-only">Next Page</span>
+            </Button>
           </div>
         )}
       </div>
