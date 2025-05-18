@@ -11,6 +11,9 @@ import { FoodsModule } from './foods/foods.module'
 import { OrdersModule } from './orders/orders.module'
 import { OrderItemsModule } from './order-items/order-items.module'
 import { EmployeesModule } from './employees/employees.module'
+import { NotificationsModule } from './notifications/notifications.module'
+import { SlogansModule } from './slogans/slogans.module'
+import { NotificationAssignmentsModule } from './notification-assignments/notification-assignments.module'
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { EmployeesModule } from './employees/employees.module'
     OrdersModule,
     OrderItemsModule,
     EmployeesModule,
+    NotificationsModule,
+    SlogansModule,
+    NotificationAssignmentsModule,
   ],
   controllers: [AppController],
   providers: [
