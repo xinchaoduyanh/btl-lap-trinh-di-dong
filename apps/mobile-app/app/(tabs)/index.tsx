@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useSlogan } from '../../context/SloganContext';
 import { UserData } from '@/constants/interface';
 
 const { width } = Dimensions.get('window');
@@ -12,6 +13,7 @@ const { width } = Dimensions.get('window');
 export default function HomeScreen() {
   const { colors } = useTheme();
   const { unreadCount, refreshUnreadCount } = useNotification();
+  const { slogan, loading: sloganLoading, error: sloganError, fetchRandomSlogan } = useSlogan();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -34,6 +36,8 @@ export default function HomeScreen() {
     };
 
     fetchUserData();
+    // Không tự động lấy slogan khi component được mount
+    // Người dùng sẽ cần bấm vào để xem slogan
   }, []);
 
   // Cập nhật số lượng thông báo chưa đọc khi component được mount
@@ -241,6 +245,49 @@ export default function HomeScreen() {
           ))}
         </View>
 
+        {/* Slogan Section */}
+        <View style={styles.recentActivitySection}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Today&apos;s Slogan</Text>
+          <TouchableOpacity
+            style={[styles.sloganContainer, { backgroundColor: colors.card }]}
+            onPress={() => {
+              // Chỉ gọi fetchRandomSlogan khi người dùng bấm vào
+              fetchRandomSlogan();
+            }}
+          >
+            {sloganLoading ? (
+              <ActivityIndicator size="small" color="#E53935" />
+            ) : slogan ? (
+              <>
+                <View style={styles.sloganIconContainer}>
+                  <Feather name="message-circle" size={20} color="#E53935" />
+                </View>
+                <View style={styles.sloganContent}>
+                  <Text style={[styles.sloganText, { color: colors.text }]}>
+                    "{slogan.content}"
+                  </Text>
+                  <Text style={styles.sloganRefreshHint}>Tap to refresh</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.sloganIconContainer}>
+                  <Feather name={sloganError ? "alert-circle" : "message-circle"} size={20} color={sloganError ? "#F44336" : "#E53935"} />
+                </View>
+                <View style={styles.sloganContent}>
+                  <Text style={[styles.noSloganText, { color: sloganError ? "#F44336" : colors.text }]}>
+                    {sloganError || "Tap to view today's slogan"}
+                  </Text>
+                  <Text style={styles.sloganRefreshHint}>
+                    {slogan ? "Tap to refresh" : "Tap to load"}
+                  </Text>
+                </View>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Today's Specials Section */}
         <View style={styles.recentActivitySection}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Today&apos;s Specials</Text>
           <View style={[styles.specialsContainer, { backgroundColor: colors.card }]}>
@@ -682,5 +729,47 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  // Styles cho phần slogan
+  sloganContainer: {
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  sloganIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(229, 57, 53, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  sloganContent: {
+    flex: 1,
+  },
+  sloganText: {
+    fontSize: 16,
+    fontStyle: 'italic',
+    lineHeight: 22,
+  },
+  sloganRefreshHint: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 6,
+  },
+  noSloganText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    flex: 1,
+    padding: 10,
   },
 });

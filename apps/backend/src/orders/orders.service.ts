@@ -57,6 +57,27 @@ export class OrdersService {
 
   async remove(id: string) {
     try {
+      // Trước khi xóa, kiểm tra order có tồn tại không
+      const order = await this.prisma.order.findUnique({
+        where: { id },
+      })
+
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${id} not found`)
+      }
+
+      // Xử lý đặc biệt cho timeOut
+      if (order.timeOut) {
+        try {
+          // Chuyển đổi timeOut thành đối tượng Date
+          const timeOutDate = new Date(order.timeOut)
+          console.log(`Order ${id} has timeOut: ${timeOutDate}`)
+        } catch (timeOutErr) {
+          console.error(`Error parsing timeOut for order ${id}:`, timeOutErr)
+        }
+      }
+
+      // Tiếp tục với quá trình xóa bình thường
       return await this.prisma.order.delete({
         where: { id },
       })
@@ -66,6 +87,7 @@ export class OrdersService {
           throw new NotFoundException(`Order with ID ${id} not found`)
         }
       }
+      console.error(`Error removing order ${id}:`, error)
       throw error
     }
   }

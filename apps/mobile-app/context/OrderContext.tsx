@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { config } from '../config/env';
-import type { Order, OrderItem, OrderItemStatus } from '../constants/interface';
+import type { Order, OrderItem, OrderItemStatus, CreateOrderRequest } from '../constants/interface';
 
 interface OrderContextType {
   orders: Order[];
@@ -9,8 +9,8 @@ interface OrderContextType {
   loading: boolean;
   fetchOrders: () => Promise<void>;
   fetchOrder: (id: string) => Promise<Order | null>;
-  createOrder: (order: Partial<Order>) => Promise<void>;
-  updateOrder: (id: string, order: Partial<Order>) => Promise<void>;
+  createOrder: (data: CreateOrderRequest) => Promise<Order>;
+  updateOrder: (id: string, data: Partial<Order>) => Promise<void>;
   updateOrderItemStatus: (orderId: string, itemId: string, status: OrderItemStatus) => Promise<void>;
   updateOrderItems: (orderId: string, items: OrderItem[]) => Promise<void>;
   deleteOrder: (id: string) => Promise<void>;
@@ -53,32 +53,34 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
-  const createOrder = async (order: Partial<Order>) => {
+  const createOrder = async (orderData: CreateOrderRequest) => {
     setLoading(true);
     try {
       const res = await fetch(`${config.API_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(order),
+        body: JSON.stringify(orderData),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to create order');
       await fetchOrders();
       Alert.alert('Success', 'Order created successfully!');
+      return data;
     } catch (error: any) {
       Alert.alert('Error', error.message);
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const updateOrder = async (id: string, order: Partial<Order>) => {
+  const updateOrder = async (id: string, orderData: Partial<Order>) => {
     setLoading(true);
     try {
       const res = await fetch(`${config.API_URL}/orders/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(order),
+        body: JSON.stringify(orderData),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to update order');
@@ -177,7 +179,9 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 export const useOrder = () => {
   const context = useContext(OrderContext);
-  if (!context) throw new Error('useOrder must be used within an OrderProvider');
+  if (context === undefined) {
+    throw new Error('useOrder must be used within an OrderProvider');
+  }
   return context;
 };
 

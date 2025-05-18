@@ -439,7 +439,7 @@ export default function OrdersPage() {
                   <TableCell>{order.employeeId.substring(0, 8)}...</TableCell>
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell>{formatDate(order.createdAt)}</TableCell>
-                  <TableCell>{order.timeOut ? formatDate(order.timeOut) : "N/A"}</TableCell>
+                  <TableCell>N/A</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -686,26 +686,7 @@ export default function OrdersPage() {
                   )}
                 />
 
-                <FormField
-                  control={editForm.control}
-                  name="timeOut"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Time Out</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
-                          onChange={(e) => {
-                            const value = e.target.value ? new Date(e.target.value).toISOString() : "";
-                            field.onChange(value);
-                          }}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+
 
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>

@@ -8,9 +8,13 @@ export class SlogansService {
 
   async create(createSloganDto: CreateSloganDto) {
     try {
-      return await this.prisma.slogan.create({
-        data: createSloganDto,
+      const slogan = await this.prisma.slogan.create({
+        data: {
+          content: createSloganDto.content,
+          isVisible: createSloganDto.isVisible,
+        },
       })
+      return slogan
     } catch (error) {
       throw error
     }
@@ -18,6 +22,14 @@ export class SlogansService {
 
   async findAll() {
     return await this.prisma.slogan.findMany()
+  }
+
+  async findVisible() {
+    return await this.prisma.slogan.findMany({
+      where: {
+        isVisible: true,
+      },
+    })
   }
 
   async findOne(id: string) {

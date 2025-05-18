@@ -11,6 +11,7 @@ export class NotificationsService {
     try {
       const notification = await this.prisma.notification.create({
         data: {
+          title: createNotificationDto.title,
           message: createNotificationDto.message,
         },
         include: {
@@ -49,6 +50,9 @@ export class NotificationsService {
     return await this.prisma.notification.update({
       where: { id },
       data: updateNotificationDto,
+      include: {
+        NotificationAssignments: true,
+      },
     })
   }
 
