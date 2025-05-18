@@ -13,6 +13,7 @@ import { OrderProvider } from '@/context/OrderContext'
 import { OrderItemProvider } from '../context/OrderItemContext'
 import { NotificationProvider } from '../context/NotificationContext'
 import { FoodProvider } from '@/context/FoodContext'
+import { SloganProvider } from '@/context/SloganContext'
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -52,6 +53,8 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <SloganProvider>
+
       <FoodProvider>
         <OrderItemProvider>
           <OrderProvider>
@@ -74,6 +77,7 @@ export default function RootLayout() {
           </OrderProvider>
         </OrderItemProvider>
       </FoodProvider>
+      </SloganProvider>
     </ThemeProvider>
   )
 }
