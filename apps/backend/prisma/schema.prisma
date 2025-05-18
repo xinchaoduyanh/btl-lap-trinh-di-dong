@@ -51,7 +51,7 @@ model Order {
   id          String      @id @default(uuid())
   tableId     String
   employeeId  String
-  status      String
+  status      OrderStatus @default(RESERVED)
   createdAt   DateTime    @default(now())
   timeOut     DateTime?
   employee    Employee    @relation(fields: [employeeId], references: [id])
@@ -127,4 +127,9 @@ enum OrderItemStatus {
   PREPARING
   READY
   COMPLETE
+}
+
+enum OrderStatus {
+  RESERVED
+  PAID
 }

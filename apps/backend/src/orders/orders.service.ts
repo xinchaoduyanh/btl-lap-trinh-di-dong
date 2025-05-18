@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateOrderDto, UpdateOrderDto } from './order.dto'
-import { Prisma } from '@prisma/client'
+import { OrderItemStatus, Prisma, OrderStatus, TableStatus } from '@prisma/client'
 
 @Injectable()
 export class OrdersService {
@@ -60,5 +60,33 @@ export class OrdersService {
       }
       throw error
     }
+  }
+
+  async findPreparingOrders() {
+    const orders = await this.prisma.order.findMany({
+      where: {
+        status: OrderStatus.RESERVED,
+        table: {
+          status: TableStatus.RESERVED,
+        },
+      },
+      include: {
+        table: true,
+        orderItems: {
+          include: {
+            food: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    if (!orders || orders.length === 0) {
+      throw new NotFoundException('No preparing orders found')
+    }
+
+    return orders
   }
 }

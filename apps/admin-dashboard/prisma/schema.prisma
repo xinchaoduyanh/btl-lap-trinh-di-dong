@@ -51,7 +51,7 @@ model Order {
   id          String      @id @default(uuid())
   tableId     String
   employeeId  String
-  status      String
+  status      OrderStatus @default(RESERVED)
   createdAt   DateTime    @default(now())
   timeOut     DateTime?
   employee    Employee    @relation(fields: [employeeId], references: [id])
@@ -64,6 +64,7 @@ model OrderItem {
   orderId    String
   foodId     String
   quantity   Int
+  status     OrderItemStatus @default(PENDING)
   food       Food     @relation(fields: [foodId], references: [id])
   order      Order    @relation(fields: [orderId], references: [id])
 }
@@ -119,4 +120,16 @@ enum FoodCategory {
   SOUP
   SALAD
   SIDE_DISH
+}
+
+enum OrderItemStatus {
+  PENDING
+  PREPARING
+  READY
+  COMPLETE
+}
+
+enum OrderStatus {
+  RESERVED
+  PAID
 }

@@ -28,6 +28,12 @@ export class OrdersController {
     return this.ordersService.findAll()
   }
 
+  @Get('preparing')
+  @HttpCode(HttpStatus.OK)
+  findPreparingOrders() {
+    return this.ordersService.findPreparingOrders()
+  }
+
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   findOne(@Param('id') id: string) {

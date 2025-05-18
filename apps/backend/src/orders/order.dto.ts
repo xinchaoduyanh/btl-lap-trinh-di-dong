@@ -1,9 +1,9 @@
 import { z } from 'zod'
-
+import { OrderStatus } from '@prisma/client'
 export const createOrderSchema = z.object({
   tableId: z.string().uuid(),
   employeeId: z.string().uuid(),
-  status: z.string().min(1),
+  status: z.nativeEnum(OrderStatus),
   timeOut: z.string().datetime().optional().nullable(),
 })
 
