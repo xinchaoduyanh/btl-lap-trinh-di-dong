@@ -1,13 +1,25 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Switch } from "@/components/ui/switch"
-import { Plus, Search, MoreHorizontal, Edit, Trash } from "lucide-react"
-import { useFood } from "@/hooks/use-foods"
+import { useState, useEffect } from 'react'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Switch } from '@/components/ui/switch'
+import { Plus, Search, MoreHorizontal, Edit, Trash, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useFood } from '@/hooks/use-foods'
 import {
   Dialog,
   DialogContent,
@@ -15,15 +27,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
-} from "@/components/ui/dialog"
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from '@/components/ui/select'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +46,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from '@/components/ui/alert-dialog'
 import {
   Form,
   FormControl,
@@ -43,24 +55,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { useForm } from "react-hook-form"
-import { CreateMenuItemRequest, UpdateMenuItemRequest } from "@/types/schema"
+} from '@/components/ui/form'
+import { useForm } from 'react-hook-form'
+import { CreateMenuItemRequest, UpdateMenuItemRequest } from '@/types/schema'
 
 // Enum FoodCategory từ schema Prisma
 enum FoodCategory {
-  MAIN_COURSE = "MAIN_COURSE",
-  APPETIZER = "APPETIZER",
-  DESSERT = "DESSERT",
-  BEVERAGE = "BEVERAGE",
-  SOUP = "SOUP",
-  SALAD = "SALAD",
-  SIDE_DISH = "SIDE_DISH"
+  MAIN_COURSE = 'MAIN_COURSE',
+  APPETIZER = 'APPETIZER',
+  DESSERT = 'DESSERT',
+  BEVERAGE = 'BEVERAGE',
+  SOUP = 'SOUP',
+  SALAD = 'SALAD',
+  SIDE_DISH = 'SIDE_DISH',
 }
 
 // Hàm tiện ích để hiển thị tên danh mục dễ đọc
 const formatCategoryName = (category: string): string => {
-  return category.replace(/_/g, ' ');
+  return category.replace(/_/g, ' ')
 }
 
 // Mở rộng interface để thêm trường category
@@ -73,10 +85,12 @@ interface UpdateFoodRequest extends UpdateMenuItemRequest {
 }
 
 export default function MenuItemsPage() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(5) // Giảm xuống 5 item mỗi trang
 
   const {
     menuItems,
@@ -85,27 +99,27 @@ export default function MenuItemsPage() {
     toggleAvailability,
     deleteMenuItem,
     createMenuItem,
-    updateMenuItem
+    updateMenuItem,
   } = useFood()
 
   // Form cho thêm mới món ăn
   const addForm = useForm<CreateFoodRequest>({
     defaultValues: {
-      name: "",
+      name: '',
       price: 0,
       category: FoodCategory.MAIN_COURSE,
-      isAvailable: true
-    }
+      isAvailable: true,
+    },
   })
 
   // Form cho chỉnh sửa món ăn
   const editForm = useForm<UpdateFoodRequest>({
     defaultValues: {
-      name: "",
+      name: '',
       price: 0,
       category: FoodCategory.MAIN_COURSE,
-      isAvailable: true
-    }
+      isAvailable: true,
+    },
   })
 
   // Xử lý thêm mới món ăn
@@ -115,7 +129,7 @@ export default function MenuItemsPage() {
       setIsAddDialogOpen(false)
       addForm.reset()
     } catch (error) {
-      console.error("Lỗi khi thêm món ăn:", error)
+      console.error('Lỗi khi thêm món ăn:', error)
     }
   }
 
@@ -128,7 +142,7 @@ export default function MenuItemsPage() {
       setIsEditDialogOpen(false)
       setEditingItem(null)
     } catch (error) {
-      console.error("Lỗi khi cập nhật món ăn:", error)
+      console.error('Lỗi khi cập nhật món ăn:', error)
     }
   }
 
@@ -139,7 +153,7 @@ export default function MenuItemsPage() {
       name: item.name,
       price: item.price,
       category: item.category || FoodCategory.MAIN_COURSE,
-      isAvailable: item.isAvailable
+      isAvailable: item.isAvailable,
     })
     setIsEditDialogOpen(true)
   }
@@ -149,7 +163,7 @@ export default function MenuItemsPage() {
     try {
       await toggleAvailability(id, isAvailable)
     } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái món ăn:", error)
+      console.error('Lỗi khi cập nhật trạng thái món ăn:', error)
     }
   }
 
@@ -158,14 +172,26 @@ export default function MenuItemsPage() {
     try {
       await deleteMenuItem(id)
     } catch (error) {
-      console.error("Lỗi khi xóa món ăn:", error)
+      console.error('Lỗi khi xóa món ăn:', error)
     }
   }
 
   // Lọc món ăn theo từ khóa tìm kiếm
   const filteredMenuItems = menuItems.filter(
-    (item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.price.toString().includes(searchTerm),
+    (item) =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.price.toString().includes(searchTerm)
   )
+
+  // Phân trang
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentItems = filteredMenuItems.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredMenuItems.length / itemsPerPage)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -184,9 +210,7 @@ export default function MenuItemsPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Thêm món ăn mới</DialogTitle>
-              <DialogDescription>
-                Điền thông tin để thêm món ăn mới vào thực đơn.
-              </DialogDescription>
+              <DialogDescription>Điền thông tin để thêm món ăn mới vào thực đơn.</DialogDescription>
             </DialogHeader>
             <Form {...addForm}>
               <form onSubmit={addForm.handleSubmit(handleAddFood)} className="space-y-4">
@@ -227,10 +251,7 @@ export default function MenuItemsPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Danh mục</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Chọn danh mục món ăn" />
@@ -255,15 +276,10 @@ export default function MenuItemsPage() {
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel>Trạng thái</FormLabel>
-                        <FormDescription>
-                          Món ăn có sẵn sàng để phục vụ không?
-                        </FormDescription>
+                        <FormDescription>Món ăn có sẵn sàng để phục vụ không?</FormDescription>
                       </div>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -317,7 +333,7 @@ export default function MenuItemsPage() {
                 </TableCell>
               </TableRow>
             ) : filteredMenuItems.length > 0 ? (
-              filteredMenuItems.map((item) => (
+              currentItems.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium w-[40%]">{item.name}</TableCell>
                   <TableCell className="w-[15%]">${item.price.toFixed(2)}</TableCell>
@@ -327,7 +343,9 @@ export default function MenuItemsPage() {
                         checked={item.isAvailable}
                         onCheckedChange={(checked) => handleAvailabilityChange(item.id, checked)}
                       />
-                      <span className="min-w-[80px]">{item.isAvailable ? "Available" : "Unavailable"}</span>
+                      <span className="min-w-[80px]">
+                        {item.isAvailable ? 'Available' : 'Unavailable'}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="w-[20%] text-right">
@@ -339,17 +357,22 @@ export default function MenuItemsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <Dialog open={isEditDialogOpen && editingItem?.id === item.id} onOpenChange={(open) => {
-                          if (!open) {
-                            setIsEditDialogOpen(false)
-                            setEditingItem(null)
-                          }
-                        }}>
+                        <Dialog
+                          open={isEditDialogOpen && editingItem?.id === item.id}
+                          onOpenChange={(open) => {
+                            if (!open) {
+                              setIsEditDialogOpen(false)
+                              setEditingItem(null)
+                            }
+                          }}
+                        >
                           <DialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => {
-                              e.preventDefault()
-                              openEditDialog(item)
-                            }}>
+                            <DropdownMenuItem
+                              onSelect={(e) => {
+                                e.preventDefault()
+                                openEditDialog(item)
+                              }}
+                            >
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
@@ -363,7 +386,10 @@ export default function MenuItemsPage() {
                             </DialogHeader>
                             {editingItem && (
                               <Form {...editForm}>
-                                <form onSubmit={editForm.handleSubmit(handleEditFood)} className="space-y-4">
+                                <form
+                                  onSubmit={editForm.handleSubmit(handleEditFood)}
+                                  className="space-y-4"
+                                >
                                   <FormField
                                     control={editForm.control}
                                     name="name"
@@ -388,7 +414,9 @@ export default function MenuItemsPage() {
                                             type="number"
                                             placeholder="Nhập giá món ăn"
                                             {...field}
-                                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                            onChange={(e) =>
+                                              field.onChange(parseFloat(e.target.value))
+                                            }
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -443,10 +471,14 @@ export default function MenuItemsPage() {
                                     )}
                                   />
                                   <DialogFooter>
-                                    <Button type="button" variant="outline" onClick={() => {
-                                      setIsEditDialogOpen(false)
-                                      setEditingItem(null)
-                                    }}>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setIsEditDialogOpen(false)
+                                        setEditingItem(null)
+                                      }}
+                                    >
                                       Hủy
                                     </Button>
                                     <Button type="submit">Lưu thay đổi</Button>
@@ -470,7 +502,8 @@ export default function MenuItemsPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Bạn có chắc chắn muốn xóa món ăn "{item.name}"? Hành động này không thể hoàn tác.
+                                Bạn có chắc chắn muốn xóa món ăn "{item.name}"? Hành động này không
+                                thể hoàn tác.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -498,6 +531,69 @@ export default function MenuItemsPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between py-4">
+        <div className="flex items-center space-x-2">
+          <p className="text-sm text-muted-foreground">
+            Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredMenuItems.length)} of{' '}
+            {filteredMenuItems.length} items
+          </p>
+          <Select
+            value={itemsPerPage.toString()}
+            onValueChange={(value) => {
+              setItemsPerPage(parseInt(value))
+              setCurrentPage(1) // Reset to first page when changing items per page
+            }}
+          >
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={itemsPerPage.toString()} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground">per page</p>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Previous Page</span>
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span className="sr-only">Next Page</span>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )
