@@ -1,52 +1,23 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Badge } from '@/components/ui/badge'
-import {
-  Plus,
-  Search,
-  MoreHorizontal,
-  Edit,
-  Trash,
-  Eye,
-  Filter,
-  AlertCircle,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { useToast } from '@/hooks/use-toast'
+
+import { useState, useEffect } from "react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
+import { Plus, Search, MoreHorizontal, Edit, Trash, Eye, Filter, AlertCircle, Check } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  DialogTitle
+} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,23 +27,29 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form'
-import { useForm } from 'react-hook-form'
-import { Card, CardContent } from '@/components/ui/card'
-import { useOrders } from '@/hooks/use-orders'
-import { Order, OrderStatus } from '@/types/schema'
-import api from '@/lib/axios'
+} from "@/components/ui/alert-dialog"
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
+import { useForm } from "react-hook-form"
+import { Card, CardContent } from "@/components/ui/card"
+import { useOrders } from "@/hooks/use-orders"
+import { Order, OrderStatus } from "@/types/schema"
+import api from "@/lib/axios"
+
 
 export default function OrdersPage() {
-  const { orders, isLoading, error, fetchOrders, createOrder, updateOrder, deleteOrder } =
-    useOrders()
+  const {
+    orders,
+    isLoading,
+    error,
+    fetchOrders,
+    createOrder,
+    updateOrder,
+    deleteOrder
+  } = useOrders()
 
   const { toast } = useToast()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('ALL')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(5) // Giảm xuống 5 item mỗi trang
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("ALL")
 
   // Dialog states
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false)
@@ -86,27 +63,30 @@ export default function OrdersPage() {
   // Forms
   const newForm = useForm({
     defaultValues: {
-      tableId: '',
-      employeeId: '',
-      status: 'PENDING',
-    },
+      tableId: "",
+      employeeId: "",
+      status: "RESERVED"
+    }
   })
 
   const editForm = useForm({
     defaultValues: {
-      tableId: '',
-      employeeId: '',
-      status: '',
-      timeOut: '',
-    },
+      tableId: "",
+      employeeId: "",
+      status: "",
+      timeOut: ""
+    }
   })
+
 
   // Add these state variables with your other state declarations
   const [isUpdateAlertOpen, setIsUpdateAlertOpen] = useState(false)
-  const [updateMessage, setUpdateMessage] = useState('')
+  const [updateMessage, setUpdateMessage] = useState("")
   const [isPendingDeleteAlertOpen, setIsPendingDeleteAlertOpen] = useState(false)
   const [isDuplicateOrderAlertOpen, setIsDuplicateOrderAlertOpen] = useState(false)
-  const [duplicateOrderError, setDuplicateOrderError] = useState('')
+  const [duplicateOrderError, setDuplicateOrderError] = useState("")
+  const [isTableReservedAlertOpen, setIsTableReservedAlertOpen] = useState(false)
+
 
   // Function to show update alert
   const showUpdateAlert = (message: string) => {
@@ -114,36 +94,65 @@ export default function OrdersPage() {
     setIsUpdateAlertOpen(true)
   }
 
+  // Function to check if table is already reserved
+  const isTableAlreadyReserved = (tableId: string) => {
+    return orders.some(order =>
+      order.tableId === tableId &&
+      order.status === "RESERVED"
+    )
+  }
+
+
   const handleCreateOrder = async (data: any) => {
     setIsSubmitting(true)
     try {
-      await createOrder(data)
-      setIsNewDialogOpen(false)
-      newForm.reset()
+      // Kiểm tra xem bàn đã có đơn hàng trong trạng thái RESERVED chưa
+      if (data.status === "RESERVED" && isTableAlreadyReserved(data.tableId)) {
+        setIsTableReservedAlertOpen(true)
+        return
+      }
+
+      // Chuyển đổi status từ UI sang giá trị hợp lệ trong backend
+      // Trong Prisma schema, OrderStatus chỉ có RESERVED và PAID
+      const mappedData = {
+        ...data,
+        // Đảm bảo status chỉ có thể là "PAID" hoặc "RESERVED"
+        status: data.status === "PAID" ? "PAID" : "RESERVED"
+      };
+
+      console.log("Sending order data:", mappedData);
+      await createOrder(mappedData);
+
+      // Refresh orders list after successful creation
+      await fetchOrders();
+
+      setIsNewDialogOpen(false);
+      newForm.reset();
       toast({
-        title: 'Order created',
-        description: 'The order has been successfully created.',
-      })
+        title: "Order created",
+        description: "The order has been successfully created."
+      });
     } catch (err) {
-      console.error('Error creating order:', err)
+      console.error("Error creating order:", err);
 
       // Check if error is about duplicate order ID
-      const errorMessage = (err as Error).message
-      if (
-        errorMessage.includes('duplicate') ||
-        errorMessage.includes('already exists') ||
-        errorMessage.includes('Unique constraint')
-      ) {
+      const errorMessage = (err as Error).message;
+      if (errorMessage.includes("duplicate") || errorMessage.includes("already exists") || errorMessage.includes("Unique constraint")) {
         // Set error message and open duplicate order alert dialog
-        setDuplicateOrderError(errorMessage)
-        setIsDuplicateOrderAlertOpen(true)
+        setDuplicateOrderError(errorMessage);
+        setIsDuplicateOrderAlertOpen(true);
       } else {
-        // Show generic error toast for other errors
+        // Show more detailed error message
+        let detailedError = errorMessage;
+        if (errorMessage.includes("500")) {
+          detailedError = "Lỗi server: Kiểm tra xem tableId và employeeId có tồn tại không";
+        }
+
         toast({
-          title: 'Error creating order',
-          description: errorMessage,
-          variant: 'destructive',
-        })
+          title: "Error creating order",
+          description: detailedError,
+          variant: "destructive"
+        });
       }
     } finally {
       setIsSubmitting(false)
@@ -159,57 +168,82 @@ export default function OrdersPage() {
       // Clean up the data before sending
       const cleanData = {
         ...data,
-        timeOut: data.timeOut === '' ? null : data.timeOut,
+        timeOut: data.timeOut === "" ? null : data.timeOut,
+        // Đảm bảo status chỉ có thể là "PAID" hoặc "RESERVED"
+        status: data.status === "PAID" ? "PAID" : "RESERVED"
       }
 
+      console.log('Mapped update data:', cleanData)
       await updateOrder(id, cleanData)
 
       // Close the dialog
       setIsEditDialogOpen(false)
 
       // Show success alert
-      showUpdateAlert('The order has been successfully updated.')
+      showUpdateAlert("The order has been successfully updated.")
 
       // Refresh orders list
       fetchOrders()
     } catch (err) {
       console.error('Error in handleUpdateOrder:', err)
-      showUpdateAlert(`Error updating order: ${(err as Error).message}`)
+
+      // Show more detailed error message
+      let errorMessage = (err as Error).message;
+      if (errorMessage.includes("500")) {
+        errorMessage = "Lỗi server: Kiểm tra xem tableId và employeeId có tồn tại không";
+      }
+
+      showUpdateAlert(`Error updating order: ${errorMessage}`)
     } finally {
       setIsSubmitting(false)
     }
   }
 
+
   const handleDeleteConfirm = (id: string) => {
     // Find order by ID
-    const orderToCheck = orders.find((order) => order.id === id)
+    const orderToCheck = orders.find(order => order.id === id)
 
-    // Check if order has PENDING status
-    if (orderToCheck && orderToCheck.status === 'PENDING') {
+    // Check if order has RESERVED status (equivalent to PENDING in UI)
+    // In Prisma schema, OrderStatus chỉ có RESERVED và PAID
+    if (orderToCheck && orderToCheck.status === "RESERVED") {
       // Show cannot delete dialog
       setIsPendingDeleteAlertOpen(true)
       return
     }
 
-    // If not PENDING, continue with normal delete process
+    // If not RESERVED, continue with normal delete process
     setOrderToDelete(id)
     setIsDeleteDialogOpen(true)
   }
+
 
   const handleDeleteOrder = async () => {
     if (!orderToDelete) return
 
     try {
       await deleteOrder(orderToDelete)
+      // Refresh orders list after successful deletion
+      await fetchOrders()
       toast({
-        title: 'Order deleted',
-        description: 'The order has been successfully deleted.',
+        title: "Order deleted",
+        description: "The order has been successfully deleted."
       })
     } catch (err) {
+      console.error("Error deleting order:", err)
+
+      // Xử lý lỗi chi tiết hơn
+      let errorMessage = (err as Error).message
+
+      // Kiểm tra nếu lỗi liên quan đến timeOut
+      if (errorMessage.includes("500") || errorMessage.includes("timeOut")) {
+        errorMessage = "Không thể xóa order. Vui lòng kiểm tra lại thông tin timeOut hoặc liên hệ quản trị viên."
+      }
+
       toast({
-        title: 'Error deleting order',
-        description: (err as Error).message,
-        variant: 'destructive',
+        title: "Error deleting order",
+        description: errorMessage,
+        variant: "destructive"
       })
     } finally {
       setOrderToDelete(null)
@@ -227,6 +261,7 @@ export default function OrdersPage() {
     setIsEditDialogOpen(true)
   }
 
+
   useEffect(() => {
     fetchOrders()
   }, [fetchOrders])
@@ -235,9 +270,9 @@ export default function OrdersPage() {
   useEffect(() => {
     if (isNewDialogOpen) {
       newForm.reset({
-        tableId: '',
-        employeeId: '',
-        status: 'PENDING',
+        tableId: "",
+        employeeId: "",
+        status: "RESERVED"
       })
     }
   }, [isNewDialogOpen, newForm])
@@ -249,10 +284,11 @@ export default function OrdersPage() {
         tableId: selectedOrder.tableId,
         employeeId: selectedOrder.employeeId,
         status: selectedOrder.status,
-        timeOut: selectedOrder.timeOut || '',
+        timeOut: selectedOrder.timeOut || ""
       })
     }
   }, [selectedOrder, isEditDialogOpen, editForm])
+
 
   // Filter orders based on search term and status filter
   const filteredOrders = orders.filter((order) => {
@@ -262,72 +298,68 @@ export default function OrdersPage() {
       order.employeeId.includes(searchTerm) ||
       order.status.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesStatus = statusFilter === 'ALL' || order.status === statusFilter
+
+    const matchesStatus = statusFilter === "ALL" || order.status === statusFilter
+
 
     return matchesSearch && matchesStatus
   })
 
-  // Phân trang
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentOrders = filteredOrders.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString()
   }
 
+
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'PENDING':
+      case "PENDING":
         return <Badge className="border-border bg-background text-foreground">Pending</Badge>
-      case 'PREPARING':
+      case "PREPARING":
         return <Badge className="bg-secondary text-secondary-foreground">Preparing</Badge>
-      case 'READY':
+      case "READY":
         return <Badge className="badge-warning">Ready</Badge>
-      case 'DELIVERED':
+      case "DELIVERED":
         return <Badge className="bg-primary text-primary-foreground">Delivered</Badge>
-      case 'COMPLETED':
+      case "COMPLETED":
         return <Badge className="badge-success">Completed</Badge>
       default:
         return <Badge>{status}</Badge>
     }
   }
 
+
   const testDirectUpdate = async (id: string) => {
     try {
       // Simple test data
       const testData = {
-        status: 'COMPLETED',
-      }
+        status: "COMPLETED"
+      };
 
-      console.log('Testing direct update for order:', id)
-      console.log('Test data:', testData)
+      console.log("Testing direct update for order:", id);
+      console.log("Test data:", testData);
 
       // Make a direct API call
-      const response = await api.patch(`/orders/${id}`, testData)
-      console.log('Direct update response:', response)
+      const response = await api.patch(`/orders/${id}`, testData);
+      console.log("Direct update response:", response);
 
       // Refresh orders
-      fetchOrders()
+      fetchOrders();
 
       toast({
-        title: 'Direct update test',
-        description: 'Check console for details',
-      })
+        title: "Direct update test",
+        description: "Check console for details"
+      });
     } catch (err) {
-      console.error('Direct update error:', err)
+      console.error("Direct update error:", err);
       toast({
-        title: 'Direct update failed',
+        title: "Direct update failed",
         description: (err as Error).message,
-        variant: 'destructive',
-      })
+        variant: "destructive"
+      });
     }
-  }
+  };
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -341,6 +373,7 @@ export default function OrdersPage() {
           New Order
         </Button>
       </div>
+
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1 max-w-sm">
@@ -371,6 +404,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -398,14 +432,14 @@ export default function OrdersPage() {
                 </TableCell>
               </TableRow>
             ) : filteredOrders.length > 0 ? (
-              currentOrders.map((order) => (
+              filteredOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.id.substring(0, 8)}...</TableCell>
                   <TableCell>{order.tableId.substring(0, 8)}...</TableCell>
                   <TableCell>{order.employeeId.substring(0, 8)}...</TableCell>
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell>{formatDate(order.createdAt)}</TableCell>
-                  <TableCell>{order.timeOut ? formatDate(order.timeOut) : 'N/A'}</TableCell>
+                  <TableCell>{order.timeOut ? formatDate(order.timeOut) : "N/A"}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -446,75 +480,14 @@ export default function OrdersPage() {
         </Table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between py-4">
-        <div className="flex items-center space-x-2">
-          <p className="text-sm text-muted-foreground">
-            Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredOrders.length)} of{' '}
-            {filteredOrders.length} orders
-          </p>
-          <Select
-            value={itemsPerPage.toString()}
-            onValueChange={(value) => {
-              setItemsPerPage(parseInt(value))
-              setCurrentPage(1) // Reset to first page when changing items per page
-            }}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder={itemsPerPage.toString()} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="5">5</SelectItem>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-sm text-muted-foreground">per page</p>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Previous Page</span>
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
-                </Button>
-              ))}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-              <span className="sr-only">Next Page</span>
-            </Button>
-          </div>
-        )}
-      </div>
-
       {/* New Order Dialog */}
       <Dialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Create New Order</DialogTitle>
-            <DialogDescription>Enter the details for the new order</DialogDescription>
+            <DialogDescription>
+              Enter the details for the new order
+            </DialogDescription>
           </DialogHeader>
           <Form {...newForm}>
             <form onSubmit={newForm.handleSubmit(handleCreateOrder)} className="space-y-4">
@@ -550,18 +523,18 @@ export default function OrdersPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="PENDING">Pending</SelectItem>
-                        <SelectItem value="PREPARING">Preparing</SelectItem>
-                        <SelectItem value="READY">Ready</SelectItem>
-                        <SelectItem value="DELIVERED">Delivered</SelectItem>
-                        <SelectItem value="COMPLETED">Completed</SelectItem>
+                        <SelectItem value="RESERVED">Reserved</SelectItem>
+                        <SelectItem value="PAID">Paid</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -573,7 +546,7 @@ export default function OrdersPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create Order'}
+                  {isSubmitting ? "Creating..." : "Create Order"}
                 </Button>
               </DialogFooter>
             </form>
@@ -614,7 +587,7 @@ export default function OrdersPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Time Out</p>
-                      <p>{selectedOrder.timeOut ? formatDate(selectedOrder.timeOut) : 'N/A'}</p>
+                      <p>{selectedOrder.timeOut ? formatDate(selectedOrder.timeOut) : "N/A"}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -624,12 +597,10 @@ export default function OrdersPage() {
                 <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
                   Close
                 </Button>
-                <Button
-                  onClick={() => {
-                    setIsViewDialogOpen(false)
-                    handleEditOrder(selectedOrder)
-                  }}
-                >
+                <Button onClick={() => {
+                  setIsViewDialogOpen(false)
+                  handleEditOrder(selectedOrder)
+                }}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </Button>
@@ -651,15 +622,17 @@ export default function OrdersPage() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Order</DialogTitle>
-            <DialogDescription>Update the order details</DialogDescription>
+            <DialogDescription>
+              Update the order details
+            </DialogDescription>
           </DialogHeader>
           {selectedOrder && (
             <Form {...editForm}>
               <form
                 onSubmit={(e) => {
-                  e.preventDefault()
-                  const formData = editForm.getValues()
-                  handleUpdateOrder(selectedOrder.id, formData)
+                  e.preventDefault();
+                  const formData = editForm.getValues();
+                  handleUpdateOrder(selectedOrder.id, formData);
                 }}
                 className="space-y-4"
               >
@@ -695,18 +668,18 @@ export default function OrdersPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="PENDING">Pending</SelectItem>
-                          <SelectItem value="PREPARING">Preparing</SelectItem>
-                          <SelectItem value="READY">Ready</SelectItem>
-                          <SelectItem value="DELIVERED">Delivered</SelectItem>
-                          <SelectItem value="COMPLETED">Completed</SelectItem>
+                          <SelectItem value="RESERVED">Reserved</SelectItem>
+                          <SelectItem value="PAID">Paid</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -723,14 +696,10 @@ export default function OrdersPage() {
                         <Input
                           type="datetime-local"
                           {...field}
-                          value={
-                            field.value ? new Date(field.value).toISOString().slice(0, 16) : ''
-                          }
+                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
                           onChange={(e) => {
-                            const value = e.target.value
-                              ? new Date(e.target.value).toISOString()
-                              : ''
-                            field.onChange(value)
+                            const value = e.target.value ? new Date(e.target.value).toISOString() : "";
+                            field.onChange(value);
                           }}
                         />
                       </FormControl>
@@ -739,15 +708,11 @@ export default function OrdersPage() {
                 />
 
                 <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsEditDialogOpen(false)}
-                  >
+                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Updating...' : 'Update Order'}
+                    {isSubmitting ? "Updating..." : "Update Order"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -756,34 +721,35 @@ export default function OrdersPage() {
         </DialogContent>
       </Dialog>
 
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the order and remove it
-              from our servers.
+              This action cannot be undone. This will permanently delete the order
+              and remove it from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setOrderToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteOrder}
-              className="bg-destructive text-destructive-foreground"
-            >
+            <AlertDialogAction onClick={handleDeleteOrder} className="bg-destructive text-destructive-foreground">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
+
       {/* Update Alert Dialog */}
       <AlertDialog open={isUpdateAlertOpen} onOpenChange={setIsUpdateAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Order Update</AlertDialogTitle>
-            <AlertDialogDescription>{updateMessage}</AlertDialogDescription>
+            <AlertDialogDescription>
+              {updateMessage}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction>OK</AlertDialogAction>
@@ -796,45 +762,17 @@ export default function OrdersPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-destructive flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" /> Không thể xóa đơn hàng
+              <AlertCircle className="h-5 w-5" /> Cannot Delete Order
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Không thể xóa đơn hàng có trạng thái{' '}
-              <span className="font-bold text-primary">Pending</span>.
-              <br />
-              <br />
-              Vui lòng thay đổi trạng thái đơn hàng trước khi thực hiện xóa.
+              Cannot delete order with <span className="font-bold text-primary">Reserved</span> status.
+              <br /><br />
+              Please change the order status before attempting to delete.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction className="bg-primary flex items-center gap-2">
-              <Check className="h-4 w-4" /> Đã hiểu
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Duplicate Order ID Alert Dialog */}
-      <AlertDialog open={isDuplicateOrderAlertOpen} onOpenChange={setIsDuplicateOrderAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" /> Lỗi: Trùng mã đơn hàng
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Không thể tạo đơn hàng mới vì mã đơn hàng đã tồn tại trong hệ thống.
-              <br />
-              <br />
-              <div className="bg-muted p-3 rounded-md text-sm">
-                <p className="font-mono">{duplicateOrderError}</p>
-              </div>
-              <br />
-              Vui lòng kiểm tra lại thông tin và thử lại.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction className="bg-primary flex items-center gap-2">
-              <Check className="h-4 w-4" /> Đã hiểu
+              <Check className="h-4 w-4" /> Understood
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -842,3 +780,6 @@ export default function OrdersPage() {
     </div>
   )
 }
+
+
+
