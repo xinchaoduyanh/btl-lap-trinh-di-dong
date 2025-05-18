@@ -105,6 +105,12 @@ model checkouts {
   updatedAt   DateTime @updatedAt
 }
 
+model slogan {
+  id          String   @id @default(uuid())
+  content     String
+  createdAt   DateTime @default(now())
+}
+
 enum Role {
   WAITER
   CASHIER
