@@ -1,6 +1,5 @@
 "use client"
-import React from "react"
-import { useState, useCallback, useMemo } from "react"
+import React, { useEffect, useState, useCallback, useMemo } from "react"
 import {
   StyleSheet,
   ScrollView,
@@ -14,29 +13,23 @@ import {
   Dimensions,
   Animated,
   StatusBar,
+  Alert,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { useTheme } from "../../../context/ThemeContext"
 import { Feather } from "@expo/vector-icons"
+import { useFood } from "../../../context/FoodContext"
+import { useTable } from "../../../context/TableContext"
+import { useOrder } from "../../../context/OrderContext"
+import { useOrderItem } from "../../../context/OrderItemContext"
+import { useAuth } from "../../../context/AuthContext"
 
 // Components
 import { Header } from "../../../components/Header"
 
 // Import interfaces
-import type { Table, Food, FoodCategory, OrderItemStatus, TableStatus } from "../../../constants/interface"
-
-// Mock data based on your schema
-const TABLES = [
-  { id: "t1", number: 1, status: "AVAILABLE" as TableStatus },
-  { id: "t2", number: 2, status: "OCCUPIED" as TableStatus },
-  { id: "t3", number: 3, status: "OCCUPIED" as TableStatus },
-  { id: "t4", number: 4, status: "RESERVED" as TableStatus },
-  { id: "t5", number: 5, status: "OCCUPIED" as TableStatus },
-  { id: "t6", number: 6, status: "CLEANING" as TableStatus },
-  { id: "t7", number: 7, status: "AVAILABLE" as TableStatus },
-  { id: "t8", number: 8, status: "OCCUPIED" as TableStatus },
-]
+import type { Table, Food, FoodCategory, OrderItemStatus,  CreateOrderRequest } from "../../../constants/interface"
 
 // Food categories based on your schema
 const FOOD_CATEGORIES = [
@@ -49,151 +42,9 @@ const FOOD_CATEGORIES = [
   { id: "cat7", name: "SIDE_DISH", icon: "square", label: "Side Dish" },
 ]
 
-// Mock food data based on your schema
-const FOODS = [
-  // MAIN_COURSE
-  {
-    id: "f1",
-    name: "Spicy Sichuan Hot Pot",
-    price: 25.99,
-    category: "MAIN_COURSE" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f2",
-    name: "Beef Slices",
-    price: 12.99,
-    category: "MAIN_COURSE" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f8",
-    name: "Pork Slices",
-    price: 11.99,
-    category: "MAIN_COURSE" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f9",
-    name: "Tomato Hot Pot",
-    price: 23.99,
-    category: "MAIN_COURSE" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f5",
-    name: "Seafood Mix",
-    price: 18.99,
-    category: "MAIN_COURSE" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-
-  // APPETIZER
-  {
-    id: "f6",
-    name: "Mushroom Platter",
-    price: 8.99,
-    category: "APPETIZER" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f11",
-    name: "Spring Rolls",
-    price: 6.99,
-    category: "APPETIZER" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f12",
-    name: "Dumplings",
-    price: 7.99,
-    category: "APPETIZER" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-
-  // SIDE_DISH
-  {
-    id: "f3",
-    name: "Tofu",
-    price: 5.99,
-    category: "SIDE_DISH" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f4",
-    name: "Vegetables",
-    price: 7.99,
-    category: "SIDE_DISH" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f7",
-    name: "Noodles",
-    price: 4.99,
-    category: "SIDE_DISH" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-
-  // BEVERAGE
-  {
-    id: "f10",
-    name: "Soft Drinks",
-    price: 2.99,
-    category: "BEVERAGE" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f13",
-    name: "Tea",
-    price: 3.99,
-    category: "BEVERAGE" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f14",
-    name: "Beer",
-    price: 5.99,
-    category: "BEVERAGE" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-
-  // DESSERT
-  {
-    id: "f15",
-    name: "Ice Cream",
-    price: 4.99,
-    category: "DESSERT" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-  {
-    id: "f16",
-    name: "Fruit Platter",
-    price: 6.99,
-    category: "DESSERT" as FoodCategory,
-    isAvailable: true,
-    image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg",
-  },
-]
-
 interface SelectedItem extends Food {
   quantity: number
   status: OrderItemStatus
-  image: string
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window")
@@ -201,6 +52,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window")
 export default function AddOrderScreen() {
   const router = useRouter()
   const { colors } = useTheme()
+  const { foods, loading: foodsLoading, fetchFoods } = useFood()
+  const { tables, loading: tablesLoading, fetchTables } = useTable()
+  const { createOrder, loading: orderLoading, orders } = useOrder()
+  const { createOrderItem } = useOrderItem()
+  const { user } = useAuth()
+
   const [selectedCategory, setSelectedCategory] = useState<FoodCategory>("MAIN_COURSE")
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
   const [itemModalVisible, setItemModalVisible] = useState(false)
@@ -212,18 +69,25 @@ export default function AddOrderScreen() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successModalVisible, setSuccessModalVisible] = useState(false)
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
 
   // Animation values
   const cartBounceAnim = useState(new Animated.Value(1))[0]
   const successScaleAnim = useState(new Animated.Value(0))[0]
 
+  // Fetch data on mount
+  useEffect(() => {
+    fetchFoods()
+    fetchTables()
+  }, [])
+
   const filteredItems = useMemo(() => {
-    return FOODS.filter((item) => item.category === selectedCategory && item.isAvailable)
-  }, [selectedCategory])
+    return foods.filter((item) => item.category === selectedCategory && item.isAvailable)
+  }, [selectedCategory, foods])
 
   const availableTables = useMemo(() => {
-    return TABLES.filter((table) => table.status === "AVAILABLE")
-  }, [])
+    return tables.filter((table) => table.status === "RESERVED")
+  }, [tables])
 
   const totalItems = useMemo(() => {
     return selectedItems.reduce((total, item) => total + item.quantity, 0)
@@ -242,11 +106,15 @@ export default function AddOrderScreen() {
     setSelectedCategory(category)
   }, [])
 
-  const handleItemPress = useCallback((item: Food & { image: string }) => {
-    setCurrentItem(item)
+  const handleItemPress = useCallback((item: Food) => {
+    if (!tableNumber) {
+      Alert.alert("Select Table", "Please select a table before adding items")
+      return
+    }
+    setCurrentItem({ ...item, image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg" })
     setQuantity("1")
     setItemModalVisible(true)
-  }, [])
+  }, [tableNumber])
 
   const addItemToOrder = useCallback(() => {
     if (!currentItem) return
@@ -320,12 +188,14 @@ export default function AddOrderScreen() {
 
   const handleSelectTable = useCallback((table: Table) => {
     setTableNumber(table.number.toString())
+    const order = orders.find(o => o.tableId === table.id)
+    setSelectedOrderId(order ? order.id : null)
     setTableModalVisible(false)
-  }, [])
+  }, [orders])
 
-  const handlePlaceOrder = useCallback(() => {
-    if (!tableNumber) {
-      setError("Please select a table")
+  const handlePlaceOrder = useCallback(async () => {
+    if (!selectedOrderId) {
+      setError("Please select a table with an existing order")
       return
     }
     if (selectedItems.length === 0) {
@@ -334,28 +204,37 @@ export default function AddOrderScreen() {
     }
 
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      for (const item of selectedItems) {
+        await createOrderItem({
+          orderId: selectedOrderId,
+          foodId: item.id,
+          quantity: item.quantity,
+          status: item.status
+        })
+      }
+
       setOrderSummaryVisible(false)
       setSuccessModalVisible(true)
 
-      // Animate success modal
       Animated.timing(successScaleAnim, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
       }).start()
 
-      // Auto-close success modal and reset after 2 seconds
       setTimeout(() => {
         setSuccessModalVisible(false)
-        // Reset the form
         setSelectedItems([])
         setTableNumber("")
+        setSelectedOrderId(null)
       }, 2000)
-    }, 1000)
-  }, [tableNumber, selectedItems, successScaleAnim])
+    } catch (error: any) {
+      setError(error.message || "Failed to add items")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [selectedOrderId, selectedItems, createOrderItem])
 
   const incrementQuantity = useCallback(() => {
     const newQuantity = Number.parseInt(quantity) + 1
@@ -373,7 +252,7 @@ export default function AddOrderScreen() {
 
       <Header
         title="Add New Order"
-        onBackPress={() => router.back()}
+        onBackPress={() => router.push('/(tabs)/orders')}
         rightIcon={selectedItems.length > 0 ? "shopping-cart" : undefined}
         onRightPress={selectedItems.length > 0 ? () => setOrderSummaryVisible(true) : undefined}
       />
