@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/employee.dto'
 
@@ -8,7 +8,13 @@ export class EmployeesService {
   constructor(private prisma: PrismaService) {}
 
   async create(createEmployeeDto: CreateEmployeeDto) {
+    const employee = await this.prisma.employee.findUnique({
+      where: { email: createEmployeeDto.email },
+    })
 
+    if (employee) {
+      throw new BadRequestException('Employee already exists')
+    }
 
     return this.prisma.employee.create({
       data: {
