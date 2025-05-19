@@ -91,7 +91,7 @@ export default function LoginScreen() {
               style={styles.logo}
             />
             <Text style={[styles.appName, { color: colors.primary }]}>ITHotpot</Text>
-            <Text style={styles.appTagline}>Delicious Hotpot Experience</Text>
+            <Text style={styles.appTagline}>Trải Nghiệm Lẩu Ngon Tuyệt</Text>
           </View>
 
           <View style={styles.formContainer}>
@@ -101,7 +101,7 @@ export default function LoginScreen() {
               imageStyle={styles.formBackgroundImage}
             >
               <View style={styles.formOverlay}>
-                <Text style={[styles.title, { color: colors.text }]}>Staff Login</Text>
+                <Text style={[styles.title, { color: colors.text }]}>Đăng Nhập Nhân Viên</Text>
 
                 <FormInput
                   label="Email"
@@ -110,20 +110,20 @@ export default function LoginScreen() {
                     setEmail(text)
                     setError("")
                   }}
-                  placeholder="Enter your email"
+                  placeholder="Nhập email của bạn"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   editable={!isLoading}
                 />
 
                 <FormInput
-                  label="Password"
+                  label="Mật khẩu"
                   value={password}
                   onChangeText={(text) => {
                     setPassword(text)
                     setError("")
                   }}
-                  placeholder="Enter your password"
+                  placeholder="Nhập mật khẩu của bạn"
                   secureTextEntry
                   editable={!isLoading}
                 />
@@ -136,7 +136,7 @@ export default function LoginScreen() {
 
                 <View style={styles.buttonContainer}>
                   <PrimaryButton
-                    title={isLoading ? "Logging in..." : "Login"}
+                    title={isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
                     onPress={handleLogin}
                     disabled={isLoading}
                     style={{
@@ -154,17 +154,17 @@ export default function LoginScreen() {
                 </View>
 
                 <SecondaryButton
-                  title="Login with Google"
+                  title="Đăng nhập với Google"
                   onPress={() => {}}
                   disabled={isLoading}
                   icon="log-in"
                 />
 
                 <View style={styles.registerContainer}>
-                  <Text style={styles.registerText}>Don&apos;t have an account? </Text>
+                  <Text style={styles.registerText}>Chưa có tài khoản? </Text>
                   <Link href="/register" asChild>
                     <TouchableOpacity>
-                      <Text style={[styles.registerLink, { color: colors.primary }]}>Register</Text>
+                      <Text style={[styles.registerLink, { color: colors.primary }]}>Đăng ký</Text>
                     </TouchableOpacity>
                   </Link>
                 </View>

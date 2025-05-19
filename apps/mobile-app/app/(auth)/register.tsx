@@ -120,7 +120,7 @@ export default function RegisterScreen() {
               imageStyle={styles.formBackgroundImage}
             >
               <View style={styles.formOverlay}>
-                <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
+                <Text style={[styles.title, { color: colors.text }]}>Tạo Tài Khoản</Text>
 
                 {step === 1 ? (
                   <View>
@@ -143,7 +143,7 @@ export default function RegisterScreen() {
                   <View>
                     <Text>Email: <Text style={{ fontWeight: "bold" }}>{email}</Text></Text>
                     <FormInput
-                      label="OTP"
+                      label="Mã OTP"
                       value={otp}
                       onChangeText={setOtp}
                       placeholder="Nhập mã OTP"
@@ -151,10 +151,10 @@ export default function RegisterScreen() {
                       editable={!isLoading}
                     />
                     <FormInput
-                      label="Tên"
+                      label="Họ và tên"
                       value={fullName}
                       onChangeText={setFullName}
-                      placeholder="Nhập tên"
+                      placeholder="Nhập họ và tên"
                       editable={!isLoading}
                     />
                     <FormInput
@@ -183,10 +183,10 @@ export default function RegisterScreen() {
                 )}
 
                 <View style={styles.loginContainer}>
-                  <Text style={styles.loginText}>Already have an account? </Text>
+                  <Text style={styles.loginText}>Đã có tài khoản? </Text>
                   <Link href="/login" asChild>
                     <TouchableOpacity>
-                      <Text style={[styles.loginLink, { color: colors.primary }]}>Login</Text>
+                      <Text style={[styles.loginLink, { color: colors.primary }]}>Đăng nhập</Text>
                     </TouchableOpacity>
                   </Link>
                 </View>
