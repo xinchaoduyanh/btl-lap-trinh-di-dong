@@ -163,7 +163,7 @@ export default function PaymentScreen() {
     // Simulate payment processing
     setTimeout(() => {
       setProcessing(false)
-      Alert.alert("Thanh toán thành công", `Thanh toán ${calculateTotal().toFixed(2)}đ đã được xử lý thành công.`, [
+      Alert.alert("Thanh toán thành công", `Thanh toán ${Math.round(calculateTotal())}đ đã được xử lý thành công.`, [
         {
           text: "OK",
           onPress: () => router.back(),
@@ -225,7 +225,7 @@ export default function PaymentScreen() {
                 <Text style={styles.orderItemName}>{item.food.name}</Text>
                 <Text style={styles.orderItemQuantity}>x{item.quantity}</Text>
               </View>
-              <Text style={styles.orderItemPrice}>{(item.food.price * item.quantity).toFixed(2)}đ</Text>
+              <Text style={styles.orderItemPrice}>{Math.round(item.food.price * item.quantity)}đ</Text>
             </View>
           ))}
 
@@ -234,11 +234,11 @@ export default function PaymentScreen() {
           <View style={styles.summarySection}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Tạm tính</Text>
-              <Text style={styles.summaryValue}>{calculateSubtotal().toFixed(2)}đ</Text>
+              <Text style={styles.summaryValue}>{Math.round(calculateSubtotal())}đ</Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Thuế (10%)</Text>
-              <Text style={styles.summaryValue}>{calculateTax().toFixed(2)}đ</Text>
+              <Text style={styles.summaryValue}>{Math.round(calculateTax())}đ</Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Giảm giá</Text>
@@ -248,7 +248,7 @@ export default function PaymentScreen() {
                   value={discount}
                   onChangeText={setDiscount}
                   keyboardType="numeric"
-                  placeholder="0.00"
+                  placeholder="0"
                 />
                 <Text style={styles.inputSuffix}>đ</Text>
               </View>
@@ -261,7 +261,7 @@ export default function PaymentScreen() {
                   value={tip}
                   onChangeText={setTip}
                   keyboardType="numeric"
-                  placeholder="0.00"
+                  placeholder="0"
                 />
                 <Text style={styles.inputSuffix}>đ</Text>
               </View>
@@ -269,7 +269,7 @@ export default function PaymentScreen() {
             <View style={styles.divider} />
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Tổng cộng</Text>
-              <Text style={styles.totalValue}>{calculateTotal().toFixed(2)}đ</Text>
+              <Text style={styles.totalValue}>{Math.round(calculateTotal())}đ</Text>
             </View>
           </View>
         </View>

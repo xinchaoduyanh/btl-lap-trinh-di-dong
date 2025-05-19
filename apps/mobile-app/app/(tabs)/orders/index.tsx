@@ -200,7 +200,7 @@ export default function OrderManagementScreen() {
                           <Text style={styles.itemQuantity}>x{item.quantity}</Text>
                           </View>
                         <Text style={styles.itemPrice}>
-                          ${((item.food?.price || 0) * (item.quantity || 0)).toFixed(2)}
+                          {Math.round((item.food?.price || 0) * (item.quantity || 0))}đ
                         </Text>
                         </View>
                     ))
@@ -212,7 +212,7 @@ export default function OrderManagementScreen() {
 
                   <View style={styles.totalContainer}>
                     <Text style={styles.totalLabel}>Tổng tiền:</Text>
-                    <Text style={styles.totalValue}>${getTotalAmount(order).toFixed(2)}</Text>
+                    <Text style={styles.totalValue}>{Math.round(getTotalAmount(order))}đ</Text>
                   </View>
                 </View>
 
