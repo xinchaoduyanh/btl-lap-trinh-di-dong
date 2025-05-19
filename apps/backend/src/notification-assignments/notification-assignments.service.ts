@@ -34,7 +34,6 @@ export class NotificationAssignmentsService {
           select: {
             id: true,
             name: true,
-            email: true,
             role: true,
           },
         },
@@ -57,7 +56,6 @@ export class NotificationAssignmentsService {
           select: {
             id: true,
             name: true,
-            email: true,
             role: true,
           },
         },
@@ -76,7 +74,13 @@ export class NotificationAssignmentsService {
         isDelete: false, // Chỉ lấy thông báo chưa xóa
       },
       include: {
-        notification: true,
+        employee: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+          },
+        },
       },
       orderBy: {
         notification: {
@@ -142,7 +146,6 @@ export class NotificationAssignmentsService {
             select: {
               id: true,
               name: true,
-              email: true,
               role: true,
             },
           },
@@ -195,6 +198,29 @@ export class NotificationAssignmentsService {
       orderBy: {
         notification: {
           createdAt: 'desc',
+        },
+      },
+    })
+  }
+
+  async findByNotification(notificationId: string) {
+    return await this.prisma.notificationAssignment.findMany({
+      where: {
+        notificationId,
+        isDelete: false, // Only get non-deleted assignments
+      },
+      include: {
+        employee: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: {
+        employee: {
+          name: 'asc', // Sort by employee name in ascending order
         },
       },
     })

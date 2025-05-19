@@ -61,4 +61,9 @@ export class NotificationAssignmentsController {
   remove(@Param('id') id: string) {
     return this.notificationAssignmentsService.remove(id)
   }
+
+  @Get('notification/:notificationId')
+  findByNotification(@Param('notificationId') notificationId: string) {
+    return this.notificationAssignmentsService.findByNotification(notificationId)
+  }
 }
