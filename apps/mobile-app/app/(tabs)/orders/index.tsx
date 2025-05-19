@@ -18,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter, useFocusEffect } from "expo-router"
 import { useTheme } from "../../../context/ThemeContext"
 import { Feather } from "@expo/vector-icons"
-import { usePreparingOrders } from "../../../context/OrderContext"
+import { usePreparingOrders, useOrder } from "../../../context/OrderContext"
 import { useOrderItem } from "../../../context/OrderItemContext"
 
 // Components
@@ -43,8 +43,11 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window")
 export default function OrderManagementScreen() {
   const router = useRouter()
   const { colors } = useTheme()
-  const [activeTab, setActiveTab] = useState("All Orders")
+  const [activeTab, setActiveTab] = useState("TẤT CẢ")
   const [refreshing, setRefreshing] = useState(false)
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+  const [pendingDeleteAlertVisible, setPendingDeleteAlertVisible] = useState(false)
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
 
   // Use context hooks
   const {
@@ -55,6 +58,8 @@ export default function OrderManagementScreen() {
     getTotalItems,
     getTotalAmount,
   } = usePreparingOrders()
+
+  const { deleteOrder } = useOrder()
 
   // Ánh xạ giữa tên tab tiếng Việt và giá trị trạng thái
   const STATUS_MAP: Record<string, string> = {
@@ -69,7 +74,7 @@ export default function OrderManagementScreen() {
 
   const filteredOrders = useMemo(() => {
     return activeTab === "TẤT CẢ" ? orders : orders.filter((order) => getOrderStatus(order) === STATUS_MAP[activeTab])
-  }, [activeTab, orders, getOrderStatus])
+  }, [activeTab, orders, getOrderStatus, STATUS_MAP])
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
@@ -106,6 +111,36 @@ export default function OrderManagementScreen() {
       params: { id: order.id },
     })
   }, [router])
+
+  // Xử lý khi nhấn nút xóa đơn hàng
+  const handleDeleteOrder = useCallback((order: Order) => {
+    // Kiểm tra trạng thái đơn hàng
+    if (getOrderStatus(order) === "PENDING") {
+      // Không cho phép xóa đơn hàng có trạng thái PENDING
+      setSelectedOrderId(order.id)
+      setPendingDeleteAlertVisible(true)
+    } else {
+      // Hiển thị dialog xác nhận xóa
+      setSelectedOrderId(order.id)
+      setDeleteModalVisible(true)
+    }
+  }, [getOrderStatus])
+
+  // Xác nhận xóa đơn hàng
+  const confirmDeleteOrder = useCallback(async () => {
+    if (selectedOrderId) {
+      try {
+        await deleteOrder(selectedOrderId)
+        // Sau khi xóa thành công, cập nhật lại danh sách đơn hàng
+        fetchOrders()
+      } catch (error) {
+        console.error("Lỗi khi xóa đơn hàng:", error)
+      } finally {
+        setDeleteModalVisible(false)
+        setSelectedOrderId(null)
+      }
+    }
+  }, [selectedOrderId, deleteOrder, fetchOrders])
 
   // Add focus effect to fetch orders when screen comes into focus
   useFocusEffect(
@@ -165,9 +200,14 @@ export default function OrderManagementScreen() {
                     </View>
                     <Text style={styles.orderTime}>{formatTime(order.createdAt)}</Text>
                   </View>
-                  <TouchableOpacity style={styles.actionButton} onPress={() => handleEditOrder(order)}>
-                    <Feather name="more-horizontal" size={20} color="#fff" />
-                  </TouchableOpacity>
+                  <View style={styles.actionButtonsContainer}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => handleDeleteOrder(order)}>
+                      <Feather name="trash-2" size={18} color="#fff" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => handleEditOrder(order)}>
+                      <Feather name="edit" size={18} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <View style={styles.orderCardBody}>
@@ -236,6 +276,76 @@ export default function OrderManagementScreen() {
       <TouchableOpacity style={styles.fabButton} onPress={handleAddOrder}>
         <Feather name="plus" size={24} color="#fff" />
       </TouchableOpacity>
+
+      {/* Dialog xác nhận xóa đơn hàng */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Xác nhận xóa</Text>
+              <TouchableOpacity style={styles.modalCloseButton} onPress={() => setDeleteModalVisible(false)}>
+                <Feather name="x" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Feather name="alert-triangle" size={50} color="#FF9800" style={styles.modalIcon} />
+              <Text style={styles.modalMessage}>Bạn có chắc chắn muốn xóa đơn hàng này không?</Text>
+              <Text style={styles.modalSubMessage}>Hành động này không thể hoàn tác.</Text>
+            </View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setDeleteModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.deleteButton]}
+                onPress={confirmDeleteOrder}
+              >
+                <Text style={styles.deleteButtonText}>Xóa</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Dialog thông báo không thể xóa đơn hàng có trạng thái PENDING */}
+      <Modal
+        visible={pendingDeleteAlertVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPendingDeleteAlertVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Không thể xóa đơn hàng</Text>
+              <TouchableOpacity style={styles.modalCloseButton} onPress={() => setPendingDeleteAlertVisible(false)}>
+                <Feather name="x" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Feather name="alert-circle" size={50} color="#F44336" style={styles.modalIcon} />
+              <Text style={styles.modalMessage}>Không thể xóa đơn hàng có trạng thái "ĐANG CHỜ"</Text>
+              <Text style={styles.modalSubMessage}>Vui lòng thay đổi trạng thái đơn hàng trước khi thử xóa.</Text>
+            </View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.okButton]}
+                onPress={() => setPendingDeleteAlertVisible(false)}
+              >
+                <Text style={styles.okButtonText}>Đã hiểu</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -332,6 +442,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 8,
   },
+  actionButtonsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   actionButton: {
     backgroundColor: "#D02C1A",
     width: 36,
@@ -339,6 +453,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
+    marginLeft: 8,
   },
   orderCardBody: {
     padding: 12,
@@ -488,5 +603,102 @@ const styles = StyleSheet.create({
     color: "#999",
     fontStyle: "italic",
     marginVertical: 8,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    width: "100%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
+    backgroundColor: "#D02C1A",
+    padding: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  modalTitle: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  modalCloseButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBody: {
+    padding: 20,
+    alignItems: "center",
+  },
+  modalIcon: {
+    marginBottom: 16,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: "#333",
+    marginBottom: 8,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  modalSubMessage: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 8,
+  },
+  cancelButton: {
+    backgroundColor: "#f8f8f8",
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  deleteButton: {
+    backgroundColor: "#F44336",
+  },
+  okButton: {
+    backgroundColor: "#4CAF50",
+  },
+  cancelButtonText: {
+    color: "#666",
+    fontWeight: "bold",
+  },
+  deleteButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  okButtonText: {
+    color: "white",
+    fontWeight: "bold",
   },
 })
