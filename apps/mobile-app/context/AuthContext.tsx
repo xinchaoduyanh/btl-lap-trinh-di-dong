@@ -23,9 +23,11 @@ type AuthContextType = {
     role: string
     isActive: boolean
   }>
-  register: (fullName: string, email: string, password: string) => Promise<void>
+  register: (fullName: string, email: string, password: string, otp: string) => Promise<void>
   logout: () => Promise<void>
   userEmail: string | null
+  sendOtp: (email: string) => Promise<void>
+  verifyOtp: (email: string, otp: string) => Promise<void>
 }
 
 // Create the context with a default value
@@ -43,6 +45,8 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => {},
   logout: async () => {},
   userEmail: null,
+  sendOtp: async () => {},
+  verifyOtp: async () => {},
 })
 
 // Custom hook to use the auth context
@@ -142,8 +146,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   // Register function
-  const register = async (fullName: string, email: string, password: string) => {
-    if (!fullName || !email || !password) {
+  const register = async (fullName: string, email: string, password: string, otp: string) => {
+    if (!fullName || !email || !password || !otp) {
       throw new Error("Vui lòng điền đầy đủ thông tin")
     }
 
@@ -155,7 +159,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: fullName, email, password }),
+        body: JSON.stringify({
+          name: fullName,
+          email,
+          password,
+          code: otp,
+        }),
       })
 
       const data = await response.json()
@@ -194,6 +203,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const sendOtp = async (email: string) => {
+    if (!email) throw new Error("Vui lòng nhập email");
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${config.API_URL}/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Gửi OTP thất bại");
+    } catch (error: any) {
+      throw new Error(error.message || "Gửi OTP thất bại");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyOtp = async (email: string, otp: string) => {
+    if (!email || !otp) throw new Error("Vui lòng nhập email và OTP");
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${config.API_URL}/auth/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: otp }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "OTP không hợp lệ");
+    } catch (error: any) {
+      throw new Error(error.message || "OTP không hợp lệ");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Value object that will be passed to consumers
   const value = {
     isLoggedIn,
@@ -203,6 +248,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     register,
     logout,
     userEmail,
+    sendOtp,
+    verifyOtp,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

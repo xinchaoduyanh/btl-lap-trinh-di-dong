@@ -1,6 +1,5 @@
 "use client"
-import React from "react"
-import { useState } from "react"
+import React, { useState } from "react"
 import {
   StyleSheet,
   View,
@@ -13,6 +12,7 @@ import {
   ImageBackground,
   ActivityIndicator,
   Animated,
+  Alert,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Link, useRouter } from "expo-router"
@@ -26,12 +26,15 @@ import Fireworks from "../../components/Fireworks"
 
 export default function RegisterScreen() {
   const router = useRouter()
-  const [fullName, setFullName] = useState("")
+  const { colors } = useTheme()
+  const { register, sendOtp, isLoading } = useAuth()
+
+  const [step, setStep] = useState(1)
   const [email, setEmail] = useState("")
+  const [otp, setOtp] = useState("")
+  const [fullName, setFullName] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const { register, isLoading } = useAuth()
-  const { colors } = useTheme()
   const [error, setError] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
   const fadeAnim = React.useRef(new Animated.Value(0)).current
@@ -56,24 +59,38 @@ export default function RegisterScreen() {
     })
   }
 
+  // Bước 1: Gửi OTP
+  const handleSendOtp = async () => {
+    if (!email) {
+      setError("Vui lòng nhập email")
+      return
+    }
+    setError("")
+    try {
+      await sendOtp(email)
+      setStep(2)
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
+  // Bước 2: Đăng ký
   const handleRegister = async () => {
-    // Validation
-    if (!fullName || !email || !password || !confirmPassword) {
+    if (!otp || !fullName || !password || !confirmPassword) {
       setError("Vui lòng điền đầy đủ thông tin")
       return
     }
-
     if (password !== confirmPassword) {
       setError("Mật khẩu không khớp")
       return
     }
-
     setError("")
     try {
-      await register(fullName, email, password)
+      await register(fullName, email, password, otp)
+      Alert.alert("Thành công", "Đăng ký thành công! Vui lòng đăng nhập.")
       showSuccessMessage()
-    } catch (error: any) {
-      setError(error.message || "Có lỗi xảy ra, vui lòng thử lại")
+    } catch (err: any) {
+      setError(err.message)
     }
   }
 
@@ -105,78 +122,65 @@ export default function RegisterScreen() {
               <View style={styles.formOverlay}>
                 <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
 
-                <FormInput
-                  label="Name"
-                  value={fullName}
-                  onChangeText={(text) => {
-                    setFullName(text)
-                    setError("")
-                  }}
-                  placeholder="Enter your name"
-                  editable={!isLoading}
-                />
-
-                <FormInput
-                  label="Email"
-                  value={email}
-                  onChangeText={(text) => {
-                    setEmail(text)
-                    setError("")
-                  }}
-                  placeholder="Enter your email"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  editable={!isLoading}
-                />
-
-                <FormInput
-                  label="Password"
-                  value={password}
-                  onChangeText={(text) => {
-                    setPassword(text)
-                    setError("")
-                  }}
-                  placeholder="Enter your password"
-                  secureTextEntry
-                  editable={!isLoading}
-                />
-
-                <FormInput
-                  label="Confirm Password"
-                  value={confirmPassword}
-                  onChangeText={(text) => {
-                    setConfirmPassword(text)
-                    setError("")
-                  }}
-                  placeholder="Confirm your password"
-                  secureTextEntry
-                  editable={!isLoading}
-                />
-
-                {error ? (
-                  <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>{error}</Text>
-                  </View>
-                ) : null}
-
-                <View style={styles.buttonContainer}>
-                  <PrimaryButton
-                    title={isLoading ? "Creating Account..." : "Register"}
-                    onPress={handleRegister}
-                    disabled={isLoading}
-                    style={{
-                      backgroundColor: isLoading ? colors.background : colors.primary,
-                      opacity: isLoading ? 0.7 : 1
-                    }}
-                  />
-                  {isLoading && (
-                    <ActivityIndicator
-                      size="small"
-                      color={colors.primary}
-                      style={styles.loadingIndicator}
+                {step === 1 ? (
+                  <View>
+                    <FormInput
+                      label="Email"
+                      value={email}
+                      onChangeText={setEmail}
+                      placeholder="Nhập email"
+                      keyboardType="email-address"
+                      editable={!isLoading}
                     />
-                  )}
-                </View>
+                    {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
+                    <PrimaryButton
+                      title={isLoading ? "Đang gửi OTP..." : "Gửi OTP"}
+                      onPress={handleSendOtp}
+                      disabled={isLoading}
+                    />
+                  </View>
+                ) : (
+                  <View>
+                    <Text>Email: <Text style={{ fontWeight: "bold" }}>{email}</Text></Text>
+                    <FormInput
+                      label="OTP"
+                      value={otp}
+                      onChangeText={setOtp}
+                      placeholder="Nhập mã OTP"
+                      keyboardType="number-pad"
+                      editable={!isLoading}
+                    />
+                    <FormInput
+                      label="Tên"
+                      value={fullName}
+                      onChangeText={setFullName}
+                      placeholder="Nhập tên"
+                      editable={!isLoading}
+                    />
+                    <FormInput
+                      label="Mật khẩu"
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="Nhập mật khẩu"
+                      secureTextEntry
+                      editable={!isLoading}
+                    />
+                    <FormInput
+                      label="Xác nhận mật khẩu"
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      placeholder="Nhập lại mật khẩu"
+                      secureTextEntry
+                      editable={!isLoading}
+                    />
+                    {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
+                    <PrimaryButton
+                      title={isLoading ? "Đang đăng ký..." : "Đăng ký"}
+                      onPress={handleRegister}
+                      disabled={isLoading}
+                    />
+                  </View>
+                )}
 
                 <View style={styles.loginContainer}>
                   <Text style={styles.loginText}>Already have an account? </Text>
