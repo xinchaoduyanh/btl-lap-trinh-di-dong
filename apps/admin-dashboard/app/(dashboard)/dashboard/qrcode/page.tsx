@@ -23,6 +23,16 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Image from 'next/image'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface QRCode {
   id: string
@@ -37,12 +47,21 @@ interface QRCode {
 export default function QRCodePage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [qrCodeToDelete, setQrCodeToDelete] = useState<string | null>(null)
   const [selectedQRCode, setSelectedQRCode] = useState<QRCode | null>(null)
   const [qrCodeImage, setQRCodeImage] = useState<string | null>(null)
   const [validUntil, setValidUntil] = useState('')
   const [location, setLocation] = useState('')
   const [validationError, setValidationError] = useState<string | null>(null)
-  const { qrCodes, loading, generateQRCode, toggleQRCodeStatus, generateQRCodeImage } = useQRCode()
+  const {
+    qrCodes,
+    loading,
+    generateQRCode,
+    toggleQRCodeStatus,
+    generateQRCodeImage,
+    deleteQRCode,
+  } = useQRCode()
 
   const handleGenerateQRCode = async () => {
     try {
@@ -111,6 +130,24 @@ export default function QRCodePage() {
     }
   }
 
+  const handleDeleteQRCode = (id: string) => {
+    setQrCodeToDelete(id)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteQRCode = async () => {
+    if (!qrCodeToDelete) return
+
+    try {
+      await deleteQRCode(qrCodeToDelete)
+      toast.success('QR code deleted successfully')
+      setQrCodeToDelete(null)
+      setIsDeleteDialogOpen(false)
+    } catch (error) {
+      toast.error('Failed to delete QR code')
+    }
+  }
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
@@ -175,12 +212,12 @@ export default function QRCodePage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Valid Until</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="w-[120px]">Code</TableHead>
+                <TableHead className="w-[150px]">Location</TableHead>
+                <TableHead className="w-[180px]">Valid Until</TableHead>
+                <TableHead className="w-[100px]">Status</TableHead>
+                <TableHead className="w-[180px]">Created At</TableHead>
+                <TableHead className="w-[250px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -193,12 +230,12 @@ export default function QRCodePage() {
               ) : (
                 qrCodes.map((qr) => (
                   <TableRow key={qr.id}>
-                    <TableCell>{qr.code}</TableCell>
-                    <TableCell>{qr.location || '-'}</TableCell>
-                    <TableCell>
+                    <TableCell className="w-[120px]">{qr.code}</TableCell>
+                    <TableCell className="w-[150px]">{qr.location || '-'}</TableCell>
+                    <TableCell className="w-[180px]">
                       {qr.validUntil ? new Date(qr.validUntil).toLocaleString() : 'Invalid date'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="w-[100px]">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
                           !qr.isUsed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -207,9 +244,11 @@ export default function QRCodePage() {
                         {qr.isUsed ? 'Used' : 'Active'}
                       </span>
                     </TableCell>
-                    <TableCell>{new Date(qr.createdAt).toLocaleString()}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
+                    <TableCell className="w-[180px]">
+                      {new Date(qr.createdAt).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="w-[250px]">
+                      <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" onClick={() => handlePreviewQRCode(qr)}>
                           Preview
                         </Button>
@@ -218,7 +257,14 @@ export default function QRCodePage() {
                           size="sm"
                           onClick={() => handleToggleStatus(qr.id)}
                         >
-                          {qr.isUsed ? 'Activate' : 'Deactivate'}
+                          {qr.isUsed ? 'Enable' : 'Disable'}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteQRCode(qr.id)}
+                        >
+                          Delete
                         </Button>
                       </div>
                     </TableCell>
@@ -251,6 +297,28 @@ export default function QRCodePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the QR code from the
+              system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setQrCodeToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteQRCode}
+              className="bg-destructive text-destructive-foreground"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
