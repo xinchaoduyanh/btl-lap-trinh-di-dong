@@ -78,28 +78,28 @@ export class CheckoutService {
   async checkIn(checkInDto: CheckInDto) {
     // Validate QR code trước
     const { qrCode: code, employeeId } = checkInDto
-    console.log(code);
+    console.log(code)
 
     const qrCode = await this.prisma.qRCode.findFirst({
       where: {
         code: code, // Check theo code thay vì id
       },
     })
-    console.log(qrCode);
+    console.log(qrCode)
     //Kiểm tra xem còn hạn k
     const isQRCodeValid = qrCode?.validUntil && qrCode.validUntil > new Date()
-    console.log(isQRCodeValid);
+    console.log(isQRCodeValid)
     if (!qrCode) {
       throw new BadRequestException('Mã QR không hợp lệ, đã hết hạn hoặc đang bị khóa')
     }
-       // Kiểm tra xem employee có tồn tại không
-       const employee = await this.prisma.employee.findUnique({
-        where: { id: checkInDto.employeeId },
-      })
+    // Kiểm tra xem employee có tồn tại không
+    const employee = await this.prisma.employee.findUnique({
+      where: { id: checkInDto.employeeId },
+    })
 
-      if (!employee) {
-        throw new BadRequestException('Không tìm thấy nhân viên')
-      }
+    if (!employee) {
+      throw new BadRequestException('Không tìm thấy nhân viên')
+    }
 
     // Kiểm tra xem nhân viên đã check-in chưa
     const activeCheckout = await this.prisma.checkouts.findFirst({
@@ -112,7 +112,6 @@ export class CheckoutService {
     if (activeCheckout) {
       throw new BadRequestException('Nhân viên đã check-in')
     }
-
 
     // Tạo record check-in
     return this.prisma.checkouts.create({
@@ -252,6 +251,21 @@ export class CheckoutService {
       orderBy: {
         createdAt: 'desc',
       },
+    })
+  }
+
+  // Xóa QR code (chỉ admin)
+  async deleteQRCode(qrCodeId: string) {
+    const qrCode = await this.prisma.qRCode.findUnique({
+      where: { id: qrCodeId },
+    })
+
+    if (!qrCode) {
+      throw new NotFoundException('Không tìm thấy QR code')
+    }
+
+    return this.prisma.qRCode.delete({
+      where: { id: qrCodeId },
     })
   }
 }
