@@ -121,6 +121,20 @@ export function useQRCode() {
     }
   }, [])
 
+  const deleteQRCode = useCallback(async (id: string) => {
+    try {
+      setLoading(true)
+      await api.delete(`/checkout/qr-code/${id}`)
+      setQRCodes((prev) => prev.filter((qr) => qr.id !== id))
+      return true
+    } catch (error) {
+      console.error('Failed to delete QR code:', error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   // Fetch QR codes on mount
   useEffect(() => {
     fetchQRCodes()
@@ -133,5 +147,6 @@ export function useQRCode() {
     generateQRCode,
     toggleQRCodeStatus,
     generateQRCodeImage,
+    deleteQRCode,
   }
 }

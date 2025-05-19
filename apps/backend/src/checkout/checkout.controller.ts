@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common'
+import { Controller, Get, Post, Body, Param, Query, Delete } from '@nestjs/common'
 import { CheckoutService } from './checkout.service'
 import { CheckInDto, CheckOutDto, GetHistoryDto } from './checkout.dto'
 import { CreateQRCodeDto } from './qr-code.dto'
@@ -42,5 +42,10 @@ export class CheckoutController {
   @Get('qr-code')
   async getAllQRCodes() {
     return this.checkoutService.getAllQRCodes()
+  }
+
+  @Delete('qr-code/:id')
+  async deleteQRCode(@Param('id') id: string) {
+    return this.checkoutService.deleteQRCode(id)
   }
 }
