@@ -9,7 +9,6 @@ export const CreateQRCodeSchema = z.object({
 // Schema cho validate QR code
 export const ValidateQRCodeSchema = z.object({
   qrCode: z.string(),
-  employeeId: z.string().uuid(),
 })
 
 // Types

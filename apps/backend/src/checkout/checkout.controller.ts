@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common'
 import { CheckoutService } from './checkout.service'
 import { CheckInDto, CheckOutDto, GetHistoryDto } from './checkout.dto'
-import { CreateQRCodeDto, ValidateQRCodeDto } from './qr-code.dto'
+import { CreateQRCodeDto } from './qr-code.dto'
 
 @Controller('checkout')
 export class CheckoutController {
@@ -28,7 +28,7 @@ export class CheckoutController {
     return this.checkoutService.getHistory(employeeId, filter)
   }
 
-  // Endpoints mới cho QR code
+  // Endpoints cho QR code
   @Post('qr-code')
   async createQRCode(@Body() createQRCodeDto: CreateQRCodeDto) {
     return this.checkoutService.createQRCode(createQRCodeDto)
@@ -42,10 +42,5 @@ export class CheckoutController {
   @Get('qr-code')
   async getAllQRCodes() {
     return this.checkoutService.getAllQRCodes()
-  }
-
-  @Post('qr-code/validate')
-  async validateQRCode(@Body() validateQRCodeDto: ValidateQRCodeDto) {
-    return this.checkoutService.validateQRCode(validateQRCodeDto)
   }
 }
