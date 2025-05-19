@@ -4,11 +4,12 @@ import React, { createContext, useState, useContext } from "react"
 import { Alert } from "react-native"
 import { config } from '../config/env'
 
-// Định nghĩa kiểu dữ liệu cho Slogan
+// Define the Slogan data type
 export interface Slogan {
   id: string
   content: string
   createdAt: string
+  isVisible?: boolean // Added isVisible property, optional as it may not need to be displayed in UI
 }
 
 // Định nghĩa kiểu dữ liệu cho context
