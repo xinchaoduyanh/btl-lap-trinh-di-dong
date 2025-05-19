@@ -3,6 +3,7 @@ import { z } from 'zod'
 // Schema cho CheckIn
 export const CheckInSchema = z.object({
   employeeId: z.string().uuid(),
+  qrCode: z.string(),
 })
 
 // Schema cho CheckOut
