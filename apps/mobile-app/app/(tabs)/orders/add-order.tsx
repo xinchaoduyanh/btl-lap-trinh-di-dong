@@ -317,7 +317,7 @@ export default function AddOrderScreen() {
                   {item.name}
                 </Text>
                 <View style={styles.foodItemPriceRow}>
-                  <Text style={styles.foodItemPrice}>${item.price.toFixed(2)}</Text>
+                  <Text style={styles.foodItemPrice}>{Math.round(item.price)}đ</Text>
                   <TouchableOpacity style={styles.addButton} onPress={() => handleItemPress(item)}>
                     <Feather name="plus" size={16} color="#fff" />
                   </TouchableOpacity>
@@ -357,7 +357,7 @@ export default function AddOrderScreen() {
                   <View style={styles.foodItemInfo}>
                     <Text style={styles.modalItemName}>{currentItem.name}</Text>
                     <Text style={styles.foodItemCard}>{getCategoryLabel(currentItem.category)}</Text>
-                    <Text style={styles.modalItemPrice}>Giá: ${currentItem.price.toFixed(2)}</Text>
+                    <Text style={styles.modalItemPrice}>Giá: {Math.round(currentItem.price)}đ</Text>
                   </View>
 
                   <View style={styles.modalQuantityContainer}>
@@ -435,7 +435,7 @@ export default function AddOrderScreen() {
                         <Text style={styles.orderItemName} numberOfLines={1}>
                           {item.name}
                         </Text>
-                        <Text style={styles.orderItemPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
+                        <Text style={styles.orderItemPrice}>{Math.round(item.price * item.quantity)}đ</Text>
                       </View>
 
                       <View style={styles.orderItemQuantityContainer}>
@@ -466,7 +466,7 @@ export default function AddOrderScreen() {
                 <View style={styles.orderSummaryFooter}>
                   <View style={styles.orderTotalContainer}>
                     <Text style={styles.orderTotalLabel}>TỔNG TIỀN:</Text>
-                    <Text style={styles.orderTotalAmount}>${totalAmount.toFixed(2)}</Text>
+                    <Text style={styles.orderTotalAmount}>{Math.round(totalAmount)}đ</Text>
                   </View>
 
                   <TouchableOpacity

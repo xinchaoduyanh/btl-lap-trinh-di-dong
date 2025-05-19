@@ -208,7 +208,7 @@ export default function EditOrderScreen() {
               <View style={styles.itemDetails}>
                 <View style={styles.priceContainer}>
                   <Text style={styles.priceLabel}>Giá:</Text>
-                  <Text style={styles.priceValue}>{item.food.price.toFixed(2)}đ</Text>
+                  <Text style={styles.priceValue}>{Math.round(item.food.price)}đ</Text>
                 </View>
 
                 <View style={styles.quantityContainer}>
@@ -231,7 +231,7 @@ export default function EditOrderScreen() {
 
                 <View style={styles.subtotalContainer}>
                   <Text style={styles.subtotalLabel}>Thành tiền:</Text>
-                  <Text style={styles.subtotalValue}>{(item.food.price * item.quantity).toFixed(2)}đ</Text>
+                  <Text style={styles.subtotalValue}>{Math.round(item.food.price * item.quantity)}đ</Text>
                 </View>
 
                 <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveItem(item.id)}>
@@ -244,7 +244,7 @@ export default function EditOrderScreen() {
 
         <View style={styles.totalContainer}>
           <Text style={styles.totalLabel}>Tổng tiền:</Text>
-          <Text style={styles.totalValue}>{calculateTotal().toFixed(2)}đ</Text>
+          <Text style={styles.totalValue}>{Math.round(calculateTotal())}đ</Text>
         </View>
       </View>
 
