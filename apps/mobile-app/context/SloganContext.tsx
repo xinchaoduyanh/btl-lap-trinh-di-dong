@@ -47,8 +47,8 @@ export const SloganProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setError(null)
 
     try {
-      console.log('Fetching slogan from:', `${config.API_URL}/slogans`)
-      const response = await fetch(`${config.API_URL}/slogans`)
+      console.log('Fetching visible slogans from:', `${config.API_URL}/slogans/visible`)
+      const response = await fetch(`${config.API_URL}/slogans/visible`)
 
       if (!response.ok) {
         console.error('API response not OK:', response.status, response.statusText)
