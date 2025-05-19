@@ -70,6 +70,7 @@ export default function AddOrderScreen() {
   const [error, setError] = useState<string | null>(null)
   const [successModalVisible, setSuccessModalVisible] = useState(false)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
 
   // Animation values
   const cartBounceAnim = useState(new Animated.Value(1))[0]
@@ -188,14 +189,15 @@ export default function AddOrderScreen() {
 
   const handleSelectTable = useCallback((table: Table) => {
     setTableNumber(table.number.toString())
+    setSelectedTableId(table.id)
     const order = orders.find(o => o.tableId === table.id)
     setSelectedOrderId(order ? order.id : null)
     setTableModalVisible(false)
   }, [orders])
 
   const handlePlaceOrder = useCallback(async () => {
-    if (!selectedOrderId) {
-      setError("Vui lòng chọn bàn có đơn hàng hiện tại")
+    if (!selectedTableId) {
+      setError("Vui lòng chọn bàn trước khi đặt hàng")
       return
     }
     if (selectedItems.length === 0) {
@@ -205,9 +207,31 @@ export default function AddOrderScreen() {
 
     setIsLoading(true)
     try {
+      let orderId = selectedOrderId;
+
+      // Nếu chưa có đơn hàng cho bàn này, tạo đơn hàng mới
+      if (!orderId) {
+        if (!user || !user.id) {
+          setError("Không thể xác định nhân viên. Vui lòng đăng nhập lại.")
+          setIsLoading(false)
+          return
+        }
+
+        // Tạo đơn hàng mới
+        const newOrderData: CreateOrderRequest = {
+          tableId: selectedTableId,
+          employeeId: user.id,
+          status: "RESERVED"
+        }
+
+        const newOrder = await createOrder(newOrderData)
+        orderId = newOrder.id
+      }
+
+      // Thêm các món ăn vào đơn hàng
       for (const item of selectedItems) {
         await createOrderItem({
-          orderId: selectedOrderId,
+          orderId: orderId,
           foodId: item.id,
           quantity: item.quantity,
           status: item.status
@@ -228,13 +252,16 @@ export default function AddOrderScreen() {
         setSelectedItems([])
         setTableNumber("")
         setSelectedOrderId(null)
+        setSelectedTableId(null)
+        // Điều hướng về trang danh sách đơn hàng
+        router.push('/(tabs)/orders')
       }, 2000)
     } catch (error: any) {
-      setError(error.message || "Không thể thêm món")
+      setError(error.message || "Không thể đặt hàng")
     } finally {
       setIsLoading(false)
     }
-  }, [selectedOrderId, selectedItems, createOrderItem])
+  }, [selectedOrderId, selectedTableId, selectedItems, createOrderItem, createOrder, user])
 
   const incrementQuantity = useCallback(() => {
     const newQuantity = Number.parseInt(quantity) + 1
@@ -470,9 +497,9 @@ export default function AddOrderScreen() {
                   </View>
 
                   <TouchableOpacity
-                    style={[styles.placeOrderButton, (!tableNumber || isLoading) && styles.placeOrderButtonDisabled]}
+                    style={[styles.placeOrderButton, (!selectedTableId || isLoading) && styles.placeOrderButtonDisabled]}
                     onPress={handlePlaceOrder}
-                    disabled={!tableNumber || isLoading}
+                    disabled={!selectedTableId || isLoading}
                   >
                     {isLoading ? (
                       <Text style={styles.placeOrderButtonText}>ĐANG XỬ LÝ...</Text>

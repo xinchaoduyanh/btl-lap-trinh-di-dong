@@ -157,7 +157,7 @@ export default function OrderManagementScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         title="Quản lý đơn hàng"
-        onBackPress={() => router.back()}
+        onBackPress={() => router.push('/(tabs)')}
         rightIcon="plus"
         onRightPress={handleAddOrder}
       />

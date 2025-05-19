@@ -135,11 +135,11 @@ export default function EditOrderScreen() {
         {
           text: "Hủy",
           style: "destructive",
-          onPress: () => router.replace('/(tabs)/orders'),
+          onPress: () => router.push('/(tabs)/orders'),
         },
       ])
     } else {
-      router.replace('/(tabs)/orders')
+      router.push('/(tabs)/orders')
     }
   }, [hasChanges, router])
 
