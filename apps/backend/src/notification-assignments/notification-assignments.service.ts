@@ -26,6 +26,7 @@ export class NotificationAssignmentsService {
         notification: {
           select: {
             id: true,
+            title: true,
             message: true,
           },
         },
@@ -48,6 +49,7 @@ export class NotificationAssignmentsService {
         notification: {
           select: {
             id: true,
+            title: true,
             message: true,
           },
         },
@@ -132,6 +134,7 @@ export class NotificationAssignmentsService {
           notification: {
             select: {
               id: true,
+              title: true,
               message: true,
             },
           },
@@ -183,6 +186,7 @@ export class NotificationAssignmentsService {
         notification: {
           select: {
             id: true,
+            title: true,
             message: true,
             createdAt: true,
           },
