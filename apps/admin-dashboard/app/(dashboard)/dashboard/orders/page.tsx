@@ -201,20 +201,30 @@ export default function OrdersPage() {
 
 
   const handleDeleteConfirm = (id: string) => {
-    // Find order by ID
-    const orderToCheck = orders.find(order => order.id === id)
+    try {
+      // Find order by ID
+      const orderToCheck = orders.find(order => order.id === id)
 
-    // Check if order has RESERVED status (equivalent to PENDING in UI)
-    // In Prisma schema, OrderStatus chỉ có RESERVED và PAID
-    if (orderToCheck && orderToCheck.status === "RESERVED") {
-      // Show cannot delete dialog
-      setIsPendingDeleteAlertOpen(true)
-      return
+      // Check if order has RESERVED status (equivalent to PENDING in UI)
+      // In Prisma schema, OrderStatus chỉ có RESERVED và PAID
+      // Sử dụng so sánh string để tránh lỗi kiểu dữ liệu
+      if (orderToCheck && String(orderToCheck.status) === "RESERVED") {
+        // Show cannot delete dialog
+        setIsPendingDeleteAlertOpen(true)
+        return
+      }
+
+      // If not RESERVED, continue with normal delete process
+      setOrderToDelete(id)
+      setIsDeleteDialogOpen(true)
+    } catch (err) {
+      console.error("Error in handleDeleteConfirm:", err)
+      toast({
+        title: "Error",
+        description: "Error preparing to delete order. Please try again.",
+        variant: "destructive"
+      })
     }
-
-    // If not RESERVED, continue with normal delete process
-    setOrderToDelete(id)
-    setIsDeleteDialogOpen(true)
   }
 
 
@@ -232,14 +242,14 @@ export default function OrdersPage() {
     } catch (err) {
       console.error("Error deleting order:", err)
 
-      // Xử lý lỗi chi tiết hơn
+      // Process error details
       let errorMessage = (err as Error).message
 
-      // Kiểm tra nếu lỗi liên quan đến timeOut hoặc lỗi server 500
+      // Check if error is related to timeOut or server 500
       if (errorMessage.includes("500") || errorMessage.includes("timeOut")) {
-        errorMessage = "Không thể xóa order. Vui lòng kiểm tra lại thông tin timeOut hoặc liên hệ quản trị viên."
+        errorMessage = "Cannot delete order. Please check timeOut information or contact administrator."
 
-        // Vẫn cần cập nhật danh sách đơn hàng để đảm bảo UI đồng bộ với server
+        // Still need to update order list to ensure UI is in sync with server
         try {
           await fetchOrders()
         } catch (fetchErr) {
@@ -253,7 +263,7 @@ export default function OrdersPage() {
         variant: "destructive"
       })
     } finally {
-      // Luôn đóng dialog và xóa orderToDelete bất kể có lỗi hay không
+      // Always close dialog and clear orderToDelete regardless of errors
       setOrderToDelete(null)
       setIsDeleteDialogOpen(false)
     }

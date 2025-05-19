@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Dimensions } from 'react-native';
+import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,8 +7,6 @@ import { useTheme } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSlogan } from '../../context/SloganContext';
 import { UserData } from '@/constants/interface';
-
-const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const { colors } = useTheme();
@@ -287,33 +285,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Today's Specials Section */}
-        <View style={styles.recentActivitySection}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Today&apos;s Specials</Text>
-          <View style={[styles.specialsContainer, { backgroundColor: colors.card }]}>
-            <View style={styles.specialItem}>
-              <View style={styles.specialIconContainer}>
-                <Feather name="star" size={20} color="#E53935" />
-              </View>
-              <View style={styles.specialContent}>
-                <Text style={[styles.specialTitle, { color: colors.text }]}>Spicy Beef Hotpot</Text>
-                <Text style={styles.specialDescription}>Our signature dish with premium beef</Text>
-              </View>
-            </View>
 
-            <View style={styles.specialDivider} />
-
-            <View style={styles.specialItem}>
-              <View style={styles.specialIconContainer}>
-                <Feather name="star" size={20} color="#E53935" />
-              </View>
-              <View style={styles.specialContent}>
-                <Text style={[styles.specialTitle, { color: colors.text }]}>Seafood Deluxe</Text>
-                <Text style={styles.specialDescription}>Fresh seafood with special broth</Text>
-              </View>
-            </View>
-          </View>
-        </View>
 
         {/* Add some bottom padding for scrolling */}
         <View style={styles.bottomPadding} />
@@ -686,47 +658,7 @@ const styles = StyleSheet.create({
   recentActivitySection: {
     marginBottom: 20,
   },
-  specialsContainer: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginTop: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  specialItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  specialIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(229, 57, 53, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  specialContent: {
-    flex: 1,
-  },
-  specialTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  specialDescription: {
-    fontSize: 14,
-    opacity: 0.6,
-  },
-  specialDivider: {
-    height: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    marginHorizontal: 16,
-  },
+
   bottomPadding: {
     height: 40,
   },
