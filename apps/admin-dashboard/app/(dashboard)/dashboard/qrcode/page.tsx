@@ -1,83 +1,115 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { toast } from "sonner";
-import { useQRCode } from "@/hooks/use-qrcode";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Image from "next/image";
+import { useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { toast } from 'sonner'
+import { useQRCode } from '@/hooks/use-qrcode'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import Image from 'next/image'
 
 interface QRCode {
-  id: string;
-  code: string;
-  validUntil: string;
-  location?: string;
-  isUsed: boolean;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  code: string
+  validUntil: string
+  location?: string
+  isUsed: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export default function QRCodePage() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [selectedQRCode, setSelectedQRCode] = useState<QRCode | null>(null);
-  const [qrCodeImage, setQRCodeImage] = useState<string | null>(null);
-  const [validUntil, setValidUntil] = useState("");
-  const [location, setLocation] = useState("");
-  const { qrCodes, loading, generateQRCode, toggleQRCodeStatus, generateQRCodeImage } = useQRCode();
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [selectedQRCode, setSelectedQRCode] = useState<QRCode | null>(null)
+  const [qrCodeImage, setQRCodeImage] = useState<string | null>(null)
+  const [validUntil, setValidUntil] = useState('')
+  const [location, setLocation] = useState('')
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const { qrCodes, loading, generateQRCode, toggleQRCodeStatus, generateQRCodeImage } = useQRCode()
 
   const handleGenerateQRCode = async () => {
     try {
-      const newQRCode = await generateQRCode(validUntil, location);
-      toast.success("QR Code generated successfully");
-      setIsDialogOpen(false);
-      setValidUntil("");
-      setLocation("");
+      // Reset validation error
+      setValidationError(null)
+
+      // Validate that validUntil is in the future
+      const validUntilDate = new Date(validUntil)
+      const now = new Date()
+
+      if (isNaN(validUntilDate.getTime())) {
+        setValidationError('Invalid date format')
+        return
+      }
+
+      if (validUntilDate <= now) {
+        setValidationError('QR code expiration date must be in the future')
+        return
+      }
+
+      const newQRCode = await generateQRCode(validUntil, location)
+      toast.success('QR Code generated successfully')
+      setIsDialogOpen(false)
+      setValidUntil('')
+      setLocation('')
+      setValidationError(null)
     } catch (error) {
-      toast.error("Failed to generate QR code");
+      toast.error('Failed to generate QR code')
     }
-  };
+  }
 
   const handleToggleStatus = async (id: string) => {
     try {
-      await toggleQRCodeStatus(id);
-      toast.success("QR Code status updated successfully");
+      await toggleQRCodeStatus(id)
+      toast.success('QR Code status updated successfully')
     } catch (error) {
-      toast.error("Failed to update QR code status");
+      toast.error('Failed to update QR code status')
     }
-  };
+  }
 
   const handlePreviewQRCode = async (qrCode: QRCode) => {
     try {
-      const imageUrl = await generateQRCodeImage(qrCode.code);
-      setQRCodeImage(imageUrl);
-      setSelectedQRCode(qrCode);
-      setIsPreviewOpen(true);
+      const imageUrl = await generateQRCodeImage(qrCode.code)
+      setQRCodeImage(imageUrl)
+      setSelectedQRCode(qrCode)
+      setIsPreviewOpen(true)
     } catch (error) {
-      toast.error("Failed to generate QR code image");
+      toast.error('Failed to generate QR code image')
     }
-  };
+  }
 
   const handleDownloadQRCode = async () => {
-    if (!qrCodeImage || !selectedQRCode) return;
+    if (!qrCodeImage || !selectedQRCode) return
 
     try {
       // Tạo link tải xuống
-      const link = document.createElement('a');
-      link.href = qrCodeImage;
-      link.download = `qrcode-${selectedQRCode.code}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success("QR Code downloaded successfully");
+      const link = document.createElement('a')
+      link.href = qrCodeImage
+      link.download = `qrcode-${selectedQRCode.code}.png`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success('QR Code downloaded successfully')
     } catch (error) {
-      toast.error("Failed to download QR code");
+      toast.error('Failed to download QR code')
     }
-  };
+  }
 
   return (
     <div className="container mx-auto py-6">
@@ -110,9 +142,21 @@ export default function QRCodePage() {
                   placeholder="Enter location"
                 />
               </div>
+
+              {validationError && (
+                <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+                  {validationError}
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsDialogOpen(false)
+                  setValidationError(null)
+                }}
+              >
                 Cancel
               </Button>
               <Button onClick={handleGenerateQRCode} disabled={loading}>
@@ -150,35 +194,31 @@ export default function QRCodePage() {
                 qrCodes.map((qr) => (
                   <TableRow key={qr.id}>
                     <TableCell>{qr.code}</TableCell>
-                    <TableCell>{qr.location || "-"}</TableCell>
-                    <TableCell>{new Date(qr.validUntil).toLocaleString()}</TableCell>
+                    <TableCell>{qr.location || '-'}</TableCell>
+                    <TableCell>
+                      {qr.validUntil ? new Date(qr.validUntil).toLocaleString() : 'Invalid date'}
+                    </TableCell>
                     <TableCell>
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
-                          !qr.isUsed
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                          !qr.isUsed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {qr.isUsed ? "Used" : "Active"}
+                        {qr.isUsed ? 'Used' : 'Active'}
                       </span>
                     </TableCell>
                     <TableCell>{new Date(qr.createdAt).toLocaleString()}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePreviewQRCode(qr)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => handlePreviewQRCode(qr)}>
                           Preview
                         </Button>
                         <Button
-                          variant={qr.isUsed ? "outline" : "destructive"}
+                          variant={qr.isUsed ? 'outline' : 'destructive'}
                           size="sm"
                           onClick={() => handleToggleStatus(qr.id)}
                         >
-                          {qr.isUsed ? "Activate" : "Deactivate"}
+                          {qr.isUsed ? 'Activate' : 'Deactivate'}
                         </Button>
                       </div>
                     </TableCell>
@@ -199,25 +239,18 @@ export default function QRCodePage() {
           <div className="flex flex-col items-center gap-4 py-4">
             {qrCodeImage && (
               <div className="relative w-[300px] h-[300px]">
-                <Image
-                  src={qrCodeImage}
-                  alt="QR Code"
-                  fill
-                  className="object-contain"
-                />
+                <Image src={qrCodeImage} alt="QR Code" fill className="object-contain" />
               </div>
             )}
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
                 Close
               </Button>
-              <Button onClick={handleDownloadQRCode}>
-                Download
-              </Button>
+              <Button onClick={handleDownloadQRCode}>Download</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

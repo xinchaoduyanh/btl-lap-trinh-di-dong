@@ -1,93 +1,130 @@
-import { useState, useCallback, useEffect } from 'react';
-import axios from 'axios';
-import QRCode from 'qrcode';
+import { useState, useCallback, useEffect } from 'react'
+import api from '@/lib/axios'
+import QRCode from 'qrcode'
 
 interface QRCode {
-  id: string;
-  code: string;
-  validUntil: string;
-  location?: string;
-  isUsed: boolean;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  code: string
+  validUntil: string
+  location?: string
+  isUsed: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export function useQRCode() {
-  const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [qrCodes, setQRCodes] = useState<QRCode[]>([])
+  const [loading, setLoading] = useState(false)
 
   const fetchQRCodes = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await axios.get('/api/checkout/qr-code');
-      setQRCodes(response.data);
+      setLoading(true)
+      const response = await api.get('/checkout/qr-code')
+
+      // Filter out QR codes with invalid validUntil dates or expired dates
+      const validQRCodes = response.data.filter((qrCode: QRCode) => {
+        if (!qrCode.validUntil) return false
+
+        try {
+          const validUntilDate = new Date(qrCode.validUntil)
+          const now = new Date()
+
+          // Check if date is valid and not expired
+          return !isNaN(validUntilDate.getTime()) && validUntilDate > now
+        } catch (error) {
+          console.error(`Invalid validUntil date for QR code ${qrCode.id}:`, error)
+          return false
+        }
+      })
+
+      // Sort QR codes by validUntil date (descending - latest first)
+      validQRCodes.sort(
+        (a: { validUntil: string | number | Date }, b: { validUntil: string | number | Date }) => {
+          const dateA = new Date(a.validUntil)
+          const dateB = new Date(b.validUntil)
+          return -dateB.getTime() + dateA.getTime()
+        }
+      )
+
+      setQRCodes(validQRCodes)
     } catch (error) {
-      console.error('Failed to fetch QR codes:', error);
-      throw error;
+      console.error('Failed to fetch QR codes:', error)
+      throw error
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const generateQRCode = useCallback(async (validUntil: string, location?: string) => {
     try {
-      setLoading(true);
-      const response = await axios.post('/api/checkout/qr-code', {
+      // Validate that validUntil is in the future
+      const validUntilDate = new Date(validUntil)
+      const now = new Date()
+
+      if (isNaN(validUntilDate.getTime()) || validUntilDate <= now) {
+        throw new Error('Valid until date must be in the future')
+      }
+
+      setLoading(true)
+      const response = await api.post('/checkout/qr-code', {
         validUntil,
-        location
-      });
-      setQRCodes(prev => [...prev, response.data]);
-      return response.data;
+        location,
+      })
+
+      // Only add to state if it's valid
+      if (validUntilDate > now) {
+        setQRCodes((prev) => [...prev, response.data])
+      }
+
+      return response.data
     } catch (error) {
-      console.error('Failed to generate QR code:', error);
-      throw error;
+      console.error('Failed to generate QR code:', error)
+      throw error
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const toggleQRCodeStatus = useCallback(async (id: string) => {
     try {
-      setLoading(true);
-      const response = await axios.post(`/api/checkout/qr-code/${id}/toggle`);
-      setQRCodes(prev =>
-        prev.map(qr => (qr.id === id ? { ...qr, isUsed: !qr.isUsed } : qr))
-      );
-      return response.data;
+      setLoading(true)
+      const response = await api.post(`/checkout/qr-code/${id}/toggle`)
+      setQRCodes((prev) => prev.map((qr) => (qr.id === id ? { ...qr, isUsed: !qr.isUsed } : qr)))
+      return response.data
     } catch (error) {
-      console.error('Failed to toggle QR code status:', error);
-      throw error;
+      console.error('Failed to toggle QR code status:', error)
+      throw error
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const generateQRCodeImage = useCallback(async (code: string) => {
     try {
-      // Tạo URL cho QR code
-      const qrCodeUrl = `${window.location.origin}/api/checkout/check-in?code=${code}`;
+      // Create URL for QR code
+      const qrCodeUrl = `${window.location.origin}/checkout/check-in?code=${code}`
 
-      // Tạo hình ảnh QR code
+      // Generate QR code image
       const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
         width: 300,
         margin: 2,
         color: {
           dark: '#000000',
-          light: '#ffffff'
-        }
-      });
+          light: '#ffffff',
+        },
+      })
 
-      return qrCodeDataUrl;
+      return qrCodeDataUrl
     } catch (error) {
-      console.error('Failed to generate QR code image:', error);
-      throw error;
+      console.error('Failed to generate QR code image:', error)
+      throw error
     }
-  }, []);
+  }, [])
 
   // Fetch QR codes on mount
   useEffect(() => {
-    fetchQRCodes();
-  }, [fetchQRCodes]);
+    fetchQRCodes()
+  }, [fetchQRCodes])
 
   return {
     qrCodes,
@@ -95,6 +132,6 @@ export function useQRCode() {
     fetchQRCodes,
     generateQRCode,
     toggleQRCodeStatus,
-    generateQRCodeImage
-  };
+    generateQRCodeImage,
+  }
 }
