@@ -129,13 +129,31 @@ export function useOrders() {
           }
         } catch (timeOutErr) {
           console.error("Error parsing timeOut:", timeOutErr)
+          // Không throw lỗi ở đây, tiếp tục thực hiện xóa
         }
       }
 
       // Tiếp tục với quá trình xóa bình thường
-      await api.delete(`/orders/${id}`)
-      setOrders(prev => prev.filter(order => order.id !== id))
-      return true
+      try {
+        await api.delete(`/orders/${id}`)
+        // Chỉ cập nhật state nếu xóa thành công
+        setOrders(prev => prev.filter(order => order.id !== id))
+        return true
+      } catch (deleteErr: any) {
+        // Xử lý lỗi khi xóa
+        console.error("API error in deleteOrder:", deleteErr)
+
+        // Kiểm tra lỗi 500 từ server
+        if (deleteErr.response && deleteErr.response.status === 500) {
+          const errorMsg = "Lỗi server khi xóa đơn hàng. Vui lòng thử lại sau."
+          setError(new Error(errorMsg))
+          throw new Error(errorMsg)
+        }
+
+        // Các lỗi khác
+        setError(deleteErr)
+        throw deleteErr
+      }
     } catch (err) {
       console.error("Error in deleteOrder:", err)
       setError(err as Error)

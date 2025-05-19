@@ -26,6 +26,8 @@
   },
   "private": true,
   "dependencies": {
-    "lap_trinh_di_dong": "file:"
+    "@types/uuid": "^10.0.0",
+    "lap_trinh_di_dong": "file:",
+    "uuid": "^11.1.0"
   }
 }

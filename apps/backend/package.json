@@ -27,6 +27,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/client": "^6.7.0",
+    "@types/uuid": "^10.0.0",
     "backend": "file:",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",

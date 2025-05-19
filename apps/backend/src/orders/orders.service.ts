@@ -60,6 +60,9 @@ export class OrdersService {
       // Trước khi xóa, kiểm tra order có tồn tại không
       const order = await this.prisma.order.findUnique({
         where: { id },
+        include: {
+          orderItems: true,
+        },
       })
 
       if (!order) {
@@ -77,7 +80,16 @@ export class OrdersService {
         }
       }
 
-      // Tiếp tục với quá trình xóa bình thường
+      // Xóa tất cả các OrderItem liên quan trước
+      if (order.orderItems && order.orderItems.length > 0) {
+        await this.prisma.orderItem.deleteMany({
+          where: {
+            orderId: id,
+          },
+        })
+      }
+
+      // Tiếp tục với quá trình xóa đơn hàng
       return await this.prisma.order.delete({
         where: { id },
       })
@@ -85,6 +97,9 @@ export class OrdersService {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
           throw new NotFoundException(`Order with ID ${id} not found`)
+        }
+        if (error.code === 'P2003') {
+          throw new ConflictException(`Cannot delete order ${id} because it has related items. Please delete the order items first.`)
         }
       }
       console.error(`Error removing order ${id}:`, error)

@@ -235,9 +235,16 @@ export default function OrdersPage() {
       // Xử lý lỗi chi tiết hơn
       let errorMessage = (err as Error).message
 
-      // Kiểm tra nếu lỗi liên quan đến timeOut
+      // Kiểm tra nếu lỗi liên quan đến timeOut hoặc lỗi server 500
       if (errorMessage.includes("500") || errorMessage.includes("timeOut")) {
         errorMessage = "Không thể xóa order. Vui lòng kiểm tra lại thông tin timeOut hoặc liên hệ quản trị viên."
+
+        // Vẫn cần cập nhật danh sách đơn hàng để đảm bảo UI đồng bộ với server
+        try {
+          await fetchOrders()
+        } catch (fetchErr) {
+          console.error("Error refreshing orders after delete error:", fetchErr)
+        }
       }
 
       toast({
@@ -246,6 +253,7 @@ export default function OrdersPage() {
         variant: "destructive"
       })
     } finally {
+      // Luôn đóng dialog và xóa orderToDelete bất kể có lỗi hay không
       setOrderToDelete(null)
       setIsDeleteDialogOpen(false)
     }
