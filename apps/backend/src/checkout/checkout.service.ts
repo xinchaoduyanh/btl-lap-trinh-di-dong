@@ -1,13 +1,87 @@
-import { Injectable, BadRequestException } from '@nestjs/common'
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { CheckInDto, CheckOutDto, GetHistoryDto } from './checkout.dto'
+import { CreateQRCodeDto, ValidateQRCodeDto } from './qr-code.dto'
 import { WorkSession, DailyWorkRecord } from './Icheckout'
+import { v4 as uuidv4 } from 'uuid'
 
 @Injectable()
 export class CheckoutService {
   constructor(private prisma: PrismaService) {}
 
+  // Tạo mã QR mới (chỉ admin mới có quyền)
+  async createQRCode(createQRCodeDto: CreateQRCodeDto) {
+    const qrCode = uuidv4() // Tạo mã QR ngẫu nhiên
+    const validUntil = new Date(createQRCodeDto.validUntil)
+
+    return this.prisma.qRCode.create({
+      data: {
+        code: qrCode,
+        validUntil,
+        location: createQRCodeDto.location,
+        isUsed: false, // QR code mới tạo sẽ ở trạng thái active
+      },
+    })
+  }
+
+  // Toggle trạng thái QR code (chỉ admin)
+  async toggleQRCodeStatus(qrCodeId: string) {
+    const qrCode = await this.prisma.qRCode.findUnique({
+      where: { id: qrCodeId },
+    })
+
+    if (!qrCode) {
+      throw new NotFoundException('Không tìm thấy QR code')
+    }
+
+    return this.prisma.qRCode.update({
+      where: { id: qrCodeId },
+      data: { isUsed: !qrCode.isUsed }, // Đảo ngược trạng thái
+    })
+  }
+
+  // Validate QR code trước khi check-in
+  async validateQRCode(validateQRCodeDto: ValidateQRCodeDto) {
+    const qrCode = await this.prisma.qRCode.findFirst({
+      where: {
+        code: validateQRCodeDto.qrCode,
+        isUsed: false, // Chỉ cho phép check-in khi QR code đang active
+        validUntil: {
+          gt: new Date(), // Chưa hết hạn
+        },
+      },
+    })
+
+    if (!qrCode) {
+      throw new BadRequestException('Mã QR không hợp lệ, đã hết hạn hoặc đang bị khóa')
+    }
+
+    return true // Trả về true nếu QR code hợp lệ
+  }
+
+  // Tự động update trạng thái QR code hết hạn
+  async updateExpiredQRCodes() {
+    const now = new Date()
+    return this.prisma.qRCode.updateMany({
+      where: {
+        validUntil: {
+          lt: now,
+        },
+        isUsed: false, // Chỉ update những QR code đang active
+      },
+      data: {
+        isUsed: true, // Chuyển sang trạng thái khóa
+      },
+    })
+  }
+
   async checkIn(checkInDto: CheckInDto) {
+    // Validate QR code trước
+    await this.validateQRCode({
+      qrCode: checkInDto.qrCode,
+      employeeId: checkInDto.employeeId,
+    })
+
     // Kiểm tra xem nhân viên đã check-in chưa
     const activeCheckout = await this.prisma.checkouts.findFirst({
       where: {
@@ -20,6 +94,7 @@ export class CheckoutService {
       throw new BadRequestException('Nhân viên đã check-in')
     }
 
+    // Tạo record check-in
     return this.prisma.checkouts.create({
       data: {
         employeeId: checkInDto.employeeId,
@@ -149,5 +224,14 @@ export class CheckoutService {
     const minutes = Math.floor((totalSeconds % 3600) / 60) % 60
     const seconds = totalSeconds % 60
     return `${hours}h ${minutes}m ${seconds}s`
+  }
+
+  // Lấy danh sách QR code (chỉ admin)
+  async getAllQRCodes() {
+    return this.prisma.qRCode.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
   }
 }

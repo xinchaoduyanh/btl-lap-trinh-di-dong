@@ -9,7 +9,6 @@ export class EmailService {
 
   constructor() {
     this.resend = new Resend(process.env.RESEND_API_KEY);
-    // this.resend = new Resend('re_288A4nyx_KNpnjhpC5Xf4mz7iD3snwxRq')
   }
 
   async sendOtpEmail(to: string, otp: string) {
