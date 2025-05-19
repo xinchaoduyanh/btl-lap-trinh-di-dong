@@ -54,12 +54,26 @@ export default function SessionDetailScreen() {
   }
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString("vi-VN", {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     })
+  }
+
+  // Chuyển đổi định dạng giờ làm việc từ "2h 30m" sang "2 giờ 30 phút"
+  const formatWorkHours = (hoursWorked: string) => {
+    if (!hoursWorked) return "0 giờ 0 phút"
+    
+    // Xử lý chuỗi như "2h 30m"
+    const hourMatch = hoursWorked.match(/(\d+)h/)
+    const minuteMatch = hoursWorked.match(/(\d+)m/)
+    
+    const hours = hourMatch ? parseInt(hourMatch[1]) : 0
+    const minutes = minuteMatch ? parseInt(minuteMatch[1]) : 0
+    
+    return `${hours} giờ ${minutes} phút`
   }
 
   return (
@@ -91,22 +105,25 @@ export default function SessionDetailScreen() {
       <ScrollView style={styles.content}>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Tổng thời gian làm việc:</Text>
-          <Text style={styles.summaryValue}>{totalWorked}</Text>
+          <Text style={styles.summaryValue}>{formatWorkHours(totalWorked)}</Text>
         </View>
         {sessions.map((item, idx) => (
           <View key={idx} style={styles.sessionItem}>
             <View style={styles.sessionRow}>
               <Feather name="log-in" size={16} color={colors.success} />
-              <Text style={styles.sessionTime}>{formatTime(item.checkIn)}</Text>
+              <Text style={styles.sessionTime}>Vào ca: {formatTime(item.checkIn)}</Text>
               <Feather name="log-out" size={16} color={colors.error} style={{ marginLeft: 16 }} />
-              <Text style={styles.sessionTime}>{formatTime(item.checkOut)}</Text>
+              <Text style={styles.sessionTime}>Tan ca: {formatTime(item.checkOut)}</Text>
               <Feather name="clock" size={16} color={colors.primary} style={{ marginLeft: 16 }} />
-              <Text style={styles.sessionTime}>{item.hoursWorked}</Text>
+              <Text style={styles.sessionTime}>Thời gian: {formatWorkHours(item.hoursWorked)}</Text>
             </View>
           </View>
         ))}
         {(!sessions || sessions.length === 0) && (
-          <Text style={styles.noSessionText}>Không có dữ liệu cho ngày này.</Text>
+          <Text style={styles.noSessionText}>Không có dữ liệu chấm công cho ngày này.</Text>
+        )}
+        {loading && (
+          <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -198,16 +215,25 @@ const styles = StyleSheet.create({
   sessionRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   sessionTime: {
     marginLeft: 4,
     fontSize: 14,
     color: '#666',
+    marginRight: 10,
   },
   noSessionText: {
     textAlign: 'center',
-    color: '#999',
-    marginTop: 32,
+    marginTop: 20,
     fontSize: 16,
+    color: '#666',
+  },
+  loadingText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: '#666',
+    fontStyle: 'italic',
   },
 })

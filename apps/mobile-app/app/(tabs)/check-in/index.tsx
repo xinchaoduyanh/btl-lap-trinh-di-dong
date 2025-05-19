@@ -23,7 +23,7 @@ export default function CheckInOutScreen() {
   const [user, setUser] = useState<UserData | null>(null)
   const { isCheckedIn, currentStatus, checkIn, checkOut, getCurrentStatus, loading, fetchHistory } = useCheckout()
   const [history, setHistory] = useState<HistoryItem[]>([])
-  const [elapsedTime, setElapsedTime] = useState("0h 0m 0s")
+  const [elapsedTime, setElapsedTime] = useState("0 giờ 0 phút 0 giây")
 
   useEffect(() => {
     const loadUser = async () => {
@@ -42,7 +42,7 @@ export default function CheckInOutScreen() {
     }
   }, [user?.id])
 
-  // Update elapsed time every second when checked in
+  // Cập nhật thời gian đã làm việc mỗi giây khi đã check-in
   useEffect(() => {
     let interval: number
     if (isCheckedIn && currentStatus?.session?.checkIn) {
@@ -55,7 +55,7 @@ export default function CheckInOutScreen() {
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
         const seconds = Math.floor((diff % (1000 * 60)) / 1000)
 
-        setElapsedTime(`${hours}h ${minutes}m ${seconds}s`)
+        setElapsedTime(`${hours} giờ ${minutes} phút ${seconds} giây`)
       }, 1000)
     }
     return () => clearInterval(interval)
@@ -72,7 +72,7 @@ export default function CheckInOutScreen() {
   }
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString("vi-VN", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -88,7 +88,7 @@ export default function CheckInOutScreen() {
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
 
-    return `${hours}h ${minutes}m`
+    return `${hours} giờ ${minutes} phút`
   }
 
   const handleCheckInOut = async () => {
@@ -98,21 +98,21 @@ export default function CheckInOutScreen() {
       await checkIn(user.id)
     } else {
       await checkOut(user.id)
-      // Refresh history after checkout
+      // Cập nhật lịch sử sau khi checkout
       loadHistory(user.id)
     }
   }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Attendance" onBackPress={() => router.replace('/')} />
+      <Header title="Chấm Công" onBackPress={() => router.replace('/')} />
 
       <ScrollView style={styles.content}>
         <View style={styles.currentTimeContainer}>
           <Feather name="clock" size={60} color={colors.primary} />
           <Text style={styles.currentDate}>{formatDate(new Date())}</Text>
           <Text style={[styles.currentTime, { color: colors.primary }]}>
-            {isCheckedIn ? elapsedTime : "0h 0m 0s"}
+            {isCheckedIn ? elapsedTime : "0 giờ 0 phút 0 giây"}
           </Text>
         </View>
 
@@ -120,13 +120,13 @@ export default function CheckInOutScreen() {
           <View style={styles.statusContainer}>
             <View style={[styles.statusIndicator, { backgroundColor: isCheckedIn ? colors.success : colors.error }]} />
             <Text style={styles.statusText}>
-              {isCheckedIn ? "Currently Working" : "Not Checked In"}
+              {isCheckedIn ? "Đang làm việc" : "Chưa vào ca"}
             </Text>
           </View>
 
           {isCheckedIn && currentStatus?.session?.checkIn && (
             <Text style={styles.checkInTimeText}>
-              Checked in at {formatTime(currentStatus.session.checkIn)}
+              Đã vào ca lúc {formatTime(currentStatus.session.checkIn)}
             </Text>
           )}
 
@@ -140,21 +140,29 @@ export default function CheckInOutScreen() {
             disabled={loading}
           >
             <Text style={styles.checkInOutButtonText}>
-              {loading ? "Loading..." : isCheckedIn ? "Check Out" : "Check In"}
+              {loading ? "Đang xử lý..." : isCheckedIn ? "Kết thúc ca" : "Bắt đầu ca"}
             </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.historyContainer}>
           <View style={styles.historyHeader}>
-            <Text style={styles.historyTitle}>Recent Sessions</Text>
+            <Text style={styles.historyTitle}>Lịch sử làm việc gần đây</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TouchableOpacity onPress={() => router.push('/(tabs)/check-in/session-detail')} style={styles.detailButton}>
-                <Text style={styles.detailButtonText}>Chi tiết</Text>
+                <Text style={styles.detailButtonText}>Xem chi tiết</Text>
               </TouchableOpacity>
               <Feather name="clock" size={24} color={colors.primary} style={{ marginLeft: 8 }} />
             </View>
           </View>
+
+          {history.length === 0 && !loading && (
+            <Text style={styles.noHistoryText}>Chưa có lịch sử làm việc.</Text>
+          )}
+
+          {loading && (
+            <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
+          )}
 
           {history.map((item, index) => (
             <View key={index} style={styles.historyItem}>
@@ -164,16 +172,16 @@ export default function CheckInOutScreen() {
               <View style={styles.historyDetails}>
                 <View style={styles.historyTimeContainer}>
                   <Feather name="log-in" size={16} color={colors.success} />
-                  <Text style={styles.historyTime}>{formatTime(item.checkIn)}</Text>
+                  <Text style={styles.historyTime}>Vào ca: {formatTime(item.checkIn)}</Text>
                 </View>
                 <View style={styles.historyTimeContainer}>
                   <Feather name="log-out" size={16} color={colors.error} />
-                  <Text style={styles.historyTime}>{formatTime(item.checkOut)}</Text>
+                  <Text style={styles.historyTime}>Tan ca: {formatTime(item.checkOut)}</Text>
                 </View>
                 <View style={styles.historyTimeContainer}>
                   <Feather name="clock" size={16} color={colors.primary} />
                   <Text style={styles.historyTime}>
-                    {calculateDuration(item.checkIn, item.checkOut)}
+                    Thời gian: {calculateDuration(item.checkIn, item.checkOut)}
                   </Text>
                 </View>
               </View>
@@ -203,8 +211,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   currentTime: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: "bold",
+    textAlign: "center",
   },
   checkInOutContainer: {
     backgroundColor: "white",
@@ -221,7 +230,7 @@ const styles = StyleSheet.create({
   statusContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   statusIndicator: {
     width: 12,
@@ -232,7 +241,6 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#333",
   },
   checkInTimeText: {
     fontSize: 14,
@@ -241,17 +249,17 @@ const styles = StyleSheet.create({
   },
   checkInOutButton: {
     width: "100%",
-    padding: 16,
+    paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
-  },
-  disabledButton: {
-    opacity: 0.7,
   },
   checkInOutButtonText: {
     color: "white",
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "600",
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
   historyContainer: {
     backgroundColor: "white",
@@ -271,42 +279,52 @@ const styles = StyleSheet.create({
   },
   historyTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: "600",
+  },
+  detailButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 16,
+  },
+  detailButtonText: {
+    fontSize: 12,
+    color: "#666",
   },
   historyItem: {
+    marginBottom: 16,
+    paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    paddingVertical: 12,
+    borderBottomColor: "#f0f0f0",
   },
   historyDate: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "500",
     marginBottom: 8,
-    color: "#333",
   },
   historyDetails: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: "column",
+    gap: 8,
   },
   historyTimeContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
   historyTime: {
-    marginLeft: 4,
+    marginLeft: 8,
     fontSize: 14,
     color: "#666",
   },
-  detailButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 6,
+  noHistoryText: {
+    textAlign: "center",
+    padding: 20,
+    color: "#666",
+    fontStyle: "italic",
   },
-  detailButtonText: {
-    color: '#333',
-    fontWeight: 'bold',
-    fontSize: 14,
+  loadingText: {
+    textAlign: "center",
+    padding: 20,
+    color: "#666",
+    fontStyle: "italic",
   },
 })
