@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && npm run copy-templates",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -17,18 +17,22 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "copy-templates": "xcopy src\\email\\templates dist\\email\\templates /E /I /Y"
   },
   "dependencies": {
     "@anatine/zod-nestjs": "^2.0.12",
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/client": "^6.7.0",
     "backend": "file:",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
     "nestjs-zod": "^4.3.1",
     "reflect-metadata": "^0.2.2",
+    "resend": "^4.5.1",
     "rxjs": "^7.8.1",
     "zod": "^3.24.3"
   },

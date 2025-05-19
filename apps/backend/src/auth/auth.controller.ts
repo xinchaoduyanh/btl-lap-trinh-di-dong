@@ -8,12 +8,22 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() dto: RegisterDto) {
+  async register(@Body() dto: { email: string; code: string; name: string; password: string }) {
     return this.authService.register(dto)
   }
 
   @Post('login')
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto)
+  }
+
+  @Post('send-otp')
+  async sendOtp(@Body('email') email: string) {
+    return this.authService.createOtp(email)
+  }
+
+  @Post('verify-otp')
+  async verifyOtp(@Body() body: { email: string; code: string }) {
+    return this.authService.verifyOtp(body.email, body.code)
   }
 }
