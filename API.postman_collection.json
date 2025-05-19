@@ -1,0 +1,1639 @@
+{
+	"info": {
+		"_postman_id": "9bf010c3-fc2d-4694-9325-68f3315370fd",
+		"name": "BTL_MOBILE",
+		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" width=\"2162\" height=\"1530\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26378705",
+		"_collection_link": "https://www.postman.com/winter-comet-250162/workspace/btlmobile/collection/26378705-9bf010c3-fc2d-4694-9325-68f3315370fd?action=share&source=collection_link&creator=26378705"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "regsiter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"kaitohaidancc@gmail.com\",\r\n  \"code\": \"127611\",\r\n  \"name\": \"dangngu\",\r\n  \"password\": \"1\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"da\",\n  \"password\": \"1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "New Request",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"kaitohaidancc@gmail.com\"\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/send-otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"send-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Request",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"duyanh19122k3@gmail.com\",\r\n  \"code\": \"268642\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/verify-otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Checkout",
+			"item": [
+				{
+					"name": "checkIn",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employeeId\": \"f1de7e02-1eea-44c9-8cb2-ddd4c5074a8e\",\r\n    \"qrCode\": \"04913212-be59-4074-ab95-53f03e69d62a\"  \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/checkout/check-in",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"checkout",
+								"check-in"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "checkOut",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employeeId\": \"d8d55765-b667-4e0b-ab8b-0606faa52012\"  // UUID của nhân viên\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/checkout/check-out",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"checkout",
+								"check-out"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "checkOutStatus",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/checkout/status/d8d55765-b667-4e0b-ab8b-0606faa52012",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"checkout",
+								"status",
+								"d8d55765-b667-4e0b-ab8b-0606faa52012"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "checkOutHistory",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/checkout/history/d8d55765-b667-4e0b-ab8b-0606faa52012?date=2025-05-08",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"checkout",
+								"history",
+								"d8d55765-b667-4e0b-ab8b-0606faa52012"
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "2025-05-08"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Qr code",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"validUntil\": \"2025-06-20T10:00:00Z\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/checkout/qr-code",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"checkout",
+								"qr-code"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Request Copy",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/checkout/qr-code/d58f9d6c-bd0a-428b-8194-327cb40e07c9/toggle",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"checkout",
+								"qr-code",
+								"d58f9d6c-bd0a-428b-8194-327cb40e07c9",
+								"toggle"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get List QR code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/checkout/qr-code",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"checkout",
+								"qr-code"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete QR code",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/checkout/qr-code/dc582e1a-7599-4dcd-8ab8-e97f0c1f6ad2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"checkout",
+								"qr-code",
+								"dc582e1a-7599-4dcd-8ab8-e97f0c1f6ad2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Table",
+			"item": [
+				{
+					"name": "Get List Tables",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/tables",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"tables"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Table By ID",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/tables/0f6bd542-8ca6-4922-9e2c-e0c52bf86764",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"tables",
+								"0f6bd542-8ca6-4922-9e2c-e0c52bf86764"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Table",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"number\": 5\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/tables",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"tables"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Table",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/tables/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"tables",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Table",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tables/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"tables",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Food",
+			"item": [
+				{
+					"name": "Get List Foods",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/foods",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"foods"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Food By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/foods/0f2786b6-32e4-4153-bade-3e13d5527ae6",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"foods",
+								"0f2786b6-32e4-4153-bade-3e13d5527ae6"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Food",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Ô long trà đào 2\",\r\n    \"price\": 50000,\r\n    \"category\": \"BEVERAGE\",\r\n    \"isAvailable\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/foods",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"foods"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Food",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"price\": 55000,\r\n    \"isAvailable\": false\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/foods/673dd887-a6bf-4061-9352-a51f9f7c21d8",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"foods",
+								"673dd887-a6bf-4061-9352-a51f9f7c21d8"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Food By Id",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/foods/673dd887-a6bf-4061-9352-a51f9f7c21d8",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"foods",
+								"673dd887-a6bf-4061-9352-a51f9f7c21d8"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Order",
+			"item": [
+				{
+					"name": "Get List Orders",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/orders",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order By Id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/orders/f73ec1d7-0b97-4a7d-ae8c-667354c6114a",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders",
+								"f73ec1d7-0b97-4a7d-ae8c-667354c6114a"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"tableId\": \"f2ffea7d-6af7-4552-b29e-b288aef19a22\",\r\n  \"employeeId\": \"f1de7e02-1eea-44c9-8cb2-ddd4c5074a8e\",\r\n  \"timeOut\": null\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/orders",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"status\": \"COMPLETED\",\r\n  \"timeOut\": \"2024-05-18T19:00:00.000Z\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/orders/93f9d06a-229e-4a9e-a858-d4e9d717a8b1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders",
+								"93f9d06a-229e-4a9e-a858-d4e9d717a8b1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Order By Id",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/orders/673dd887-a6bf-4061-9352-a51f9f7c21d8",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders",
+								"673dd887-a6bf-4061-9352-a51f9f7c21d8"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Request",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/orders/preparing",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders",
+								"preparing"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "OrderItem",
+			"item": [
+				{
+					"name": "Get List OrderItem",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/order-items",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"order-items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get OrderItem By Id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/order-items/762d2a7d-b064-4d5a-b199-21f2cf5b4945",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"order-items",
+								"762d2a7d-b064-4d5a-b199-21f2cf5b4945"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create OrderItem",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"orderId\": \"f73ec1d7-0b97-4a7d-ae8c-667354c6114a\",\r\n  \"foodId\": \"a3c031b8-6d76-45d1-b6cc-9203b680ab18\",\r\n  \"quantity\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/order-items",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"order-items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update OrderItem",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"quantity\": 5\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/order-items/762d2a7d-b064-4d5a-b199-21f2cf5b4945",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"order-items",
+								"762d2a7d-b064-4d5a-b199-21f2cf5b4945"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete OrderItem By Id",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/foods/673dd887-a6bf-4061-9352-a51f9f7c21d8",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"foods",
+								"673dd887-a6bf-4061-9352-a51f9f7c21d8"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Employee",
+			"item": [
+				{
+					"name": "Get List employees",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/employees",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"employees"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get employees by id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/employees/3a1f56c2-9d6e-4c8b-9a1b-4a5a1d2f1e01",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"employees",
+								"3a1f56c2-9d6e-4c8b-9a1b-4a5a1d2f1e01"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create employees",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"test@example.com\",\r\n  \"password\": \"password123\",\r\n  \"name\": \"Test Employee\",\r\n  \"role\": \"WAITER\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/employees",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"employees"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update employees",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Updated Name\",\r\n  \"isActive\": true\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/employees/3a1f56c2-9d6e-4c8b-9a1b-4a5a1d2f1e01",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"employees",
+								"3a1f56c2-9d6e-4c8b-9a1b-4a5a1d2f1e01"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete employees By id",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/employees/3a1f56c2-9d6e-4c8b-9a1b-4a5a1d2f1e01",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"employees",
+								"3a1f56c2-9d6e-4c8b-9a1b-4a5a1d2f1e01"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Notification",
+			"item": [
+				{
+					"name": "Get List Notification",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notifications",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notifications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Notifications",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"cảnh tỉnh\",\r\n    \"message\": \"xe tui đau lắm lun\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/notifications",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notifications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notifications By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notifications/662fece1-7673-4dde-9d17-c7fb75a25347",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notifications",
+								"662fece1-7673-4dde-9d17-c7fb75a25347"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Notifications",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"fixed\",\r\n    \"message\" : \"fixed\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/notifications/cec0fb58-e599-4af1-89aa-411b5c1b5242",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notifications",
+								"cec0fb58-e599-4af1-89aa-411b5c1b5242"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Notifications",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notifications/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notifications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "NotificationAssignment",
+			"item": [
+				{
+					"name": "Create Notification Assignment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"notificationId\" : \"5564a2ce-89fa-42a0-8f35-26cb11477354\",\r\n    \"employeeId\" : \"fcf37c89-b1c8-479e-9418-6ff57cc0825a\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/notification-assignments",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notification-assignments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get List Notification Assignment",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"notificationId\" : \"\",\r\n    \"employeeId\" : \"\"\r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/notification-assignments",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notification-assignments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notification Asignment By Id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"notificationId\" : \"\",\r\n    \"employeeId\" : \"f1de7e02-1eea-44c9-8cb2-ddd4c5074a8e\"\r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/notification-assignments/aa7be043-53f0-491b-b82e-4d971c87182d",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notification-assignments",
+								"aa7be043-53f0-491b-b82e-4d971c87182d"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notification Assignment by Notification Id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"notificationId\" : \"\",\r\n    \"employeeId\" : \"f1de7e02-1eea-44c9-8cb2-ddd4c5074a8e\"\r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/notification-assignments/notification/662fece1-7673-4dde-9d17-c7fb75a25347",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notification-assignments",
+								"notification",
+								"662fece1-7673-4dde-9d17-c7fb75a25347"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get notification asignment by employee id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notification-assignments/employee/fcf37c89-b1c8-479e-9418-6ff57cc0825a/all",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notification-assignments",
+								"employee",
+								"fcf37c89-b1c8-479e-9418-6ff57cc0825a",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get count By Employee",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"notificationId\": \"cec0fb58-e599-4af1-89aa-411b5c1b5242\",\r\n    \"employeeId\": \"f1de7e02-1eea-44c9-8cb2-ddd4c5074a8e\"\r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/notification-assignments/employee/fcf37c89-b1c8-479e-9418-6ff57cc0825a/unread-count",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notification-assignments",
+								"employee",
+								"fcf37c89-b1c8-479e-9418-6ff57cc0825a",
+								"unread-count"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Read By Id",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notification-assignments/6f64da3b-9344-473e-93f7-dd46c01e8da0/read",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notification-assignments",
+								"6f64da3b-9344-473e-93f7-dd46c01e8da0",
+								"read"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Notification Assignment",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"isRead\": false,\r\n    \"isDelete\": false\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/notification-assignments/6f64da3b-9344-473e-93f7-dd46c01e8da0",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notification-assignments",
+								"6f64da3b-9344-473e-93f7-dd46c01e8da0"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Notification assignment",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notification-assignments/020a2a47-0794-4988-96a7-162fd3f3adee",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notification-assignments",
+								"020a2a47-0794-4988-96a7-162fd3f3adee"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Slogan",
+			"item": [
+				{
+					"name": "Get List Slogan",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/slogans",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"slogans"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Slogan",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"content\": \"hello world\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/slogans",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"slogans"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Slogan By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/slogans/118b6456-6f31-4117-bd95-cc64da54236d",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"slogans",
+								"118b6456-6f31-4117-bd95-cc64da54236d"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Slogan",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"content\" : \"fixed\",\r\n    \"isVisible\" : false\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/slogans/118b6456-6f31-4117-bd95-cc64da54236d",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"slogans",
+								"118b6456-6f31-4117-bd95-cc64da54236d"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Slogan",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/slogans/118b6456-6f31-4117-bd95-cc64da54236d",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"slogans",
+								"118b6456-6f31-4117-bd95-cc64da54236d"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Visible Slogan",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/slogans/visible",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"slogans",
+								"visible"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Update data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Successful PUT request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Add your name in the body\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/info?id=1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"info"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "1"
+						}
+					]
+				},
+				"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+			},
+			"response": []
+		},
+		{
+			"name": "Delete data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Successful DELETE request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/info?id=1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"info"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "1"
+						}
+					]
+				},
+				"description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "https://postman-rest-api-learner.glitch.me/"
+		}
+	]
+}
