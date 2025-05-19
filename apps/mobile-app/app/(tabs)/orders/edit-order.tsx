@@ -83,10 +83,10 @@ export default function EditOrderScreen() {
 
   // Remove item
   const handleRemoveItem = useCallback((itemId: string) => {
-    Alert.alert("Remove Item", "Are you sure you want to remove this item?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert("Xóa món", "Bạn có chắc muốn xóa món này không?", [
+      { text: "Hủy", style: "cancel" },
       {
-        text: "Remove",
+        text: "Xóa",
         style: "destructive",
         onPress: () => {
           setEditedItems((prev) => prev.filter((item) => item.id !== itemId))
@@ -117,11 +117,11 @@ export default function EditOrderScreen() {
       for (const item of deletedItems) {
         await deleteOrderItem(item.id)
       }
-      Alert.alert("Success", "Order updated successfully")
+      Alert.alert("Thành công", "Đơn hàng đã được cập nhật thành công")
       router.replace('/(tabs)/orders')
     } catch (error) {
-      console.error("Error saving changes:", error)
-      Alert.alert("Error", "Failed to save changes")
+      console.error("Lỗi khi lưu thay đổi:", error)
+      Alert.alert("Lỗi", "Không thể lưu thay đổi")
     } finally {
       setSaving(false)
     }
@@ -130,10 +130,10 @@ export default function EditOrderScreen() {
   // Cancel changes
   const handleCancelChanges = useCallback(() => {
     if (hasChanges) {
-      Alert.alert("Discard Changes", "Are you sure you want to discard your changes?", [
-        { text: "Keep Editing", style: "cancel" },
+      Alert.alert("Hủy thay đổi", "Bạn có chắc muốn hủy các thay đổi?", [
+        { text: "Tiếp tục chỉnh sửa", style: "cancel" },
         {
-          text: "Discard",
+          text: "Hủy",
           style: "destructive",
           onPress: () => router.replace('/(tabs)/orders'),
         },
@@ -156,7 +156,7 @@ export default function EditOrderScreen() {
         <StatusBar barStyle="light-content" backgroundColor="#D02C1A" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D02C1A" />
-          <Text style={styles.loadingText}>Loading order details...</Text>
+          <Text style={styles.loadingText}>Đang tải thông tin đơn hàng...</Text>
         </View>
       </SafeAreaView>
     )
@@ -170,7 +170,7 @@ export default function EditOrderScreen() {
         <TouchableOpacity style={styles.backButton} onPress={handleCancelChanges}>
           <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Order</Text>
+        <Text style={styles.headerTitle}>Chỉnh sửa đơn hàng</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -178,7 +178,7 @@ export default function EditOrderScreen() {
         <View style={styles.orderInfoRow}>
           <View style={styles.orderInfoItem}>
             <Feather name="coffee" size={20} color="#D02C1A" />
-            <Text style={styles.orderInfoText}>Table {order.tableNumber}</Text>
+            <Text style={styles.orderInfoText}>Bàn {order.tableNumber}</Text>
           </View>
           <View style={styles.orderInfoItem}>
             <Feather name="clock" size={20} color="#D02C1A" />
@@ -190,7 +190,7 @@ export default function EditOrderScreen() {
       </View>
 
       <View style={styles.contentContainer}>
-        <Text style={styles.sectionTitle}>Order Items</Text>
+        <Text style={styles.sectionTitle}>Các món đã đặt</Text>
 
         <ScrollView style={styles.itemsList}>
           {editedItems.map((item) => (
@@ -207,8 +207,8 @@ export default function EditOrderScreen() {
 
               <View style={styles.itemDetails}>
                 <View style={styles.priceContainer}>
-                  <Text style={styles.priceLabel}>Price:</Text>
-                  <Text style={styles.priceValue}>${item.food.price.toFixed(2)}</Text>
+                  <Text style={styles.priceLabel}>Giá:</Text>
+                  <Text style={styles.priceValue}>{item.food.price.toFixed(2)}đ</Text>
                 </View>
 
                 <View style={styles.quantityContainer}>
@@ -230,8 +230,8 @@ export default function EditOrderScreen() {
                 </View>
 
                 <View style={styles.subtotalContainer}>
-                  <Text style={styles.subtotalLabel}>Subtotal:</Text>
-                  <Text style={styles.subtotalValue}>${(item.food.price * item.quantity).toFixed(2)}</Text>
+                  <Text style={styles.subtotalLabel}>Thành tiền:</Text>
+                  <Text style={styles.subtotalValue}>{(item.food.price * item.quantity).toFixed(2)}đ</Text>
                 </View>
 
                 <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveItem(item.id)}>
@@ -243,14 +243,14 @@ export default function EditOrderScreen() {
         </ScrollView>
 
         <View style={styles.totalContainer}>
-          <Text style={styles.totalLabel}>Total Amount:</Text>
-          <Text style={styles.totalValue}>${calculateTotal().toFixed(2)}</Text>
+          <Text style={styles.totalLabel}>Tổng tiền:</Text>
+          <Text style={styles.totalValue}>{calculateTotal().toFixed(2)}đ</Text>
         </View>
       </View>
 
       <View style={styles.footer}>
         <TouchableOpacity style={[styles.footerButton, styles.cancelButton]} onPress={handleCancelChanges}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+          <Text style={styles.cancelButtonText}>Hủy</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -261,7 +261,7 @@ export default function EditOrderScreen() {
           {saving ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.saveButtonText}>Update Order</Text>
+            <Text style={styles.saveButtonText}>Cập nhật đơn hàng</Text>
           )}
         </TouchableOpacity>
       </View>

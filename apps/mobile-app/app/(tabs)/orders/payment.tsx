@@ -36,7 +36,7 @@ const MOCK_ORDER = {
       status: "PENDING",
       food: {
         id: "f1",
-        name: "Spicy Sichuan Hot Pot",
+        name: "Lẩu Tứ Xuyên cay",
         price: 25.99,
         category: "MAIN_COURSE",
       },
@@ -49,7 +49,7 @@ const MOCK_ORDER = {
       status: "PENDING",
       food: {
         id: "f2",
-        name: "Beef Slices",
+        name: "Thịt bò thái lát",
         price: 12.99,
         category: "MAIN_COURSE",
       },
@@ -62,7 +62,7 @@ const MOCK_ORDER = {
       status: "PREPARING",
       food: {
         id: "f3",
-        name: "Tofu",
+        name: "Đậu phụ",
         price: 5.99,
         category: "SIDE_DISH",
       },
@@ -75,7 +75,7 @@ const MOCK_ORDER = {
       status: "READY",
       food: {
         id: "f4",
-        name: "Vegetables",
+        name: "Rau các loại",
         price: 7.99,
         category: "SIDE_DISH",
       },
@@ -85,9 +85,9 @@ const MOCK_ORDER = {
 
 // Payment methods
 const PAYMENT_METHODS = [
-  { id: "cash", name: "Cash", icon: "dollar-sign" },
-  { id: "card", name: "Credit Card", icon: "credit-card" },
-  { id: "qr", name: "QR Code", icon: "smartphone" },
+  { id: "cash", name: "Tiền mặt", icon: "dollar-sign" },
+  { id: "card", name: "Thẻ tín dụng", icon: "credit-card" },
+  { id: "qr", name: "Mã QR", icon: "smartphone" },
 ]
 
 export default function PaymentScreen() {
@@ -116,8 +116,8 @@ export default function PaymentScreen() {
         // For now, we'll use mock data
         setOrder(MOCK_ORDER)
       } catch (error) {
-        console.error("Error fetching order:", error)
-        Alert.alert("Error", "Failed to load order details")
+        console.error("Lỗi khi tải đơn hàng:", error)
+        Alert.alert("Lỗi", "Không thể tải thông tin đơn hàng")
       } finally {
         setLoading(false)
       }
@@ -163,7 +163,7 @@ export default function PaymentScreen() {
     // Simulate payment processing
     setTimeout(() => {
       setProcessing(false)
-      Alert.alert("Payment Successful", `Payment of $${calculateTotal().toFixed(2)} processed successfully.`, [
+      Alert.alert("Thanh toán thành công", `Thanh toán ${calculateTotal().toFixed(2)}đ đã được xử lý thành công.`, [
         {
           text: "OK",
           onPress: () => router.back(),
@@ -183,7 +183,7 @@ export default function PaymentScreen() {
         <StatusBar barStyle="light-content" backgroundColor="#D02C1A" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D02C1A" />
-          <Text style={styles.loadingText}>Loading payment details...</Text>
+          <Text style={styles.loadingText}>Đang tải thông tin thanh toán...</Text>
         </View>
       </SafeAreaView>
     )
@@ -197,7 +197,7 @@ export default function PaymentScreen() {
         <TouchableOpacity style={styles.backButton} onPress={handleCancel}>
           <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payment</Text>
+        <Text style={styles.headerTitle}>Thanh toán</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -205,152 +205,121 @@ export default function PaymentScreen() {
         <View style={styles.orderInfoCard}>
           <View style={styles.orderInfoRow}>
             <View style={styles.orderInfoItem}>
-              <Feather name="coffee" size={20} color="#D02C1A" />
-              <Text style={styles.orderInfoText}>Table {order.tableNumber}</Text>
+              <Feather name="coffee" size={16} color="#D02C1A" />
+              <Text style={styles.orderInfoText}>Bàn {order.tableNumber}</Text>
             </View>
             <View style={styles.orderInfoItem}>
-              <Feather name="clock" size={20} color="#D02C1A" />
+              <Feather name="clock" size={16} color="#D02C1A" />
               <Text style={styles.orderInfoText}>
                 {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </Text>
             </View>
           </View>
-        </View>
 
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
+          <View style={styles.divider} />
 
-          <View style={styles.orderSummaryCard}>
-            {order.orderItems.map((item: any) => (
-              <View key={item.id} style={styles.orderItem}>
-                <View style={styles.orderItemDetails}>
-                  <Text style={styles.orderItemName}>{item.food.name}</Text>
-                  <Text style={styles.orderItemQuantity}>x{item.quantity}</Text>
-                </View>
-                <Text style={styles.orderItemPrice}>${(item.food.price * item.quantity).toFixed(2)}</Text>
+          <Text style={styles.sectionTitle}>Các món đã đặt</Text>
+          {order.orderItems.map((item: any) => (
+            <View key={item.id} style={styles.orderItem}>
+              <View style={styles.orderItemInfo}>
+                <Text style={styles.orderItemName}>{item.food.name}</Text>
+                <Text style={styles.orderItemQuantity}>x{item.quantity}</Text>
               </View>
-            ))}
-
-            <View style={styles.divider} />
-
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>${calculateSubtotal().toFixed(2)}</Text>
+              <Text style={styles.orderItemPrice}>{(item.food.price * item.quantity).toFixed(2)}đ</Text>
             </View>
+          ))}
 
+          <View style={styles.divider} />
+
+          <View style={styles.summarySection}>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tax (10%)</Text>
-              <Text style={styles.summaryValue}>${calculateTax().toFixed(2)}</Text>
+              <Text style={styles.summaryLabel}>Tạm tính</Text>
+              <Text style={styles.summaryValue}>{calculateSubtotal().toFixed(2)}đ</Text>
             </View>
-
-            <View style={styles.discountContainer}>
-              <View style={styles.discountLabelContainer}>
-                <Text style={styles.summaryLabel}>Discount</Text>
-              </View>
-              <View style={styles.discountInputContainer}>
-                <Text style={styles.currencySymbol}>$</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Thuế (10%)</Text>
+              <Text style={styles.summaryValue}>{calculateTax().toFixed(2)}đ</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Giảm giá</Text>
+              <View style={styles.inputContainer}>
                 <TextInput
-                  style={styles.discountInput}
+                  style={styles.input}
                   value={discount}
                   onChangeText={setDiscount}
                   keyboardType="numeric"
                   placeholder="0.00"
                 />
+                <Text style={styles.inputSuffix}>đ</Text>
               </View>
             </View>
-
-            <View style={styles.tipContainer}>
-              <View style={styles.tipLabelContainer}>
-                <Text style={styles.summaryLabel}>Tip</Text>
-              </View>
-              <View style={styles.tipInputContainer}>
-                <Text style={styles.currencySymbol}>$</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Tiền tip</Text>
+              <View style={styles.inputContainer}>
                 <TextInput
-                  style={styles.tipInput}
+                  style={styles.input}
                   value={tip}
                   onChangeText={setTip}
                   keyboardType="numeric"
                   placeholder="0.00"
                 />
+                <Text style={styles.inputSuffix}>đ</Text>
               </View>
             </View>
-
             <View style={styles.divider} />
-
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>${calculateTotal().toFixed(2)}</Text>
+              <Text style={styles.totalLabel}>Tổng cộng</Text>
+              <Text style={styles.totalValue}>{calculateTotal().toFixed(2)}đ</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Payment Method</Text>
-
-          <View style={styles.paymentMethodsContainer}>
+        <View style={styles.paymentMethodsCard}>
+          <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+          <View style={styles.paymentMethods}>
             {PAYMENT_METHODS.map((method) => (
               <TouchableOpacity
                 key={method.id}
-                style={[styles.paymentMethodCard, selectedPaymentMethod === method.id && styles.selectedPaymentMethod]}
+                style={[
+                  styles.paymentMethodButton,
+                  selectedPaymentMethod === method.id && styles.selectedPaymentMethod,
+                ]}
                 onPress={() => setSelectedPaymentMethod(method.id)}
               >
                 <Feather
                   name={method.icon as any}
                   size={24}
-                  color={selectedPaymentMethod === method.id ? "#D02C1A" : "#666"}
+                  color={selectedPaymentMethod === method.id ? "#fff" : "#333"}
                 />
                 <Text
                   style={[
-                    styles.paymentMethodName,
+                    styles.paymentMethodText,
                     selectedPaymentMethod === method.id && styles.selectedPaymentMethodText,
                   ]}
                 >
                   {method.name}
                 </Text>
-                {selectedPaymentMethod === method.id && (
-                  <View style={styles.selectedCheckmark}>
-                    <Feather name="check" size={16} color="#fff" />
-                  </View>
-                )}
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {selectedPaymentMethod === "qr" && (
-          <View style={styles.qrCodeContainer}>
-            <Image
-              source={{
-                uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/QR_code_for_mobile_English_Wikipedia.svg/1200px-QR_code_for_mobile_English_Wikipedia.svg.png",
-              }}
-              style={styles.qrCodeImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.qrCodeText}>Scan this QR code to pay</Text>
-          </View>
-        )}
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <TouchableOpacity style={[styles.footerButton, styles.cancelButton]} onPress={handleCancel}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
-          style={[styles.footerButton, styles.payButton]}
+          style={[styles.processButton, processing && styles.processingButton]}
           onPress={handleProcessPayment}
           disabled={processing}
         >
           {processing ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <>
-              <Feather name="check-circle" size={20} color="#fff" style={styles.payButtonIcon} />
-              <Text style={styles.payButtonText}>Process Payment</Text>
-            </>
+            <Text style={styles.processButtonText}>Xác nhận thanh toán</Text>
           )}
         </TouchableOpacity>
-      </View>
+
+        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} disabled={processing}>
+          <Text style={styles.cancelButtonText}>Hủy</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   )
 }
@@ -358,7 +327,6 @@ export default function PaymentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f8f8",
   },
   loadingContainer: {
     flex: 1,
@@ -371,18 +339,16 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   header: {
-    backgroundColor: "#D02C1A",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    backgroundColor: "#D02C1A",
     paddingVertical: 16,
     paddingHorizontal: 16,
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -409,6 +375,7 @@ const styles = StyleSheet.create({
   orderInfoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: 12,
   },
   orderInfoItem: {
     flexDirection: "row",
@@ -416,49 +383,7 @@ const styles = StyleSheet.create({
   },
   orderInfoText: {
     marginLeft: 8,
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
-  },
-  sectionContainer: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 12,
-  },
-  orderSummaryCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  orderItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  orderItemDetails: {
-    flex: 1,
-  },
-  orderItemName: {
-    fontSize: 16,
-    color: "#333",
-  },
-  orderItemQuantity: {
     fontSize: 14,
-    color: "#666",
-    marginTop: 2,
-  },
-  orderItemPrice: {
-    fontSize: 16,
-    fontWeight: "500",
     color: "#333",
   },
   divider: {
@@ -466,187 +391,153 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
     marginVertical: 12,
   },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#333",
+  },
+  orderItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  orderItemInfo: {
+    flex: 1,
+  },
+  orderItemName: {
+    fontSize: 14,
+    color: "#333",
+  },
+  orderItemQuantity: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
+  },
+  orderItemPrice: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
+  },
+  summarySection: {
+    marginTop: 8,
+  },
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   summaryLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#666",
   },
   summaryValue: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#333",
-    fontWeight: "500",
   },
-  discountContainer: {
+  inputContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    height: 36,
   },
-  discountLabelContainer: {
+  input: {
     flex: 1,
+    height: "100%",
+    fontSize: 14,
+    textAlign: "right",
   },
-  discountInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f8f8f8",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    width: 120,
-  },
-  currencySymbol: {
-    fontSize: 16,
+  inputSuffix: {
+    marginLeft: 4,
+    fontSize: 14,
     color: "#666",
-    marginRight: 4,
-  },
-  discountInput: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-    textAlign: "right",
-  },
-  tipContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  tipLabelContainer: {
-    flex: 1,
-  },
-  tipInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f8f8f8",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    width: 120,
-  },
-  tipInput: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-    textAlign: "right",
   },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 4,
   },
   totalLabel: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#333",
   },
   totalValue: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "bold",
     color: "#D02C1A",
   },
-  paymentMethodsContainer: {
+  paymentMethodsCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  paymentMethods: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  paymentMethodCard: {
+  paymentMethodButton: {
     flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 4,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    position: "relative",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    marginHorizontal: 4,
   },
   selectedPaymentMethod: {
-    borderWidth: 2,
+    backgroundColor: "#D02C1A",
     borderColor: "#D02C1A",
   },
-  paymentMethodName: {
+  paymentMethodText: {
     marginTop: 8,
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
+    fontSize: 12,
+    color: "#333",
   },
   selectedPaymentMethodText: {
-    color: "#D02C1A",
-    fontWeight: "bold",
+    color: "#fff",
   },
-  selectedCheckmark: {
-    position: "absolute",
-    top: -8,
-    right: -8,
+  processButton: {
     backgroundColor: "#D02C1A",
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    borderRadius: 8,
+    paddingVertical: 16,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
+    marginBottom: 12,
   },
-  qrCodeContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    alignItems: "center",
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  processingButton: {
+    opacity: 0.7,
   },
-  qrCodeImage: {
-    width: 200,
-    height: 200,
-    marginBottom: 16,
-  },
-  qrCodeText: {
+  processButtonText: {
+    color: "#fff",
     fontSize: 16,
-    color: "#666",
-  },
-  footer: {
-    flexDirection: "row",
-    padding: 16,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-  },
-  footerButton: {
-    flex: 1,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 8,
+    fontWeight: "bold",
   },
   cancelButton: {
-    backgroundColor: "#607D8B",
+    borderRadius: 8,
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#D02C1A",
   },
   cancelButtonText: {
-    color: "#fff",
+    color: "#D02C1A",
     fontSize: 16,
-    fontWeight: "bold",
-  },
-  payButton: {
-    backgroundColor: "#D02C1A",
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  payButtonIcon: {
-    marginRight: 8,
-  },
-  payButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
 })

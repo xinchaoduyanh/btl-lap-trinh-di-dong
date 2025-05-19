@@ -33,13 +33,13 @@ import type { Table, Food, FoodCategory, OrderItemStatus,  CreateOrderRequest } 
 
 // Food categories based on your schema
 const FOOD_CATEGORIES = [
-  { id: "cat1", name: "MAIN_COURSE", icon: "disc", label: "Main Course" },
-  { id: "cat2", name: "APPETIZER", icon: "coffee", label: "Appetizer" },
-  { id: "cat3", name: "DESSERT", icon: "heart", label: "Dessert" },
-  { id: "cat4", name: "BEVERAGE", icon: "coffee", label: "Beverage" },
-  { id: "cat5", name: "SOUP", icon: "thermometer", label: "Soup" },
+  { id: "cat1", name: "MAIN_COURSE", icon: "disc", label: "Món chính" },
+  { id: "cat2", name: "APPETIZER", icon: "coffee", label: "Khai vị" },
+  { id: "cat3", name: "DESSERT", icon: "heart", label: "Tráng miệng" },
+  { id: "cat4", name: "BEVERAGE", icon: "coffee", label: "Đồ uống" },
+  { id: "cat5", name: "SOUP", icon: "thermometer", label: "Súp" },
   { id: "cat6", name: "SALAD", icon: "feather", label: "Salad" },
-  { id: "cat7", name: "SIDE_DISH", icon: "square", label: "Side Dish" },
+  { id: "cat7", name: "SIDE_DISH", icon: "square", label: "Món phụ" },
 ]
 
 interface SelectedItem extends Food {
@@ -108,7 +108,7 @@ export default function AddOrderScreen() {
 
   const handleItemPress = useCallback((item: Food) => {
     if (!tableNumber) {
-      Alert.alert("Select Table", "Please select a table before adding items")
+      Alert.alert("Chọn bàn", "Vui lòng chọn bàn trước khi thêm món")
       return
     }
     setCurrentItem({ ...item, image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg" })
@@ -121,7 +121,7 @@ export default function AddOrderScreen() {
 
     const parsedQuantity = Number.parseInt(quantity)
     if (parsedQuantity < 1) {
-      setError("Quantity must be at least 1")
+      setError("Số lượng phải ít nhất là 1")
       return
     }
 
@@ -175,7 +175,7 @@ export default function AddOrderScreen() {
   const updateItemQuantity = useCallback(
     (itemId: string, newQuantity: number) => {
       if (newQuantity < 1) {
-        setError("Quantity must be at least 1")
+        setError("Số lượng phải ít nhất là 1")
         return
       }
 
@@ -195,11 +195,11 @@ export default function AddOrderScreen() {
 
   const handlePlaceOrder = useCallback(async () => {
     if (!selectedOrderId) {
-      setError("Please select a table with an existing order")
+      setError("Vui lòng chọn bàn có đơn hàng hiện tại")
       return
     }
     if (selectedItems.length === 0) {
-      setError("Please add at least one item")
+      setError("Vui lòng thêm ít nhất một món")
       return
     }
 
@@ -230,7 +230,7 @@ export default function AddOrderScreen() {
         setSelectedOrderId(null)
       }, 2000)
     } catch (error: any) {
-      setError(error.message || "Failed to add items")
+      setError(error.message || "Không thể thêm món")
     } finally {
       setIsLoading(false)
     }
@@ -251,7 +251,7 @@ export default function AddOrderScreen() {
       <StatusBar barStyle="light-content" backgroundColor="#D02C1A" />
 
       <Header
-        title="Add New Order"
+        title="Thêm đơn hàng mới"
         onBackPress={() => router.push('/(tabs)/orders')}
         rightIcon={selectedItems.length > 0 ? "shopping-cart" : undefined}
         onRightPress={selectedItems.length > 0 ? () => setOrderSummaryVisible(true) : undefined}
@@ -260,7 +260,7 @@ export default function AddOrderScreen() {
       <View style={styles.tableInfoBar}>
         <TouchableOpacity style={styles.tableSelector} onPress={() => setTableModalVisible(true)}>
           <Feather name="coffee" size={18} color="#D02C1A" />
-          <Text style={styles.tableSelectorText}>{tableNumber ? `Table ${tableNumber}` : "Select Table"}</Text>
+          <Text style={styles.tableSelectorText}>{tableNumber ? `Bàn ${tableNumber}` : "Chọn bàn"}</Text>
           <Feather name="chevron-down" size={16} color="#666" />
         </TouchableOpacity>
 
@@ -301,7 +301,7 @@ export default function AddOrderScreen() {
       <View style={styles.contentContainer}>
         <View style={styles.categoryHeaderContainer}>
           <Text style={styles.categoryHeaderTitle}>{getCategoryLabel(selectedCategory)}</Text>
-          <Text style={styles.categoryHeaderCount}>{filteredItems.length} items</Text>
+          <Text style={styles.categoryHeaderCount}>{filteredItems.length} món</Text>
         </View>
 
         <FlatList
@@ -328,7 +328,7 @@ export default function AddOrderScreen() {
           ListEmptyComponent={
             <View style={styles.emptyListContainer}>
               <Feather name="alert-circle" size={50} color="#ccc" />
-              <Text style={styles.emptyListText}>No items available</Text>
+              <Text style={styles.emptyListText}>Không có món ăn</Text>
             </View>
           }
         />
@@ -346,7 +346,7 @@ export default function AddOrderScreen() {
             {currentItem && (
               <>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Add to Order</Text>
+                  <Text style={styles.modalTitle}>Thêm vào đơn hàng</Text>
                   <TouchableOpacity style={styles.modalCloseButton} onPress={() => setItemModalVisible(false)}>
                     <Feather name="x" size={20} color="#fff" />
                   </TouchableOpacity>
@@ -354,11 +354,14 @@ export default function AddOrderScreen() {
 
                 <View style={styles.modalBody}>
                   <Image source={{ uri: currentItem.image }} style={styles.modalItemImage} />
-                  <Text style={styles.modalItemName}>{currentItem.name}</Text>
-                  <Text style={styles.modalItemPrice}>${currentItem.price.toFixed(2)}</Text>
+                  <View style={styles.foodItemInfo}>
+                    <Text style={styles.modalItemName}>{currentItem.name}</Text>
+                    <Text style={styles.foodItemCard}>{getCategoryLabel(currentItem.category)}</Text>
+                    <Text style={styles.modalItemPrice}>Giá: ${currentItem.price.toFixed(2)}</Text>
+                  </View>
 
                   <View style={styles.modalQuantityContainer}>
-                    <Text style={styles.modalQuantityLabel}>Quantity:</Text>
+                    <Text style={styles.modalQuantityLabel}>Số lượng:</Text>
                     <View style={styles.modalQuantityControls}>
                       <TouchableOpacity style={styles.modalQuantityButton} onPress={decrementQuantity}>
                         <Feather name="minus" size={20} color="#D02C1A" />
@@ -380,7 +383,7 @@ export default function AddOrderScreen() {
 
                 <View style={styles.modalFooter}>
                   <TouchableOpacity style={styles.modalAddButton} onPress={addItemToOrder}>
-                    <Text style={styles.modalAddButtonText}>Add to Order</Text>
+                    <Text style={styles.modalAddButtonText}>Thêm vào đơn hàng</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -399,7 +402,7 @@ export default function AddOrderScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.orderSummaryModal}>
             <View style={styles.orderSummaryHeader}>
-              <Text style={styles.orderSummaryTitle}>Order Summary</Text>
+              <Text style={styles.orderSummaryTitle}>TÓM TẮT ĐƠN HÀNG</Text>
               <TouchableOpacity style={styles.modalCloseButton} onPress={() => setOrderSummaryVisible(false)}>
                 <Feather name="x" size={20} color="#fff" />
               </TouchableOpacity>
@@ -408,7 +411,7 @@ export default function AddOrderScreen() {
             <View style={styles.orderSummaryTableInfo}>
               <Feather name="coffee" size={20} color="#D02C1A" />
               <Text style={styles.orderSummaryTableText}>
-                {tableNumber ? `Table ${tableNumber}` : "No table selected"}
+                {tableNumber ? `Bàn ${tableNumber}` : "Chưa chọn bàn"}
               </Text>
               {!tableNumber && (
                 <TouchableOpacity
@@ -418,7 +421,7 @@ export default function AddOrderScreen() {
                     setOrderSummaryVisible(false)
                   }}
                 >
-                  <Text style={styles.selectTableButtonText}>Select</Text>
+                  <Text style={styles.selectTableButtonText}>CHỌN</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -462,7 +465,7 @@ export default function AddOrderScreen() {
 
                 <View style={styles.orderSummaryFooter}>
                   <View style={styles.orderTotalContainer}>
-                    <Text style={styles.orderTotalLabel}>Total Amount:</Text>
+                    <Text style={styles.orderTotalLabel}>TỔNG TIỀN:</Text>
                     <Text style={styles.orderTotalAmount}>${totalAmount.toFixed(2)}</Text>
                   </View>
 
@@ -472,11 +475,11 @@ export default function AddOrderScreen() {
                     disabled={!tableNumber || isLoading}
                   >
                     {isLoading ? (
-                      <Text style={styles.placeOrderButtonText}>Processing...</Text>
+                      <Text style={styles.placeOrderButtonText}>ĐANG XỬ LÝ...</Text>
                     ) : (
                       <>
                         <Feather name="check-circle" size={18} color="#fff" />
-                        <Text style={styles.placeOrderButtonText}>Place Order</Text>
+                        <Text style={styles.placeOrderButtonText}>ĐẶT HÀNG</Text>
                       </>
                     )}
                   </TouchableOpacity>
@@ -485,10 +488,10 @@ export default function AddOrderScreen() {
             ) : (
               <View style={styles.emptyOrderContainer}>
                 <Feather name="shopping-cart" size={50} color="#ccc" />
-                <Text style={styles.emptyOrderText}>Your order is empty</Text>
-                <Text style={styles.emptyOrderSubtext}>Add items from the menu</Text>
+                <Text style={styles.emptyOrderText}>ĐƠN HÀNG TRỐNG</Text>
+                <Text style={styles.emptyOrderSubtext}>Thêm món ăn từ thực đơn</Text>
                 <TouchableOpacity style={styles.browseMenuButton} onPress={() => setOrderSummaryVisible(false)}>
-                  <Text style={styles.browseMenuButtonText}>Browse Menu</Text>
+                  <Text style={styles.browseMenuButtonText}>XEM THỰC ĐƠN</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -506,7 +509,7 @@ export default function AddOrderScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.tableModalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Table</Text>
+              <Text style={styles.modalTitle}>Chọn bàn</Text>
               <TouchableOpacity style={styles.modalCloseButton} onPress={() => setTableModalVisible(false)}>
                 <Feather name="x" size={20} color="#fff" />
               </TouchableOpacity>
@@ -517,7 +520,7 @@ export default function AddOrderScreen() {
                 availableTables.map((table) => (
                   <TouchableOpacity key={table.id} style={styles.tableItem} onPress={() => handleSelectTable(table)}>
                     <Feather name="coffee" size={20} color="#D02C1A" />
-                    <Text style={styles.tableItemText}>Table {table.number}</Text>
+                    <Text style={styles.tableItemText}>Bàn {table.number}</Text>
                     <View style={styles.tableStatusBadge}>
                       <Text style={styles.tableStatusText}>{table.status}</Text>
                     </View>
@@ -526,7 +529,7 @@ export default function AddOrderScreen() {
               ) : (
                 <View style={styles.emptyTableContainer}>
                   <Feather name="alert-circle" size={40} color="#ccc" />
-                  <Text style={styles.emptyTableText}>No available tables</Text>
+                  <Text style={styles.emptyTableText}>Không có bàn khả dụng</Text>
                 </View>
               )}
             </ScrollView>

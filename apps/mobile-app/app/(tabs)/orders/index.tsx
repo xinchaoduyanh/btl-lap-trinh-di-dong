@@ -56,10 +56,19 @@ export default function OrderManagementScreen() {
     getTotalAmount,
   } = usePreparingOrders()
 
-  const tabs = ["All Orders", "PENDING", "PREPARING", "READY", "DELIVERED"]
+  // Ánh xạ giữa tên tab tiếng Việt và giá trị trạng thái
+  const STATUS_MAP: Record<string, string> = {
+    "TẤT CẢ": "All Orders",
+    "ĐANG CHỜ": "PENDING",
+    "ĐANG CHUẨN BỊ": "PREPARING",
+    "SẴN SÀNG": "READY",
+    "ĐÃ GIAO": "DELIVERED"
+  }
+
+  const tabs = ["TẤT CẢ", "ĐANG CHỜ", "ĐANG CHUẨN BỊ", "SẴN SÀNG", "ĐÃ GIAO"]
 
   const filteredOrders = useMemo(() => {
-    return activeTab === "All Orders" ? orders : orders.filter((order) => getOrderStatus(order) === activeTab)
+    return activeTab === "TẤT CẢ" ? orders : orders.filter((order) => getOrderStatus(order) === STATUS_MAP[activeTab])
   }, [activeTab, orders, getOrderStatus])
 
   const onRefresh = useCallback(() => {
@@ -75,11 +84,11 @@ export default function OrderManagementScreen() {
       const diffMins = Math.floor(diffMs / 60000)
 
       if (diffMins < 60) {
-        return `${diffMins} mins ago`
+        return `${diffMins} phút trước`
       } else if (diffMins < 1440) {
-        return `${Math.floor(diffMins / 60)} hours ago`
+        return `${Math.floor(diffMins / 60)} giờ trước`
       } else {
-        return `${Math.floor(diffMins / 1440)} days ago`
+        return `${Math.floor(diffMins / 1440)} ngày trước`
       }
     } catch (error) {
       console.error("Error formatting time:", error)
@@ -112,7 +121,7 @@ export default function OrderManagementScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
-        title="Order Management"
+        title="Quản lý đơn hàng"
         onBackPress={() => router.back()}
         rightIcon="plus"
         onRightPress={handleAddOrder}
@@ -124,8 +133,8 @@ export default function OrderManagementScreen() {
           style={styles.bannerImage}
         />
         <View style={styles.bannerTextContainer}>
-          <Text style={styles.bannerTitle}>Hot Pot Paradise</Text>
-          <Text style={styles.bannerSubtitle}>Manage all customer orders</Text>
+          <Text style={styles.bannerTitle}>Thiên đường lẩu</Text>
+          <Text style={styles.bannerSubtitle}>Quản lý tất cả đơn hàng</Text>
         </View>
       </View>
 
@@ -134,7 +143,7 @@ export default function OrderManagementScreen() {
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D02C1A" />
-          <Text style={styles.loadingText}>Loading orders...</Text>
+          <Text style={styles.loadingText}>Đang tải đơn hàng...</Text>
         </View>
       ) : (
       <ScrollView
@@ -165,7 +174,7 @@ export default function OrderManagementScreen() {
                   <View style={styles.orderInfoRow}>
                     <View style={styles.orderInfoItem}>
                       <Feather name="coffee" size={16} color="#D02C1A" />
-                      <Text style={styles.orderInfoText}>Table {order.table?.number}</Text>
+                      <Text style={styles.orderInfoText}>Bàn {order.table?.number}</Text>
                     </View>
                     <View style={styles.orderInfoItem}>
                       <Feather name="clock" size={16} color="#D02C1A" />
@@ -177,7 +186,7 @@ export default function OrderManagementScreen() {
 
                   <View style={styles.divider} />
 
-                  <Text style={styles.itemsTitle}>Order Items:</Text>
+                  <Text style={styles.itemsTitle}>Các món đã đặt:</Text>
                   {order.orderItems && order.orderItems.length > 0 ? (
                     order.orderItems.map((item) => (
                         <View key={item.id} style={styles.orderItem}>
@@ -196,13 +205,13 @@ export default function OrderManagementScreen() {
                         </View>
                     ))
                   ) : (
-                    <Text style={styles.emptyText}>No items in this order</Text>
+                    <Text style={styles.emptyText}>Không có món nào</Text>
                   )}
 
                   <View style={styles.divider} />
 
                   <View style={styles.totalContainer}>
-                    <Text style={styles.totalLabel}>Total Amount:</Text>
+                    <Text style={styles.totalLabel}>Tổng tiền:</Text>
                     <Text style={styles.totalValue}>${getTotalAmount(order).toFixed(2)}</Text>
                   </View>
                 </View>
@@ -213,11 +222,11 @@ export default function OrderManagementScreen() {
         ) : (
           <View style={styles.emptyContainer}>
             <Feather name="coffee" size={50} color="#ccc" />
-              <Text style={styles.emptyTitle}>No Orders Found</Text>
-              <Text style={styles.emptySubtitle}>There are no orders matching your filter</Text>
+              <Text style={styles.emptyTitle}>Không tìm thấy đơn hàng</Text>
+              <Text style={styles.emptySubtitle}>Không có đơn hàng nào phù hợp với bộ lọc</Text>
               <TouchableOpacity style={styles.addOrderButton} onPress={handleAddOrder}>
                 <Feather name="plus" size={18} color="#fff" />
-                <Text style={styles.addOrderButtonText}>Add New Order</Text>
+                <Text style={styles.addOrderButtonText}>Thêm đơn hàng mới</Text>
               </TouchableOpacity>
           </View>
         )}
