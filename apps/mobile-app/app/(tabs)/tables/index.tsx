@@ -24,19 +24,19 @@ import { FilterButton } from "../../../components/FilterButton"
 import { TableCard } from "../../../components/TableCard"
 
 const STATUS_LABELS: Record<TableStatus, string> = {
-  AVAILABLE: "Available",
-  OCCUPIED: "Occupied",
-  RESERVED: "Reserved",
-  CLEANING: "Cleaning",
+  AVAILABLE: "Trống",
+  OCCUPIED: "Đang phục vụ",
+  RESERVED: "Đã đặt trước",
+  CLEANING: "Đang dọn dẹp",
 }
 const STATUS_OPTIONS: TableStatus[] = ["AVAILABLE", "OCCUPIED", "RESERVED", "CLEANING"]
-const FILTERS = ["All", ...Object.values(STATUS_LABELS)]
+const FILTERS = ["Tất cả", ...Object.values(STATUS_LABELS)]
 
 export default function TableManagementScreen() {
   const router = useRouter()
   const { colors } = useTheme()
   const { tables, loading, fetchTables, updateTable } = useTable()
-  const [activeFilter, setActiveFilter] = useState<string>("All")
+  const [activeFilter, setActiveFilter] = useState<string>("Tất cả")
   const [editingTable, setEditingTable] = useState<Table | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<TableStatus | null>(null)
 
@@ -45,7 +45,7 @@ export default function TableManagementScreen() {
   }, [])
 
   const getFilteredTables = () => {
-    if (activeFilter === "All") return tables
+    if (activeFilter === "Tất cả") return tables
     const statusKey = Object.keys(STATUS_LABELS).find((key) => STATUS_LABELS[key as TableStatus] === activeFilter) as
       | TableStatus
       | undefined
@@ -53,7 +53,7 @@ export default function TableManagementScreen() {
   }
 
   const windowWidth = Dimensions.get("window").width
-  const tableWidth = (windowWidth - 48) / 3 // 3 tables per row with padding
+  const tableWidth = (windowWidth - 48) / 3 // 3 bàn mỗi hàng với padding
 
   const handleStatusChange = async () => {
     if (!editingTable || !selectedStatus) return
@@ -67,9 +67,9 @@ export default function TableManagementScreen() {
     try {
       await updateTable(editingTable.id, { status: selectedStatus })
       fetchTables()
-      Alert.alert("Success", "Table status updated successfully!")
+      Alert.alert("Thành công", "Cập nhật trạng thái bàn thành công!")
     } catch (error) {
-      Alert.alert("Error", "Failed to update table status")
+      Alert.alert("Lỗi", "Không thể cập nhật trạng thái bàn")
     } finally {
       setEditingTable(null)
       setSelectedStatus(null)
@@ -79,14 +79,14 @@ export default function TableManagementScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
-        title="Table Management"
+        title="Quản lý bàn"
         onBackPress={() => router.back()}
         rightIcon="refresh-cw"
         onRightPress={fetchTables}
       />
 
       <View style={styles.restaurantMapContainer}>
-        <Text style={styles.mapTitle}>Hot Pot Paradise</Text>
+        <Text style={styles.mapTitle}>Nhà hàng Lẩu Thiên Đường</Text>
         <Image
           source={{ uri: "https://img.freepik.com/free-vector/restaurant-floor-plan-template_23-2147980214.jpg" }}
           style={styles.restaurantMap}
@@ -125,14 +125,14 @@ export default function TableManagementScreen() {
           ))}
           {getFilteredTables().length === 0 && (
             <Text style={{ textAlign: "center", color: colors.text, marginTop: 32, width: "100%" }}>
-              No tables found.
+              Không tìm thấy bàn nào.
             </Text>
           )}
         </View>
       </ScrollView>
 
       <View style={styles.legend}>
-        <Text style={styles.legendTitle}>Legend:</Text>
+        <Text style={styles.legendTitle}>Chú thích:</Text>
         <View style={styles.legendItems}>
           {Object.entries(STATUS_LABELS).map(([status, label]) => (
             <View key={status} style={styles.legendItem}>
@@ -143,7 +143,7 @@ export default function TableManagementScreen() {
         </View>
       </View>
 
-      {/* Centered Modal Form */}
+      {/* Form Modal ở giữa màn hình */}
       <Modal
         visible={editingTable !== null}
         transparent={true}
@@ -157,7 +157,7 @@ export default function TableManagementScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {editingTable ? `Table ${editingTable.number} Status` : "Update Table"}
+                {editingTable ? `Trạng thái bàn số ${editingTable.number}` : "Cập nhật bàn"}
               </Text>
             </View>
 
@@ -187,7 +187,7 @@ export default function TableManagementScreen() {
                   setSelectedStatus(null)
                 }}
               >
-                <Text style={[styles.buttonText, { color: "#D02C1A" }]}>Cancel</Text>
+                <Text style={[styles.buttonText, { color: "#D02C1A" }]}>Hủy bỏ</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -196,10 +196,10 @@ export default function TableManagementScreen() {
                   styles.confirmButton,
                   (!selectedStatus || selectedStatus === editingTable?.status) && styles.disabledButton,
                 ]}
-                disabled={!selectedStatus || selectedStatus === editingTable?.status}
                 onPress={handleStatusChange}
+                disabled={!selectedStatus || selectedStatus === editingTable?.status}
               >
-                <Text style={[styles.buttonText, { color: "white" }]}>Update</Text>
+                <Text style={[styles.buttonText, { color: "#fff" }]}>Xác nhận</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -209,19 +209,18 @@ export default function TableManagementScreen() {
   )
 }
 
-// Helper function to get status color
-const getStatusColor = (status: TableStatus | string) => {
+const getStatusColor = (status: TableStatus): string => {
   switch (status) {
     case "AVAILABLE":
-      return "#4CAF50"
+      return "#4CAF50" // Xanh lá - trống
     case "OCCUPIED":
-      return "#F44336"
+      return "#F44336" // Đỏ - đang phục vụ
     case "RESERVED":
-      return "#FF9800"
+      return "#FF9800" // Cam - đã đặt trước
     case "CLEANING":
-      return "#2196F3"
+      return "#2196F3" // Xanh dương - đang dọn dẹp
     default:
-      return "#666"
+      return "#9E9E9E" // Xám - mặc định
   }
 }
 
@@ -230,48 +229,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   restaurantMapContainer: {
-    backgroundColor: "white",
-    margin: 16,
-    marginBottom: 8,
-    borderRadius: 10,
-    padding: 10,
+    padding: 16,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   mapTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#D02C1A", // Hot pot red color
-    marginBottom: 8,
+    marginBottom: 12,
+    color: "#333",
   },
   restaurantMap: {
     width: "100%",
-    height: 120,
-    borderRadius: 5,
+    height: 180,
+    borderRadius: 8,
   },
   filterContainer: {
-    backgroundColor: "white",
-    paddingVertical: 8,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    marginBottom: 8,
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
   },
   tablesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    paddingBottom: 80, // Để không bị che bởi legend
   },
   legend: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: "white",
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderTopWidth: 1,
     borderTopColor: "#eee",
   },
@@ -279,7 +272,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     marginBottom: 8,
-    color: "#333",
   },
   legendItems: {
     flexDirection: "row",
@@ -301,30 +293,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContent: {
     backgroundColor: "white",
-    borderRadius: 16,
+    borderRadius: 12,
     width: "80%",
-    maxWidth: 400,
     overflow: "hidden",
-    elevation: 5,
   },
   modalHeader: {
-    backgroundColor: "#D02C1A", // Hot pot red color
     padding: 16,
-    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   modalTitle: {
-    color: "white",
     fontSize: 18,
     fontWeight: "bold",
+    textAlign: "center",
   },
   statusOptionsContainer: {
     padding: 16,
@@ -332,17 +321,16 @@ const styles = StyleSheet.create({
   statusOption: {
     padding: 12,
     borderRadius: 8,
-    marginBottom: 10,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#eee",
+    marginBottom: 8,
   },
   statusOptionActive: {
-    borderWidth: 0,
+    borderWidth: 2,
+    borderColor: "#333",
   },
   statusOptionText: {
-    fontWeight: "500",
     fontSize: 16,
+    textAlign: "center",
+    fontWeight: "500",
   },
   modalFooter: {
     flexDirection: "row",
@@ -353,23 +341,19 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     alignItems: "center",
-    justifyContent: "center",
   },
   cancelButton: {
-    backgroundColor: "#fff",
-    borderRightWidth: 0.5,
+    borderRightWidth: 1,
     borderRightColor: "#eee",
   },
   confirmButton: {
-    backgroundColor: "#D02C1A", // Hot pot red color
-    borderLeftWidth: 0.5,
-    borderLeftColor: "#eee",
+    backgroundColor: "#4CAF50",
   },
   disabledButton: {
-    backgroundColor: "#cccccc",
+    backgroundColor: "#CCCCCC",
   },
   buttonText: {
+    fontSize: 16,
     fontWeight: "bold",
-    color: "#D02C1A", // Hot pot red color cho Cancel, trắng cho Confirm
   },
 })
