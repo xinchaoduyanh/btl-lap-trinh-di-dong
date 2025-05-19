@@ -63,28 +63,28 @@ export default function HomeScreen() {
   const actionTiles = [
     {
       id: 1,
-      title: 'Check In/Out',
+      title: 'Chấm công',
       icon: 'clock',
       color: '#E53935', // Red for hotpot theme
       screen: '/(tabs)/check-in'
     },
     {
       id: 2,
-      title: 'Order Management',
+      title: 'Quản lý đơn hàng',
       icon: 'shopping-cart',
       color: '#D84315', // Deep orange for hotpot theme
       screen: '/(tabs)/orders'
     },
     {
       id: 3,
-      title: 'Table Management',
+      title: 'Quản lý bàn',
       icon: 'grid',
       color: '#BF360C', // Darker orange for hotpot theme
       screen: '/(tabs)/tables'
     },
     {
       id: 4,
-      title: 'Notifications',
+      title: 'Thông báo',
       icon: 'bell',
       color: '#6D4C41', // Brown for hotpot theme
       screen: '/(tabs)/notifications',
@@ -104,7 +104,7 @@ export default function HomeScreen() {
           <View style={styles.steamBubble2} />
           <View style={styles.steamBubble3} />
         </View>
-        <Text style={[styles.loadingText, { color: colors.text }]}>Preparing your hotpot...</Text>
+        <Text style={[styles.loadingText, { color: colors.text }]}>Đang chuẩn bị lẩu của bạn...</Text>
       </View>
     );
   }
@@ -116,8 +116,8 @@ export default function HomeScreen() {
         <View style={styles.headerBackground} />
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>ITHotpot Staff</Text>
-            <Text style={styles.headerSubtitle}>Welcome back, chef!</Text>
+            <Text style={styles.headerTitle}>Nhân viên ITHotpot</Text>
+            <Text style={styles.headerSubtitle}>Chào mừng trở lại, đầu bếp!</Text>
           </View>
           <TouchableOpacity
             onPress={handleLogout}
@@ -125,7 +125,7 @@ export default function HomeScreen() {
           >
             <View style={styles.logoutButtonInner}>
               <Feather name="log-out" size={18} color="white" />
-              <Text style={styles.logoutText}>Logout</Text>
+              <Text style={styles.logoutText}>Đăng xuất</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -186,25 +186,25 @@ export default function HomeScreen() {
 
                   <View style={styles.detailItem}>
                     <Feather name="activity" size={16} color="#E53935" style={styles.detailIcon} />
-                    <Text style={[styles.detailLabel, { color: colors.text }]}>Status</Text>
+                    <Text style={[styles.detailLabel, { color: colors.text }]}>Trạng thái</Text>
                     <View style={styles.statusContainer}>
                       <View style={[styles.statusIndicator, { backgroundColor: userData.isActive ? '#4CAF50' : '#F44336' }]} />
                       <Text style={[styles.statusValue, { color: colors.text }]}>
-                        {userData.isActive ? 'Active' : 'Inactive'}
+                        {userData.isActive ? 'Hoạt động' : 'Không hoạt động'}
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.detailItem}>
                     <Feather name="clock" size={16} color="#E53935" style={styles.detailIcon} />
-                    <Text style={[styles.detailLabel, { color: colors.text }]}>Shift</Text>
-                    <Text style={[styles.detailValue, { color: colors.text }]}>Day Shift</Text>
+                    <Text style={[styles.detailLabel, { color: colors.text }]}>Ca làm</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>Ca ngày</Text>
                   </View>
 
                   <View style={styles.detailItem}>
                     <Feather name="award" size={16} color="#E53935" style={styles.detailIcon} />
-                    <Text style={[styles.detailLabel, { color: colors.text }]}>Experience</Text>
-                    <Text style={[styles.detailValue, { color: colors.text }]}>Senior</Text>
+                    <Text style={[styles.detailLabel, { color: colors.text }]}>Kinh nghiệm</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>Cao cấp</Text>
                   </View>
                 </View>
               </>
@@ -213,9 +213,9 @@ export default function HomeScreen() {
         )}
 
         <View style={styles.quickActionsHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Hành động nhanh</Text>
           <TouchableOpacity>
-            <Text style={styles.viewAllText}>View All</Text>
+            <Text style={styles.viewAllText}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
 
@@ -245,7 +245,7 @@ export default function HomeScreen() {
 
         {/* Slogan Section */}
         <View style={styles.recentActivitySection}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Today&apos;s Slogan</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Khẩu hiệu hôm nay</Text>
           <TouchableOpacity
             style={[styles.sloganContainer, { backgroundColor: colors.card }]}
             onPress={() => {
@@ -261,10 +261,16 @@ export default function HomeScreen() {
                   <Feather name="message-circle" size={20} color="#E53935" />
                 </View>
                 <View style={styles.sloganContent}>
-                  <Text style={[styles.sloganText, { color: colors.text }]}>
-                    "{slogan.content}"
-                  </Text>
-                  <Text style={styles.sloganRefreshHint}>Tap to refresh</Text>
+                  <View style={styles.sloganTextRow}>
+                    <Feather name="message-square" size={16} color="#E53935" style={styles.sloganTextIcon} />
+                    <Text style={[styles.sloganText, { color: colors.text }]}>
+                      "{slogan.content}"
+                    </Text>
+                  </View>
+                  <View style={styles.sloganTextRow}>
+                    <Feather name="refresh-cw" size={14} color="#888" style={styles.sloganTextIcon} />
+                    <Text style={styles.sloganRefreshHint}>Chạm để làm mới</Text>
+                  </View>
                 </View>
               </>
             ) : (
@@ -273,12 +279,23 @@ export default function HomeScreen() {
                   <Feather name={sloganError ? "alert-circle" : "message-circle"} size={20} color={sloganError ? "#F44336" : "#E53935"} />
                 </View>
                 <View style={styles.sloganContent}>
-                  <Text style={[styles.noSloganText, { color: sloganError ? "#F44336" : colors.text }]}>
-                    {sloganError || "Tap to view today's slogan"}
-                  </Text>
-                  <Text style={styles.sloganRefreshHint}>
-                    {slogan ? "Tap to refresh" : "Tap to load"}
-                  </Text>
+                  <View style={styles.sloganTextRow}>
+                    <Feather name="search" size={16} color={sloganError ? "#F44336" : "#E53935"} style={styles.sloganTextIcon} />
+                    <Text style={[styles.noSloganText, { color: sloganError ? "#F44336" : colors.text }]}>
+                      {sloganError ||"Chạm nhẹ, khám phá khẩu hiệu ngày hôm nay!"}
+                    </Text>
+                  </View>
+                  <View style={styles.sloganTextRow}>
+                    <Feather
+                      name={slogan ? "refresh-cw" : "download"}
+                      size={14}
+                      color="#888"
+                      style={styles.sloganTextIcon}
+                    />
+                    <Text style={styles.sloganRefreshHint}>
+                      {slogan ? "Chạm nhẹ, làm mới khẩu hiệu cực xịn!" : "Chạm để tải"}
+                    </Text>
+                  </View>
                 </View>
               </>
             )}
@@ -687,6 +704,14 @@ const styles = StyleSheet.create({
   sloganContent: {
     flex: 1,
   },
+  sloganTextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  sloganTextIcon: {
+    marginRight: 8,
+  },
   sloganText: {
     fontSize: 16,
     fontStyle: 'italic',
@@ -702,7 +727,5 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'left',
     flex: 1,
-    padding: 10,
-    paddingLeft: 15,
   },
 });
