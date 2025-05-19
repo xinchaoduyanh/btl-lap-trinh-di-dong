@@ -16,6 +16,7 @@ import {
   Home,
   ShoppingBag,
   Flame,
+  QrCode,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -115,6 +116,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       <Link href="/dashboard/orders">
                         <ClipboardList className="mr-2 h-4 w-4" />
                         <span>Orders</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/qrcode')}>
+                      <Link href="/dashboard/qrcode">
+                        <QrCode className="mr-2 h-4 w-4" />
+                        <span>QR Codes</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

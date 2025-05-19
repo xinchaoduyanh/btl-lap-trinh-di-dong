@@ -55,6 +55,7 @@
     "next-themes": "latest",
     "nodemailer": "latest",
     "prisma": "latest",
+    "qrcode": "^1.5.4",
     "react": "^19",
     "react-day-picker": "8.10.1",
     "react-dom": "^19",
@@ -69,6 +70,7 @@
   },
   "devDependencies": {
     "@types/node": "^22",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8",
