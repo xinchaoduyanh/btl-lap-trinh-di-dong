@@ -1,13 +1,16 @@
-import { Controller, Get, Post, Body, Param, Query, Delete } from '@nestjs/common'
+import { Controller, Get, Post, Body, Param, Query, Delete, UsePipes } from '@nestjs/common'
 import { CheckoutService } from './checkout.service'
 import { CheckInDto, CheckOutDto, GetHistoryDto } from './checkout.dto'
 import { CreateQRCodeDto } from './qr-code.dto'
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe'
+import { CheckInSchema } from './checkout.dto'
 
 @Controller('checkout')
 export class CheckoutController {
   constructor(private readonly checkoutService: CheckoutService) {}
 
   @Post('check-in')
+  @UsePipes(new ZodValidationPipe(CheckInSchema))
   async checkIn(@Body() checkInDto: CheckInDto) {
     return this.checkoutService.checkIn(checkInDto)
   }
