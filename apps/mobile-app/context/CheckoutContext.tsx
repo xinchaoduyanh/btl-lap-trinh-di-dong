@@ -6,7 +6,7 @@ import { config } from '../config/env'
 interface CheckoutContextType {
   isCheckedIn: boolean;
   currentStatus: CheckoutStatus | null;
-  checkIn: (employeeId: string) => Promise<void>;
+  checkIn: (employeeId: string, qrCode: string) => Promise<void>;
   checkOut: (employeeId: string) => Promise<void>;
   getCurrentStatus: (employeeId: string) => Promise<void>;
   loading: boolean;
@@ -21,7 +21,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [currentStatus, setCurrentStatus] = useState<CheckoutStatus | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const checkIn = async (employeeId: string) => {
+  const checkIn = async (employeeId: string, qrCode: string) => {
     try {
       setLoading(true);
       const response = await fetch(`${config.API_URL}/checkout/check-in`, {
@@ -29,7 +29,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ employeeId }),
+        body: JSON.stringify({ employeeId, qrCode }),
       });
 
       const data = await response.json();
@@ -40,7 +40,6 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       setIsCheckedIn(true);
       await getCurrentStatus(employeeId);
-      Alert.alert('Success', 'Checked in successfully');
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert('Error', error.message);

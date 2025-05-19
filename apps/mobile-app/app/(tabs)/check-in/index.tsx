@@ -95,7 +95,11 @@ export default function CheckInOutScreen() {
     if (!user?.id) return
 
     if (!isCheckedIn) {
-      await checkIn(user.id)
+      // Navigate to QR scanner first
+      router.push({
+        pathname: '/(tabs)/check-in/ScanQRCode',
+        params: { employeeId: user.id }
+      });
     } else {
       await checkOut(user.id)
       // Cập nhật lịch sử sau khi checkout
