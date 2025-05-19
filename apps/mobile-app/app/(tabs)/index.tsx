@@ -700,8 +700,9 @@ const styles = StyleSheet.create({
   noSloganText: {
     fontSize: 14,
     fontStyle: 'italic',
-    textAlign: 'center',
+    textAlign: 'left',
     flex: 1,
     padding: 10,
+    paddingLeft: 15,
   },
 });
