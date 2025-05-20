@@ -67,8 +67,22 @@ export default function TablesPage() {
 
   // Gọi API khi component mount
   useEffect(() => {
-    fetchTables()
-  }, [fetchTables])
+    // Thêm cờ để tránh gọi API nhiều lần
+    let isMounted = true
+
+    const loadTables = async () => {
+      if (isMounted) {
+        await fetchTables()
+      }
+    }
+
+    loadTables()
+
+    // Cleanup function để tránh memory leak và gọi API khi component unmount
+    return () => {
+      isMounted = false
+    }
+  }, []) // Loại bỏ fetchTables khỏi dependencies
 
   // Filter tables based on search term and status filter
   const filteredTables = tables.filter((table) => {

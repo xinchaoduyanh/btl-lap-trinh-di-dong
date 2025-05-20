@@ -26,7 +26,6 @@ import { useAuth } from '../../../context/AuthContext'
 
 // Components
 import { Header } from '../../../components/Header'
-import { TabBar } from '../../../components/TabBar'
 
 // Import interfaces
 import type { OrderItemStatus, Order } from '../../../constants/interface'
