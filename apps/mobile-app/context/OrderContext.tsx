@@ -32,7 +32,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (!res.ok) throw new Error(data.message || 'Failed to fetch orders')
       setOrders(data)
     } catch (error: any) {
-      Alert.alert('Error', error.message)
+      console.error('Error fetching orders:', error.message)
     } finally {
       setLoading(false)
     }
@@ -175,7 +175,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (!res.ok) throw new Error(data.message || 'Failed to fetch preparing orders')
       setPreparingOrders(data)
     } catch (error: any) {
-      Alert.alert('Error', error.message)
+      if (error.message != 'No preparing orders found')
+        console.error('Error fetching preparing orders:', error.message)
     } finally {
       setLoading(false)
     }
