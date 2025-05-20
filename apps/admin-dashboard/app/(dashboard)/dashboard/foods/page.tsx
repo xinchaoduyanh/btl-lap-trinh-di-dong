@@ -594,16 +594,87 @@ export default function FoodsPage() {
               <span className="sr-only">Previous Page</span>
             </Button>
             <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
-                </Button>
-              ))}
+              {(() => {
+                // Logic để hiển thị tối đa 10 trang
+                const maxVisiblePages = 5; // Số trang hiển thị ở mỗi bên của trang hiện tại
+                const pages = [];
+                
+                // Luôn hiển thị trang đầu tiên
+                if (currentPage > 1 + maxVisiblePages) {
+                  pages.push(
+                    <Button
+                      key={1}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(1)}
+                    >
+                      1
+                    </Button>
+                  );
+                  
+                  // Thêm dấu ... nếu cần
+                  if (currentPage > 2 + maxVisiblePages) {
+                    pages.push(
+                      <Button
+                        key="ellipsis-start"
+                        variant="outline"
+                        size="sm"
+                        disabled
+                      >
+                        ...
+                      </Button>
+                    );
+                  }
+                }
+                
+                // Tính toán phạm vi trang hiển thị
+                const startPage = Math.max(1, currentPage - maxVisiblePages);
+                const endPage = Math.min(totalPages, currentPage + maxVisiblePages);
+                
+                // Thêm các trang trong phạm vi
+                for (let i = startPage; i <= endPage; i++) {
+                  pages.push(
+                    <Button
+                      key={i}
+                      variant={currentPage === i ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(i)}
+                    >
+                      {i}
+                    </Button>
+                  );
+                }
+                
+                // Luôn hiển thị trang cuối cùng
+                if (currentPage < totalPages - maxVisiblePages) {
+                  // Thêm dấu ... nếu cần
+                  if (currentPage < totalPages - 1 - maxVisiblePages) {
+                    pages.push(
+                      <Button
+                        key="ellipsis-end"
+                        variant="outline"
+                        size="sm"
+                        disabled
+                      >
+                        ...
+                      </Button>
+                    );
+                  }
+                  
+                  pages.push(
+                    <Button
+                      key={totalPages}
+                      variant={currentPage === totalPages ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(totalPages)}
+                    >
+                      {totalPages}
+                    </Button>
+                  );
+                }
+                
+                return pages;
+              })()}
             </div>
             <Button
               variant="outline"

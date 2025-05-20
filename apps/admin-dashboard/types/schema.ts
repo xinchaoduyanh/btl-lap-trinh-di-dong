@@ -13,10 +13,12 @@ export enum TableStatus {
 }
 
 export enum OrderStatus {
-  PENDING = "PENDING",
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED",
+  // PENDING = "PENDING",
+  // IN_PROGRESS = "IN_PROGRESS",
+  // COMPLETED = "COMPLETED",
+  // CANCELLED = "CANCELLED",
+  RESERVED = "RESERVED",
+  PAID = "PAID",
 }
 
 export enum CheckoutStatus {

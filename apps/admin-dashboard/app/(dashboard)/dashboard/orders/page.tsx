@@ -331,16 +331,10 @@ export default function OrdersPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "PENDING":
-        return <Badge className="border-border bg-background text-foreground">Pending</Badge>
-      case "PREPARING":
-        return <Badge className="bg-secondary text-secondary-foreground">Preparing</Badge>
-      case "READY":
-        return <Badge className="badge-warning">Ready</Badge>
-      case "DELIVERED":
-        return <Badge className="bg-primary text-primary-foreground">Delivered</Badge>
-      case "COMPLETED":
-        return <Badge className="badge-success">Completed</Badge>
+      case "RESERVED":
+        return <Badge className="badge-warning">Reserved</Badge>
+      case "PAID":
+        return <Badge className="badge-success">Paid</Badge>
       default:
         return <Badge>{status}</Badge>
     }
@@ -412,11 +406,8 @@ export default function OrdersPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Statuses</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="PREPARING">Preparing</SelectItem>
-              <SelectItem value="READY">Ready</SelectItem>
-              <SelectItem value="DELIVERED">Delivered</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="RESERVED">Reserved</SelectItem>
+              <SelectItem value="PAID">Paid</SelectItem>
             </SelectContent>
           </Select>
         </div>
