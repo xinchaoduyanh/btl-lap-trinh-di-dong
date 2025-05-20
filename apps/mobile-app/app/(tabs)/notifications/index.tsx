@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from "react"
 import { StyleSheet, View, Text, ScrollView, Alert, ActivityIndicator, Modal, TouchableOpacity } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Feather } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
+import { useRouter, useFocusEffect } from "expo-router"
 
 // Components
 import { Header } from "../../../components/Header"
@@ -21,10 +21,12 @@ export default function NotificationsScreen() {
   const {
     notifications, // Danh sách thông báo
     loading, // Trạng thái đang tải
+    unreadCount, // Số lượng thông báo chưa đọc
     fetchNotifications, // Hàm lấy danh sách thông báo
     markAsRead, // Hàm đánh dấu thông báo đã đọc
     markAllAsRead, // Hàm đánh dấu tất cả thông báo đã đọc
-    deleteNotification // Hàm xóa thông báo
+    deleteNotification, // Hàm xóa thông báo
+    refreshUnreadCount // Hàm cập nhật số lượng thông báo chưa đọc
   } = useNotification()
 
   // State cho dialog chi tiết thông báo
@@ -37,21 +39,38 @@ export default function NotificationsScreen() {
   const [modalVisible, setModalVisible] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Lấy thông báo khi component được mount
-  useEffect(() => {
-    // Gọi API để lấy danh sách thông báo
-    const loadNotifications = async () => {
-      try {
-        setError(null)
-        await fetchNotifications()
-      } catch (error) {
-        console.error("Lỗi khi tải thông báo:", error)
-        setError("Không thể tải thông báo. Vui lòng thử lại sau.")
+  // State để theo dõi số lượng thông báo chưa đọc trước đó
+  const [previousUnreadCount, setPreviousUnreadCount] = useState<number | null>(null)
+
+  // Sử dụng useFocusEffect để theo dõi khi màn hình được focus
+  useFocusEffect(
+    useCallback(() => {
+      // Khi màn hình được focus (người dùng vào màn hình)
+      const loadData = async () => {
+        try {
+          // Lấy số lượng thông báo chưa đọc hiện tại
+          await refreshUnreadCount()
+          
+          // Nếu đây là lần đầu vào màn hình hoặc có sự thay đổi số lượng
+          if (previousUnreadCount === null || previousUnreadCount !== unreadCount) {
+            setError(null)
+            await fetchNotifications()
+            setPreviousUnreadCount(unreadCount)
+          }
+        } catch (error) {
+          console.error("Lỗi khi tải thông báo:", error)
+          setError("Không thể tải thông báo. Vui lòng thử lại sau.")
+        }
       }
-    }
-    
-    loadNotifications()
-  }, []) // Không thêm fetchNotifications vào dependency array
+      
+      loadData()
+      
+      // Cleanup function khi màn hình không còn focus
+      return () => {
+        // Không cần cleanup gì đặc biệt
+      }
+    }, [unreadCount, previousUnreadCount, refreshUnreadCount, fetchNotifications])
+  )
 
   // Xử lý đánh dấu thông báo đã đọc và hiển thị chi tiết
   const handleNotificationPress = useCallback(async (notification: any, assignmentId: string) => {
