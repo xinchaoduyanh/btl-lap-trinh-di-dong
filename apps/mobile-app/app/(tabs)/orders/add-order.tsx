@@ -446,13 +446,11 @@ export default function AddOrderScreen() {
                 </View>
 
                 <View style={styles.modalBody}>
-                  <View style={styles.foodItemInfo}>
-                    <Text style={styles.modalItemName}>{currentItem.name}</Text>
-                    <Text style={styles.foodItemCard}>
-                      {getCategoryLabel(currentItem.category)}
-                    </Text>
-                    <Text style={styles.modalItemPrice}>Giá: {Math.round(currentItem.price)}đ</Text>
-                  </View>
+                  <Text style={styles.modalItemName}>{currentItem.name}</Text>
+                  <Text style={styles.modalItemCategory}>
+                    {getCategoryLabel(currentItem.category)}
+                  </Text>
+                  <Text style={styles.modalItemPrice}>Giá: {Math.round(currentItem.price)}đ</Text>
 
                   <View style={styles.modalQuantityContainer}>
                     <Text style={styles.modalQuantityLabel}>Số lượng:</Text>
@@ -468,7 +466,7 @@ export default function AddOrderScreen() {
                         style={styles.modalQuantityInput}
                         value={quantity}
                         onChangeText={setQuantity}
-                        keyboardType="number-pad"
+                        keyboardType="numeric"
                       />
 
                       <TouchableOpacity
@@ -869,8 +867,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalBody: {
-    padding: 16,
-    alignItems: 'center',
+    padding: 20,
   },
   modalItemImage: {
     width: 150,
@@ -882,24 +879,33 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 4,
     textAlign: 'center',
+    marginBottom: 4,
+  },
+  modalItemCategory: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8,
   },
   modalItemPrice: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#D02C1A',
+    textAlign: 'center',
     marginBottom: 20,
   },
   modalQuantityContainer: {
-    width: '100%',
-    marginTop: 8,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 10,
   },
   modalQuantityLabel: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
   },
   modalQuantityControls: {
@@ -908,20 +914,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalQuantityButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#D02C1A',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#fff',
   },
   modalQuantityInput: {
-    width: 60,
+    width: 80,
+    height: 44,
     textAlign: 'center',
     fontSize: 20,
     fontWeight: 'bold',
     marginHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    backgroundColor: '#fff',
   },
   modalFooter: {
     borderTopWidth: 1,
