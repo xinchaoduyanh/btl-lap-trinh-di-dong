@@ -41,7 +41,7 @@ export default function NotificationsScreen() {
 
   // State để theo dõi số lượng thông báo chưa đọc trước đó
   const [previousUnreadCount, setPreviousUnreadCount] = useState<number | null>(null)
-
+  
   // Sử dụng useFocusEffect để theo dõi khi màn hình được focus
   useFocusEffect(
     useCallback(() => {
