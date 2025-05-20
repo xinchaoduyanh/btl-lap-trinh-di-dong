@@ -21,6 +21,8 @@ import { Feather } from '@expo/vector-icons'
 import { usePreparingOrders, useOrder } from '../../../context/OrderContext'
 import { useOrderItem } from '../../../context/OrderItemContext'
 import { useTable } from '../../../context/TableContext'
+import { config } from '../../../config/env'
+import { useAuth } from '../../../context/AuthContext'
 
 // Components
 import { Header } from '../../../components/Header'
@@ -44,10 +46,13 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window')
 export default function OrderManagementScreen() {
   const router = useRouter()
   const { colors } = useTheme()
-  const [activeTab, setActiveTab] = useState('TẤT CẢ')
+  const { user } = useAuth()
   const [refreshing, setRefreshing] = useState(false)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false)
+  const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<Order | null>(null)
+  const [qrCodeImage, setQrCodeImage] = useState<string | null>(null)
 
   // Use context hooks
   const {
@@ -59,26 +64,11 @@ export default function OrderManagementScreen() {
     getTotalAmount,
   } = usePreparingOrders()
 
-  const { deleteOrder } = useOrder()
+  const { deleteOrder, updateOrder } = useOrder()
 
   const { fetchTables } = useTable()
 
-  // Ánh xạ giữa tên tab tiếng Việt và giá trị trạng thái
-  const STATUS_MAP: Record<string, string> = {
-    'TẤT CẢ': 'All Orders',
-    'ĐANG CHỜ': 'PENDING',
-    'ĐANG CHUẨN BỊ': 'PREPARING',
-    'SẴN SÀNG': 'READY',
-    'ĐÃ GIAO': 'DELIVERED',
-  }
-
-  const tabs = ['TẤT CẢ', 'ĐANG CHỜ', 'ĐANG CHUẨN BỊ', 'SẴN SÀNG', 'ĐÃ GIAO']
-
-  const filteredOrders = useMemo(() => {
-    return activeTab === 'TẤT CẢ'
-      ? orders
-      : orders.filter((order) => getOrderStatus(order) === STATUS_MAP[activeTab])
-  }, [activeTab, orders, getOrderStatus, STATUS_MAP])
+  const filteredOrders = orders
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
@@ -156,6 +146,63 @@ export default function OrderManagementScreen() {
     }
   }, [selectedOrderId, deleteOrder, fetchOrders, fetchTables])
 
+  // Thêm hàm xử lý thanh toán
+  const handlePayment = useCallback(
+    (order: Order) => {
+      setSelectedOrderForPayment(order)
+      // Giả lập tạo mã QR - trong thực tế bạn sẽ gọi API để lấy mã QR
+      setQrCodeImage(
+        'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' +
+          encodeURIComponent(`order_id=${order.id}&amount=${Math.round(getTotalAmount(order))}`)
+      )
+      setPaymentModalVisible(true)
+    },
+    [getTotalAmount]
+  )
+
+  // Thêm hàm xác nhận thanh toán
+  const confirmPayment = useCallback(async () => {
+    if (!selectedOrderForPayment || !user) return
+
+    try {
+      setPaymentModalVisible(false)
+
+      // Lấy thời gian hiện tại khi bấm nút thanh toán
+      const currentTime = new Date().toISOString()
+
+      // Cập nhật trạng thái đơn hàng thành PAID, thêm timeOut và employeeId
+      await updateOrder(selectedOrderForPayment.id, {
+        status: 'PAID',
+        timeOut: currentTime,
+        employeeId: user.id, // Thêm ID của nhân viên đang xử lý
+      })
+
+      // Cập nhật trạng thái bàn thành CLEANING
+      if (selectedOrderForPayment.tableId) {
+        await fetch(`${config.API_URL}/tables/${selectedOrderForPayment.tableId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'CLEANING' }),
+        })
+      }
+
+      // Hiển thị thông báo thành công
+      Alert.alert(
+        'Thanh toán thành công',
+        `Đơn hàng đã được thanh toán với số tiền ${Math.round(getTotalAmount(selectedOrderForPayment))}đ`
+      )
+
+      // Làm mới danh sách đơn hàng và bàn
+      await fetchOrders()
+      await fetchTables()
+    } catch (error) {
+      console.error('Lỗi khi thanh toán:', error)
+      Alert.alert('Lỗi', 'Không thể hoàn tất thanh toán. Vui lòng thử lại sau.')
+    } finally {
+      setSelectedOrderForPayment(null)
+    }
+  }, [selectedOrderForPayment, getTotalAmount, fetchOrders, fetchTables, user])
+
   // Add focus effect to fetch orders when screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -187,8 +234,6 @@ export default function OrderManagementScreen() {
         </View>
       </View>
 
-      <TabBar tabs={tabs} activeTab={activeTab} onTabPress={setActiveTab} />
-
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D02C1A" />
@@ -204,20 +249,15 @@ export default function OrderManagementScreen() {
               <View key={order.id} style={styles.orderCard}>
                 <View style={styles.orderCardHeader}>
                   <View style={styles.orderHeaderLeft}>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        {
-                          backgroundColor:
-                            STATUS_COLORS[getOrderStatus(order) as keyof typeof STATUS_COLORS],
-                        },
-                      ]}
-                    >
-                      <Text style={styles.statusText}>{getOrderStatus(order)}</Text>
-                    </View>
                     <Text style={styles.orderTime}>{formatTime(order.createdAt)}</Text>
                   </View>
                   <View style={styles.actionButtonsContainer}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handlePayment(order)}
+                    >
+                      <Feather name="credit-card" size={18} color="#fff" />
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => handleDeleteOrder(order)}
@@ -359,6 +399,69 @@ export default function OrderManagementScreen() {
       >
         ...
       </Modal> */}
+
+      {/* Modal thanh toán */}
+      <Modal
+        visible={paymentModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPaymentModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.paymentModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Thanh toán đơn hàng</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setPaymentModalVisible(false)}
+              >
+                <Feather name="x" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            {selectedOrderForPayment && (
+              <View style={styles.paymentModalBody}>
+                <View style={styles.orderSummaryRow}>
+                  <Text style={styles.paymentLabel}>Mã đơn hàng:</Text>
+                  <Text style={styles.paymentValue}>
+                    {selectedOrderForPayment.id.substring(0, 8)}...
+                  </Text>
+                </View>
+
+                <View style={styles.orderSummaryRow}>
+                  <Text style={styles.paymentLabel}>Bàn:</Text>
+                  <Text style={styles.paymentValue}>{selectedOrderForPayment.table?.number}</Text>
+                </View>
+
+                <View style={styles.orderSummaryRow}>
+                  <Text style={styles.paymentLabel}>Tổng tiền:</Text>
+                  <Text style={styles.paymentValueHighlight}>
+                    {Math.round(getTotalAmount(selectedOrderForPayment))}đ
+                  </Text>
+                </View>
+
+                <View style={styles.qrCodeContainer}>
+                  {qrCodeImage ? (
+                    <Image
+                      source={{ uri: qrCodeImage }}
+                      style={styles.qrCodeImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <ActivityIndicator size="large" color="#D02C1A" />
+                  )}
+                  <Text style={styles.qrCodeText}>Quét mã QR để thanh toán</Text>
+                </View>
+
+                <TouchableOpacity style={styles.confirmPaymentButton} onPress={confirmPayment}>
+                  <Feather name="check-circle" size={20} color="#fff" />
+                  <Text style={styles.confirmPaymentText}>Xác nhận đã thanh toán</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -713,5 +816,70 @@ const styles = StyleSheet.create({
   okButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  paymentModalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    width: '90%',
+    maxWidth: 400,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  paymentModalBody: {
+    padding: 16,
+  },
+  orderSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  paymentLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  paymentValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  paymentValueHighlight: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#D02C1A',
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  qrCodeImage: {
+    width: 200,
+    height: 200,
+    marginBottom: 10,
+  },
+  qrCodeText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  confirmPaymentButton: {
+    flexDirection: 'row',
+    backgroundColor: '#D02C1A',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  confirmPaymentText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginLeft: 8,
   },
 })
