@@ -59,6 +59,8 @@ export default function OrderManagementScreen() {
     preparingOrders: orders,
     loading,
     fetchPreparingOrders: fetchOrders,
+    getOrderStatus,
+    getTotalItems,
     getTotalAmount,
   } = usePreparingOrders()
 
@@ -127,7 +129,10 @@ export default function OrderManagementScreen() {
         await fetchTables()
 
         // Hiển thị thông báo thành công
-        Alert.alert('Thành công', 'Đơn hàng đã được xóa!')
+        Alert.alert(
+          'Thành công',
+          'Đơn hàng đã được xóa và trạng thái bàn đã được cập nhật thành "Đang dọn dẹp"'
+        )
       } catch (error) {
         console.error('Lỗi khi xóa đơn hàng:', error)
         Alert.alert(
@@ -384,6 +389,16 @@ export default function OrderManagementScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Loại bỏ hoặc vô hiệu hóa modal thông báo không thể xóa đơn hàng có trạng thái PENDING */}
+      {/* <Modal
+        visible={pendingDeleteAlertVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPendingDeleteAlertVisible(false)}
+      >
+        ...
+      </Modal> */}
 
       {/* Modal thanh toán */}
       <Modal
