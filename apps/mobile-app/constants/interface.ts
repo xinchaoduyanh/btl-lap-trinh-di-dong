@@ -43,6 +43,7 @@ export interface Food {
   price: number;
   category: FoodCategory;
   isAvailable: boolean;
+  imageUrl: string;
   image?: string;
   orderItems?: OrderItem[];
 }

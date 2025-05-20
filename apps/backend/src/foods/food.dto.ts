@@ -6,6 +6,7 @@ export const createFoodSchema = z.object({
   price: z.number().positive(),
   category: z.nativeEnum(FoodCategory),
   isAvailable: z.boolean().default(true),
+  imageUrl: z.string().optional(),
 })
 
 export const updateFoodSchema = createFoodSchema.partial()
