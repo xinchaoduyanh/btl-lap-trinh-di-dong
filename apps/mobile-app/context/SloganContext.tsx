@@ -18,8 +18,10 @@ type SloganContextType = {
   loading: boolean
   error: string | null
   fetchRandomSlogan: () => Promise<void>
-  fetchAllSlogans: () => Promise<Slogan[]>
 }
+
+
+
 
 // Tạo context với giá trị mặc định
 const SloganContext = createContext<SloganContextType>({
@@ -27,7 +29,6 @@ const SloganContext = createContext<SloganContextType>({
   loading: false,
   error: null,
   fetchRandomSlogan: async () => {},
-  fetchAllSlogans: async () => [],
 })
 
 // Hook để sử dụng context
@@ -90,51 +91,7 @@ export const SloganProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }
 
-  // Lấy tất cả slogan
-  const fetchAllSlogans = async (): Promise<Slogan[]> => {
-    setLoading(true)
-    setError(null)
 
-    try {
-      console.log('Fetching all slogans from:', `${config.API_URL}/slogans`)
-      const response = await fetch(`${config.API_URL}/slogans`)
-
-      if (!response.ok) {
-        console.error('API response not OK:', response.status, response.statusText)
-        throw new Error(`Không thể lấy danh sách slogan: ${response.status} ${response.statusText}`)
-      }
-
-      const data = await response.json()
-      console.log('All slogans data received:', data)
-
-      if (Array.isArray(data)) {
-        // Kiểm tra và lọc các slogan hợp lệ
-        const validSlogans = data.filter(item =>
-          item && typeof item === 'object' &&
-          'id' in item &&
-          'content' in item &&
-          typeof item.content === 'string'
-        )
-
-        if (validSlogans.length === 0 && data.length > 0) {
-          console.error('No valid slogans found in data')
-          setError('Không tìm thấy slogan hợp lệ')
-        }
-
-        return validSlogans
-      } else {
-        console.error('Data is not an array:', data)
-        setError('Dữ liệu không đúng định dạng')
-        return []
-      }
-    } catch (err) {
-      console.error('Error fetching all slogans:', err)
-      setError(`Không thể lấy danh sách slogan: ${err instanceof Error ? err.message : 'Lỗi không xác định'}`)
-      return []
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // Không tự động lấy slogan khi component được mount nữa
   // Người dùng sẽ cần bấm vào để xem slogan
@@ -145,8 +102,7 @@ export const SloganProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         slogan,
         loading,
         error,
-        fetchRandomSlogan,
-        fetchAllSlogans
+        fetchRandomSlogan
       }}
     >
       {children}
