@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { config } from '../config/env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export interface Notification {
   id: string;
   message: string;
+  title: string;
   createdAt: string;
 }
 
@@ -42,6 +43,7 @@ interface NotificationContextType {
   deleteNotification: (assignmentId: string) => Promise<void>;
   countUnread: () => Promise<number>;
   refreshUnreadCount: () => Promise<void>;
+  lastFetchTime: number | null;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -50,15 +52,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [lastFetchTime, setLastFetchTime] = useState<number | null>(null);
 
   // Cập nhật số lượng thông báo chưa đọc khi component được mount
   useEffect(() => {
     refreshUnreadCount();
 
-    // Thiết lập interval để cập nhật số lượng thông báo chưa đọc mỗi 30 giây
+    // Thiết lập interval để cập nhật số lượng thông báo chưa đọc mỗi 10 giây
     const intervalId = setInterval(() => {
       refreshUnreadCount();
-    }, 30000);
+    }, 10000); // Thay đổi từ 15000 (15s) thành 10000 (10s)
 
     // Cleanup interval khi component unmount
     return () => clearInterval(intervalId);
@@ -95,12 +98,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         type = 'inventory';
       }
 
-      // Tạo tiêu đề từ nội dung thông báo
-      let title = 'Thông báo mới';
-      if (type === 'order') title = 'Đơn hàng mới';
-      if (type === 'schedule') title = 'Cập nhật lịch';
-      if (type === 'table') title = 'Thông báo bàn';
-      if (type === 'inventory') title = 'Cảnh báo kho';
+      // Sử dụng title từ API nếu có, nếu không thì tạo title dựa trên loại thông báo
+      let title = assignment.notification.title || 'Thông báo mới';
+      
+      // Nếu không có title từ API, tạo title dựa trên loại thông báo
+      if (!assignment.notification.title) {
+        if (type === 'order') title = 'Đơn hàng mới';
+        if (type === 'schedule') title = 'Cập nhật lịch';
+        if (type === 'table') title = 'Thông báo bàn';
+        if (type === 'inventory') title = 'Cảnh báo kho';
+      }
 
       // Định dạng thời gian
       let timeString = 'Vừa xong';
@@ -146,7 +153,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   // Lấy danh sách thông báo từ API
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
+    // Kiểm tra thời gian từ lần fetch cuối cùng
+    const now = Date.now();
+    // Nếu đã fetch trong vòng 5 giây, không fetch lại
+    if (lastFetchTime && now - lastFetchTime < 5000) {
+      console.log('Đã fetch gần đây, bỏ qua');
+      return;
+    }
+
     setLoading(true);
     try {
       // Lấy ID của nhân viên đang đăng nhập
@@ -192,7 +207,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
 
         const data = await response.json();
-        console.log('Dữ liệu thông báo từ API:', JSON.stringify(data, null, 2));
 
         // Kiểm tra xem data có phải là mảng không
         if (!Array.isArray(data)) {
@@ -221,6 +235,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         // Cập nhật số lượng thông báo chưa đọc
         await refreshUnreadCount();
+        
+        // Cập nhật thời gian fetch cuối cùng
+        setLastFetchTime(Date.now());
       } catch (fetchError) {
         console.log('Lỗi khi fetch:', fetchError);
         // Sử dụng dữ liệu giả nếu không thể kết nối với API
@@ -255,7 +272,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       setLoading(false);
     }
-  };
+  }, [lastFetchTime]);
 
   // Đánh dấu thông báo đã đọc
   const markAsRead = async (assignmentId: string) => {
@@ -397,7 +414,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       markAllAsRead,
       deleteNotification,
       countUnread,
-      refreshUnreadCount
+      refreshUnreadCount,
+      lastFetchTime
     }}>
       {children}
     </NotificationContext.Provider>
