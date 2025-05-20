@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react'
 import { Alert } from 'react-native'
 import { config } from '../config/env'
 import type { Order, OrderItem, OrderItemStatus, CreateOrderRequest } from '../constants/interface'
+import { useTable } from './TableContext'
 
 interface OrderContextType {
   orders: Order[]
@@ -15,6 +16,7 @@ interface OrderContextType {
   updateOrderItems: (orderId: string, items: OrderItem[]) => Promise<void>
   deleteOrder: (id: string) => Promise<void>
   fetchPreparingOrders: () => Promise<void>
+  updateOrderPaymentStatus: (orderId: string, timeOut: string) => Promise<void>
 }
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined)
@@ -24,7 +26,13 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [preparingOrders, setPreparingOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
 
-  const fetchOrders = async () => {
+  // Sử dụng TableContext để có thể cập nhật danh sách bàn
+  const { fetchTables } = useTable()
+
+  const fetchOrders = useCallback(async () => {
+    // Tránh gọi API nếu đang loading
+    if (loading) return
+
     setLoading(true)
     try {
       const res = await fetch(`${config.API_URL}/orders`)
@@ -36,7 +44,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } finally {
       setLoading(false)
     }
-  }
+  }, []) // Loại bỏ các dependencies không cần thiết
 
   const fetchOrder = useCallback(async (id: string) => {
     setLoading(true)
@@ -64,11 +72,10 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Failed to create order')
       await fetchOrders()
-      // Bỏ thông báo Alert ở đây để tránh trùng lặp
       return data
     } catch (error: any) {
       console.error('Error creating order:', error.message)
-      throw error // Ném lỗi để component gọi hàm này có thể xử lý
+      throw error
     } finally {
       setLoading(false)
     }
@@ -135,51 +142,92 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const deleteOrder = async (id: string) => {
     setLoading(true)
     try {
-      // Trước khi xóa, lấy thông tin đơn hàng để biết tableId
-      const orderToDelete = orders.find((order) => order.id === id)
-      const tableId = orderToDelete?.tableId
-
+      // Gọi API xóa đơn hàng - backend sẽ xử lý cập nhật trạng thái bàn
       const res = await fetch(`${config.API_URL}/orders/${id}`, {
         method: 'DELETE',
       })
-      if (!res.ok) throw new Error('Failed to delete order')
 
-      // Sau khi xóa đơn hàng thành công, cập nhật trạng thái bàn thành CLEANING
-      if (tableId) {
-        const tableRes = await fetch(`${config.API_URL}/tables/${tableId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'CLEANING' }),
-        })
-        if (!tableRes.ok) {
-          console.error('Failed to update table status')
-        }
+      if (!res.ok) {
+        // Xử lý lỗi từ API
+        const errorData = await res.json().catch(() => ({ message: 'Failed to delete order' }))
+        throw new Error(errorData.message || 'Failed to delete order')
       }
 
-      await fetchOrders()
-      // Bỏ thông báo Alert ở đây để tránh trùng lặp
+      // Cập nhật state sau khi xóa thành công
+      await Promise.all([
+        fetchOrders(), // Cập nhật danh sách tất cả đơn hàng
+        fetchPreparingOrders(), // Cập nhật danh sách đơn hàng đang chuẩn bị
+        fetchTables(), // Cập nhật danh sách bàn và trạng thái bàn
+      ])
+
+      // Không cần gọi API cập nhật trạng thái bàn vì backend đã xử lý
+      console.log('Orders and tables updated after deletion')
     } catch (error: any) {
-      // Chỉ log lỗi, không hiển thị Alert
       console.error('Error deleting order:', error.message)
-      throw error // Ném lỗi để component gọi hàm này có thể xử lý
+      throw error
     } finally {
       setLoading(false)
     }
   }
 
   const fetchPreparingOrders = useCallback(async () => {
+    // Tránh gọi API nếu đang loading
+    if (loading) return
+
     setLoading(true)
     try {
+      console.log('Fetching preparing orders from API...')
       const res = await fetch(`${config.API_URL}/orders/preparing`)
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        console.error('API error:', errorData)
+        throw new Error(errorData.message || 'Failed to fetch preparing orders')
+      }
+
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message || 'Failed to fetch preparing orders')
+      console.log('Preparing orders fetched successfully:', data.length)
       setPreparingOrders(data)
+      return data
+    } catch (error: any) {
+      console.error('Error fetching preparing orders:', error.message)
+      // Sử dụng console.error thay vì Alert để tránh hiển thị quá nhiều alert
+    } finally {
+      setLoading(false)
+    }
+  }, []) // Loại bỏ các dependencies không cần thiết
+
+  const updateOrderPaymentStatus = async (orderId: string, timeOut: string) => {
+    setLoading(true)
+    try {
+      console.log(`Updating order ${orderId} payment status to PAID`)
+      const orderUpdateData = {
+        status: 'PAID',
+        timeOut: timeOut,
+      }
+
+      const res = await fetch(`${config.API_URL}/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderUpdateData),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.message || 'Failed to update order payment status')
+      }
+
+      // Cập nhật danh sách đơn hàng
+      await fetchOrders()
+      await fetchPreparingOrders()
+
+      return await res.json()
     } catch (error: any) {
       Alert.alert('Error', error.message)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   return (
     <OrderContext.Provider
@@ -195,6 +243,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateOrderItems,
         deleteOrder,
         fetchPreparingOrders,
+        updateOrderPaymentStatus,
       }}
     >
       {children}
@@ -212,7 +261,13 @@ export const useOrder = () => {
 
 // Custom hook for preparing orders
 export const usePreparingOrders = () => {
-  const { preparingOrders, loading, fetchPreparingOrders, updateOrderItems } = useOrder()
+  const {
+    preparingOrders,
+    loading,
+    fetchPreparingOrders,
+    updateOrderItems,
+    updateOrderPaymentStatus,
+  } = useOrder()
 
   const getOrderItemsByStatus = useCallback((order: Order | null, status: OrderItemStatus) => {
     if (!order) return []
@@ -268,5 +323,6 @@ export const usePreparingOrders = () => {
     getTotalAmount,
     getOrderStatus,
     updateOrderItems,
+    updateOrderPaymentStatus,
   }
 }
