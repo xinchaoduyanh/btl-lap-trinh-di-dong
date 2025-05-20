@@ -125,27 +125,31 @@ export class OrdersService {
   }
 
   async findPreparingOrders() {
-    const orders = await this.prisma.order.findMany({
-      where: {
-        status: OrderStatus.RESERVED,
-      },
-      include: {
-        table: true,
-        orderItems: {
-          include: {
-            food: true,
+    try {
+      const orders = await this.prisma.order.findMany({
+        where: {
+          status: OrderStatus.RESERVED,
+        },
+        include: {
+          table: true,
+          orderItems: {
+            include: {
+              food: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
 
-    if (!orders || orders.length === 0) {
-      throw new NotFoundException('No preparing orders found')
+      console.log(`Found ${orders.length} preparing orders`)
+
+      // Trả về mảng rỗng thay vì throw error nếu không có đơn hàng
+      return orders
+    } catch (error) {
+      console.error('Error fetching preparing orders:', error)
+      throw error
     }
-
-    return orders
   }
 }

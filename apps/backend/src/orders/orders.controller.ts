@@ -47,8 +47,8 @@ export class OrdersController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK) // Thay đổi từ NO_CONTENT sang OK để có thể trả về thông tin
   async remove(@Param('id') id: string) {
-    await this.ordersService.remove(id)
+    return this.ordersService.remove(id)
   }
 }

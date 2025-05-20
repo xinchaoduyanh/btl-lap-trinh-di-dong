@@ -223,6 +223,12 @@ export default function AddOrderScreen() {
   )
 
   const handlePlaceOrder = useCallback(async () => {
+    // Ngăn chặn việc gọi nhiều lần khi đang xử lý
+    if (isLoading) {
+      console.log('Already processing order, ignoring duplicate call')
+      return
+    }
+
     if (!selectedTableId) {
       setError('Vui lòng chọn bàn trước khi đặt hàng')
       return
@@ -234,26 +240,20 @@ export default function AddOrderScreen() {
 
     setIsLoading(true)
     try {
-      let orderId = selectedOrderId
-
-      // Nếu chưa có đơn hàng cho bàn này, tạo đơn hàng mới
-      if (!orderId) {
-        if (!user || !user.id) {
-          setError('Không thể xác định nhân viên. Vui lòng đăng nhập lại.')
-          setIsLoading(false)
-          return
-        }
-
-        // Tạo đơn hàng mới
-        const newOrderData: CreateOrderRequest = {
-          tableId: selectedTableId,
-          employeeId: user.id,
-          status: 'RESERVED',
-        }
-
-        const newOrder = await createOrder(newOrderData)
-        orderId = newOrder.id
+      if (!user || !user.id) {
+        setError('Không thể xác định nhân viên. Vui lòng đăng nhập lại.')
+        return
       }
+
+      // Tạo đơn hàng mới
+      const newOrderData: CreateOrderRequest = {
+        tableId: selectedTableId,
+        employeeId: user.id,
+        status: 'RESERVED',
+      }
+
+      const newOrder = await createOrder(newOrderData)
+      const orderId = newOrder.id
 
       // Thêm các món ăn vào đơn hàng
       for (const item of selectedItems) {

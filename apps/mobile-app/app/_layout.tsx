@@ -53,31 +53,30 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <SloganProvider>
-
-      <FoodProvider>
-        <OrderItemProvider>
-          <OrderProvider>
-            <TableProvider>
-            <CheckoutProvider>
-              <NotificationProvider>
-                <CustomThemeProvider>
-                  <AuthProvider>
-                    <Stack screenOptions={{ headerShown: false }}>
-                      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                      <Stack.Screen name="+not-found" />
-                    </Stack>
-                    <StatusBar style="auto" />
-                  </AuthProvider>
-                </CustomThemeProvider>
-              </NotificationProvider>
-            </CheckoutProvider>
-          </TableProvider>
-          </OrderProvider>
-        </OrderItemProvider>
-      </FoodProvider>
-      </SloganProvider>
+      <CustomThemeProvider>
+        <AuthProvider>
+          <SloganProvider>
+            <FoodProvider>
+              <TableProvider>
+                <OrderProvider>
+                  <OrderItemProvider>
+                    <CheckoutProvider>
+                      <NotificationProvider>
+                        <Stack screenOptions={{ headerShown: false }}>
+                          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                          <Stack.Screen name="+not-found" />
+                        </Stack>
+                        <StatusBar style="auto" />
+                      </NotificationProvider>
+                    </CheckoutProvider>
+                  </OrderItemProvider>
+                </OrderProvider>
+              </TableProvider>
+            </FoodProvider>
+          </SloganProvider>
+        </AuthProvider>
+      </CustomThemeProvider>
     </ThemeProvider>
   )
 }

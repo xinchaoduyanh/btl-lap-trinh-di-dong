@@ -1,94 +1,34 @@
-"use client"
-import React, { useState, useEffect, useCallback } from "react"
+'use client'
+import React, { useState, useEffect, useCallback } from 'react'
 
 import {
   StyleSheet,
   ScrollView,
   View,
-  Image,
   Text,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
   StatusBar,
   TextInput,
-} from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { useRouter, useLocalSearchParams } from "expo-router"
-import { useTheme } from "../../../context/ThemeContext"
-import { Feather } from "@expo/vector-icons"
+  Image,
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter, useLocalSearchParams } from 'expo-router'
+import { useTheme } from '../../../context/ThemeContext'
+import { Feather } from '@expo/vector-icons'
+import { useOrder } from '../../../context/OrderContext'
+import { useTable } from '../../../context/TableContext'
+import { useAuth } from '../../../context/AuthContext'
 
-// Mock data for testing
-const MOCK_ORDER = {
-  id: "ord1",
-  tableId: "t5",
-  tableNumber: 5,
-  employeeId: "emp1",
-  status: "PENDING",
-  createdAt: "2023-05-17T10:30:00Z",
-  timeOut: null,
-  orderItems: [
-    {
-      id: "oi1",
-      orderId: "ord1",
-      foodId: "f1",
-      quantity: 1,
-      status: "PENDING",
-      food: {
-        id: "f1",
-        name: "Lẩu Tứ Xuyên cay",
-        price: 25.99,
-        category: "MAIN_COURSE",
-      },
-    },
-    {
-      id: "oi2",
-      orderId: "ord1",
-      foodId: "f2",
-      quantity: 2,
-      status: "PENDING",
-      food: {
-        id: "f2",
-        name: "Thịt bò thái lát",
-        price: 12.99,
-        category: "MAIN_COURSE",
-      },
-    },
-    {
-      id: "oi3",
-      orderId: "ord1",
-      foodId: "f3",
-      quantity: 1,
-      status: "PREPARING",
-      food: {
-        id: "f3",
-        name: "Đậu phụ",
-        price: 5.99,
-        category: "SIDE_DISH",
-      },
-    },
-    {
-      id: "oi4",
-      orderId: "ord1",
-      foodId: "f4",
-      quantity: 1,
-      status: "READY",
-      food: {
-        id: "f4",
-        name: "Rau các loại",
-        price: 7.99,
-        category: "SIDE_DISH",
-      },
-    },
-  ],
-}
-
-// Payment methods
+// Payment methods - chỉ giữ lại tiền mặt và QR
 const PAYMENT_METHODS = [
-  { id: "cash", name: "Tiền mặt", icon: "dollar-sign" },
-  { id: "card", name: "Thẻ tín dụng", icon: "credit-card" },
-  { id: "qr", name: "Mã QR", icon: "smartphone" },
+  { id: 'cash', name: 'Tiền mặt', icon: 'dollar-sign' },
+  { id: 'qr', name: 'Mã QR', icon: 'smartphone' },
 ]
+
+// Mock QR code data
+const MOCK_QR_CODE = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=payment_order_'
 
 export default function PaymentScreen() {
   const router = useRouter()
@@ -96,40 +36,69 @@ export default function PaymentScreen() {
   const params = useLocalSearchParams()
   const orderId = params.id as string
 
+  // Sử dụng các context
+  const { fetchOrder, updateOrderPaymentStatus } = useOrder()
+  const { updateTable } = useTable() // Sử dụng hàm updateTable hiện có
+  const { user } = useAuth()
+  const { fetchTables } = useTable()
+
   // State
-  const [order, setOrder] = useState<any>(MOCK_ORDER)
+  const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [processing, setProcessing] = useState(false)
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("cash")
-  const [discount, setDiscount] = useState<string>("0")
-  const [tip, setTip] = useState<string>("0")
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('cash')
+  const [showQRCode, setShowQRCode] = useState(false)
+  const [qrCodeUrl, setQrCodeUrl] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [paymentSteps, setPaymentSteps] = useState({
+    updatingOrder: false,
+    updatingTable: false,
+  })
 
   // Fetch order data
   useEffect(() => {
-    const fetchOrder = async () => {
+    const loadOrder = async () => {
+      if (!orderId) {
+        setError('Không tìm thấy mã đơn hàng')
+        return
+      }
+
       setLoading(true)
       try {
-        // In a real app, you would fetch the order data
-        // const orderData = await getOrderById(orderId)
-        // setOrder(orderData)
-
-        // For now, we'll use mock data
-        setOrder(MOCK_ORDER)
+        const orderData = await fetchOrder(orderId)
+        if (orderData) {
+          setOrder(orderData)
+        } else {
+          setError('Không thể tải thông tin đơn hàng')
+        }
       } catch (error) {
-        console.error("Lỗi khi tải đơn hàng:", error)
-        Alert.alert("Lỗi", "Không thể tải thông tin đơn hàng")
+        console.error('Lỗi khi tải đơn hàng:', error)
+        setError('Không thể tải thông tin đơn hàng')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchOrder()
-  }, [orderId])
+    loadOrder()
+  }, [orderId, fetchOrder])
+
+  // Tạo QR code khi chọn phương thức thanh toán QR
+  useEffect(() => {
+    if (selectedPaymentMethod === 'qr' && order) {
+      setShowQRCode(true)
+      // Tạo mock QR code URL với orderId
+      setQrCodeUrl(`${MOCK_QR_CODE}${order.id}_${Date.now()}`)
+    } else {
+      setShowQRCode(false)
+    }
+  }, [selectedPaymentMethod, order])
 
   // Calculate subtotal
   const calculateSubtotal = useCallback(() => {
+    if (!order || !order.orderItems || !Array.isArray(order.orderItems)) return 0
     return order.orderItems.reduce((total: number, item: any) => {
-      return total + item.food.price * item.quantity
+      if (!item || !item.food) return total
+      return total + (item.food.price || 0) * (item.quantity || 0)
     }, 0)
   }, [order])
 
@@ -138,39 +107,60 @@ export default function PaymentScreen() {
     return calculateSubtotal() * 0.1
   }, [calculateSubtotal])
 
-  // Calculate discount
-  const getDiscount = useCallback(() => {
-    const discountValue = Number.parseFloat(discount) || 0
-    return discountValue > calculateSubtotal() ? calculateSubtotal() : discountValue
-  }, [discount, calculateSubtotal])
-
-  // Calculate tip
-  const getTip = useCallback(() => {
-    return Number.parseFloat(tip) || 0
-  }, [tip])
-
   // Calculate total
   const calculateTotal = useCallback(() => {
-    return calculateSubtotal() + calculateTax() - getDiscount() + getTip()
-  }, [calculateSubtotal, calculateTax, getDiscount, getTip])
+    return calculateSubtotal() + calculateTax()
+  }, [calculateSubtotal, calculateTax])
 
   // Handle payment
-  const handleProcessPayment = useCallback(() => {
-    if (processing) return
+  const handleProcessPayment = useCallback(async () => {
+    if (processing || !order || !user) return
 
     setProcessing(true)
 
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // 1. Cập nhật trạng thái đơn hàng thành PAID và thêm timeOut
+      setPaymentSteps(prev => ({ ...prev, updatingOrder: true }))
+      const currentTime = new Date().toISOString()
+      await updateOrderPaymentStatus(order.id, currentTime)
+      setPaymentSteps(prev => ({ ...prev, updatingOrder: false, updatingTable: true }))
+
+      // 2. Cập nhật trạng thái bàn thành CLEANING
+      if (order.tableId) {
+        await updateTable(order.tableId, { status: 'CLEANING' })
+      }
+      setPaymentSteps(prev => ({ ...prev, updatingTable: false }))
+
+      // 3. Hiển thị thông báo thành công
+      Alert.alert(
+        'Thanh toán thành công',
+        `Thanh toán ${Math.round(calculateTotal())}đ đã được xử lý thành công.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]
+      )
+    } catch (error) {
+      console.error('Lỗi khi thanh toán:', error)
+      Alert.alert('Lỗi', 'Không thể hoàn tất thanh toán. Vui lòng thử lại sau.')
+    } finally {
       setProcessing(false)
-      Alert.alert("Thanh toán thành công", `Thanh toán ${Math.round(calculateTotal())}đ đã được xử lý thành công.`, [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ])
-    }, 1500)
-  }, [processing, calculateTotal, router])
+      setPaymentSteps({
+        updatingOrder: false,
+        updatingTable: false,
+      })
+    }
+  }, [
+    processing,
+    order,
+    user,
+    updateOrderPaymentStatus,
+    updateTable, // Sử dụng updateTable thay vì updateTableStatus
+    calculateTotal,
+    router,
+  ])
 
   // Handle cancel
   const handleCancel = useCallback(() => {
@@ -184,6 +174,28 @@ export default function PaymentScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D02C1A" />
           <Text style={styles.loadingText}>Đang tải thông tin thanh toán...</Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  if (error || !order) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle="light-content" backgroundColor="#D02C1A" />
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleCancel}>
+            <Feather name="arrow-left" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Thanh toán</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Feather name="alert-circle" size={64} color="#F44336" />
+          <Text style={styles.errorText}>{error || 'Không thể tải thông tin đơn hàng'}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => router.back()}>
+            <Text style={styles.retryButtonText}>Quay lại</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     )
@@ -206,28 +218,45 @@ export default function PaymentScreen() {
           <View style={styles.orderInfoRow}>
             <View style={styles.orderInfoItem}>
               <Feather name="coffee" size={16} color="#D02C1A" />
-              <Text style={styles.orderInfoText}>Bàn {order.tableNumber}</Text>
+              <Text style={styles.orderInfoText}>
+                Bàn {order.table ? order.table.number : 'N/A'}
+              </Text>
             </View>
             <View style={styles.orderInfoItem}>
               <Feather name="clock" size={16} color="#D02C1A" />
               <Text style={styles.orderInfoText}>
-                {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {new Date(order.createdAt).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </Text>
             </View>
           </View>
 
           <View style={styles.divider} />
 
-          <Text style={styles.sectionTitle}>Các món đã đặt</Text>
-          {order.orderItems.map((item: any) => (
-            <View key={item.id} style={styles.orderItem}>
-              <View style={styles.orderItemInfo}>
-                <Text style={styles.orderItemName}>{item.food.name}</Text>
-                <Text style={styles.orderItemQuantity}>x{item.quantity}</Text>
+          <Text style={styles.sectionTitle}>Chi tiết đơn hàng</Text>
+
+          {Array.isArray(order.orderItems) && order.orderItems.length > 0 ? (
+            order.orderItems.map((item: any) => (
+              <View key={item.id} style={styles.orderItem}>
+                <View style={styles.orderItemInfo}>
+                  <Text style={styles.orderItemName}>
+                    {item && item.food ? item.food.name : 'Món không xác định'}
+                  </Text>
+                  <Text style={styles.orderItemQuantity}>x{item ? item.quantity : 0}</Text>
+                </View>
+                <Text style={styles.orderItemPrice}>
+                  {Math.round(
+                    ((item && item.food ? item.food.price : 0) || 0) * (item ? item.quantity : 0)
+                  )}
+                  đ
+                </Text>
               </View>
-              <Text style={styles.orderItemPrice}>{Math.round(item.food.price * item.quantity)}đ</Text>
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={styles.noItemsText}>Không có món ăn nào</Text>
+          )}
 
           <View style={styles.divider} />
 
@@ -236,37 +265,12 @@ export default function PaymentScreen() {
               <Text style={styles.summaryLabel}>Tạm tính</Text>
               <Text style={styles.summaryValue}>{Math.round(calculateSubtotal())}đ</Text>
             </View>
+
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Thuế (10%)</Text>
               <Text style={styles.summaryValue}>{Math.round(calculateTax())}đ</Text>
             </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Giảm giá</Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  value={discount}
-                  onChangeText={setDiscount}
-                  keyboardType="numeric"
-                  placeholder="0"
-                />
-                <Text style={styles.inputSuffix}>đ</Text>
-              </View>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tiền tip</Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  value={tip}
-                  onChangeText={setTip}
-                  keyboardType="numeric"
-                  placeholder="0"
-                />
-                <Text style={styles.inputSuffix}>đ</Text>
-              </View>
-            </View>
-            <View style={styles.divider} />
+
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Tổng cộng</Text>
               <Text style={styles.totalValue}>{Math.round(calculateTotal())}đ</Text>
@@ -289,7 +293,7 @@ export default function PaymentScreen() {
                 <Feather
                   name={method.icon as any}
                   size={24}
-                  color={selectedPaymentMethod === method.id ? "#fff" : "#333"}
+                  color={selectedPaymentMethod === method.id ? '#fff' : '#333'}
                 />
                 <Text
                   style={[
@@ -304,16 +308,23 @@ export default function PaymentScreen() {
           </View>
         </View>
 
+        {showQRCode && (
+          <View style={styles.qrCodeContainer}>
+            <Image source={{ uri: qrCodeUrl }} style={styles.qrCodeImage} resizeMode="contain" />
+            <Text style={styles.qrCodeText}>
+              Quét mã QR để thanh toán {Math.round(calculateTotal())}đ
+            </Text>
+          </View>
+        )}
+
         <TouchableOpacity
           style={[styles.processButton, processing && styles.processingButton]}
           onPress={handleProcessPayment}
           disabled={processing}
         >
-          {processing ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.processButtonText}>Xác nhận thanh toán</Text>
-          )}
+          <Text style={styles.processButtonText}>
+            {processing ? 'Đang xử lý...' : 'Hoàn tất thanh toán'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} disabled={processing}>
@@ -330,77 +341,77 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: "#666",
+    color: '#666',
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#D02C1A",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#D02C1A',
     paddingVertical: 16,
     paddingHorizontal: 16,
   },
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
+    fontWeight: 'bold',
+    color: '#fff',
   },
   content: {
     flex: 1,
     padding: 16,
   },
   orderInfoCard: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   orderInfoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 12,
   },
   orderInfoItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   orderInfoText: {
     marginLeft: 8,
     fontSize: 14,
-    color: "#333",
+    color: '#333',
   },
   divider: {
     height: 1,
-    backgroundColor: "#eee",
+    backgroundColor: '#eee',
     marginVertical: 12,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 12,
-    color: "#333",
+    color: '#333',
   },
   orderItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8,
   },
   orderItemInfo: {
@@ -408,136 +419,161 @@ const styles = StyleSheet.create({
   },
   orderItemName: {
     fontSize: 14,
-    color: "#333",
+    color: '#333',
   },
   orderItemQuantity: {
     fontSize: 12,
-    color: "#666",
+    color: '#666',
     marginTop: 2,
   },
   orderItemPrice: {
     fontSize: 14,
-    fontWeight: "500",
-    color: "#333",
+    fontWeight: '500',
+    color: '#333',
+  },
+  noItemsText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginVertical: 10,
   },
   summarySection: {
     marginTop: 8,
   },
   summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8,
   },
   summaryLabel: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
   },
   summaryValue: {
     fontSize: 14,
-    color: "#333",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    height: 36,
-  },
-  input: {
-    flex: 1,
-    height: "100%",
-    fontSize: 14,
-    textAlign: "right",
-  },
-  inputSuffix: {
-    marginLeft: 4,
-    fontSize: 14,
-    color: "#666",
+    color: '#333',
   },
   totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 4,
   },
   totalLabel: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
   },
   totalValue: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#D02C1A",
+    fontWeight: 'bold',
+    color: '#D02C1A',
   },
   paymentMethodsCard: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   paymentMethods: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   paymentMethodButton: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
     marginHorizontal: 4,
   },
   selectedPaymentMethod: {
-    backgroundColor: "#D02C1A",
-    borderColor: "#D02C1A",
+    backgroundColor: '#D02C1A',
+    borderColor: '#D02C1A',
   },
   paymentMethodText: {
     marginTop: 8,
     fontSize: 12,
-    color: "#333",
+    color: '#333',
   },
   selectedPaymentMethodText: {
-    color: "#fff",
+    color: '#fff',
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  qrCodeImage: {
+    width: 200,
+    height: 200,
+    marginBottom: 10,
+  },
+  qrCodeText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
   processButton: {
-    backgroundColor: "#D02C1A",
+    backgroundColor: '#D02C1A',
     borderRadius: 8,
     paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
   processingButton: {
     opacity: 0.7,
   },
   processButtonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   cancelButton: {
     borderRadius: 8,
     paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: "#D02C1A",
+    borderColor: '#D02C1A',
   },
   cancelButtonText: {
-    color: "#D02C1A",
+    color: '#D02C1A',
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: '500',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#D02C1A',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 })

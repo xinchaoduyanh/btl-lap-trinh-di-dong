@@ -49,9 +49,6 @@ export default function OrderManagementScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
-  const [paymentModalVisible, setPaymentModalVisible] = useState(false)
-  const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<Order | null>(null)
-  const [qrCodeImage, setQrCodeImage] = useState<string | null>(null)
 
   // Use context hooks
   const {
@@ -63,9 +60,7 @@ export default function OrderManagementScreen() {
     getTotalAmount,
   } = usePreparingOrders()
 
-  const { deleteOrder, updateOrder } = useOrder()
-
-  const { fetchTables } = useTable()
+  const { deleteOrder } = useOrder()
 
   const filteredOrders = orders
 
@@ -108,99 +103,42 @@ export default function OrderManagementScreen() {
     [router]
   )
 
-  // Xử lý khi nhấn nút xóa đơn hàng
+  // Xử lý khi nhấn nút xóa đơn hàng - đơn giản hóa
   const handleDeleteOrder = useCallback((order: Order) => {
-    // Hiển thị dialog xác nhận xóa trực tiếp, không cần kiểm tra trạng thái
     setSelectedOrderId(order.id)
     setDeleteModalVisible(true)
   }, [])
 
-  // Xác nhận xóa đơn hàng
+  // Xác nhận xóa đơn hàng - đơn giản hóa
   const confirmDeleteOrder = useCallback(async () => {
     if (selectedOrderId) {
       try {
+        setRefreshing(true) // Hiển thị trạng thái loading
+
+        console.log(`Confirming deletion of order: ${selectedOrderId}`)
         await deleteOrder(selectedOrderId)
-
-        // Sau khi xóa thành công, cập nhật lại danh sách đơn hàng
-        await fetchOrders()
-
-        // Cập nhật danh sách bàn để hiển thị trạng thái mới
-        await fetchTables()
-
-        // Hiển thị thông báo thành công
-        Alert.alert(
-          'Thành công',
-          'Đơn hàng đã được xóa và trạng thái bàn đã được cập nhật thành "Đang dọn dẹp"'
-        )
+        Alert.alert('Thành công', 'Đơn hàng đã được xóa thành công')
       } catch (error) {
         console.error('Lỗi khi xóa đơn hàng:', error)
-        Alert.alert(
-          'Lỗi',
-          'Không thể xóa đơn hàng. Vui lòng thử lại sau hoặc liên hệ quản trị viên.'
-        )
+        Alert.alert('Lỗi', 'Không thể xóa đơn hàng. Vui lòng thử lại sau.')
       } finally {
+        setRefreshing(false)
         setDeleteModalVisible(false)
         setSelectedOrderId(null)
       }
     }
-  }, [selectedOrderId, deleteOrder, fetchOrders, fetchTables])
+  }, [selectedOrderId, deleteOrder])
 
-  // Thêm hàm xử lý thanh toán
+  // Thay đổi hàm xử lý thanh toán để chuyển hướng sang trang payment
   const handlePayment = useCallback(
     (order: Order) => {
-      setSelectedOrderForPayment(order)
-      // Giả lập tạo mã QR - trong thực tế bạn sẽ gọi API để lấy mã QR
-      setQrCodeImage(
-        'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' +
-          encodeURIComponent(`order_id=${order.id}&amount=${Math.round(getTotalAmount(order))}`)
-      )
-      setPaymentModalVisible(true)
-    },
-    [getTotalAmount]
-  )
-
-  // Thêm hàm xác nhận thanh toán
-  const confirmPayment = useCallback(async () => {
-    if (!selectedOrderForPayment || !user) return
-
-    try {
-      setPaymentModalVisible(false)
-
-      // Lấy thời gian hiện tại khi bấm nút thanh toán
-      const currentTime = new Date().toISOString()
-
-      // Cập nhật trạng thái đơn hàng thành PAID, thêm timeOut và employeeId
-      await updateOrder(selectedOrderForPayment.id, {
-        status: 'PAID',
-        timeOut: currentTime,
-        employeeId: user.id, // Thêm ID của nhân viên đang xử lý
+      router.push({
+        pathname: '/(tabs)/orders/payment',
+        params: { id: order.id },
       })
-
-      // Cập nhật trạng thái bàn thành CLEANING
-      if (selectedOrderForPayment.tableId) {
-        await fetch(`${config.API_URL}/tables/${selectedOrderForPayment.tableId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'CLEANING' }),
-        })
-      }
-
-      // Hiển thị thông báo thành công
-      Alert.alert(
-        'Thanh toán thành công',
-        `Đơn hàng đã được thanh toán với số tiền ${Math.round(getTotalAmount(selectedOrderForPayment))}đ`
-      )
-
-      // Làm mới danh sách đơn hàng và bàn
-      await fetchOrders()
-      await fetchTables()
-    } catch (error) {
-      console.error('Lỗi khi thanh toán:', error)
-      Alert.alert('Lỗi', 'Không thể hoàn tất thanh toán. Vui lòng thử lại sau.')
-    } finally {
-      setSelectedOrderForPayment(null)
-    }
-  }, [selectedOrderForPayment, getTotalAmount, fetchOrders, fetchTables, user])
+    },
+    [router]
+  )
 
   // Add focus effect to fetch orders when screen comes into focus
   useFocusEffect(
@@ -344,11 +282,7 @@ export default function OrderManagementScreen() {
         </ScrollView>
       )}
 
-      <TouchableOpacity style={styles.fabButton} onPress={handleAddOrder}>
-        <Feather name="plus" size={24} color="#fff" />
-      </TouchableOpacity>
-
-      {/* Dialog xác nhận xóa đơn hàng */}
+      {/* Modal xác nhận xóa đơn hàng */}
       <Modal
         visible={deleteModalVisible}
         transparent={true}
@@ -363,13 +297,15 @@ export default function OrderManagementScreen() {
                 style={styles.modalCloseButton}
                 onPress={() => setDeleteModalVisible(false)}
               >
-                <Feather name="x" size={20} color="#fff" />
+                <Feather name="x" size={18} color="#fff" />
               </TouchableOpacity>
             </View>
             <View style={styles.modalBody}>
-              <Feather name="alert-triangle" size={50} color="#FF9800" style={styles.modalIcon} />
-              <Text style={styles.modalMessage}>Bạn có chắc chắn muốn xóa đơn hàng này không?</Text>
-              <Text style={styles.modalSubMessage}>Hành động này không thể hoàn tác.</Text>
+              <Feather name="alert-triangle" size={50} color="#F44336" style={styles.modalIcon} />
+              <Text style={styles.modalMessage}>Bạn có chắc chắn muốn xóa đơn hàng này?</Text>
+              <Text style={styles.modalSubMessage}>
+                Hành động này không thể hoàn tác và sẽ xóa tất cả dữ liệu liên quan.
+              </Text>
             </View>
             <View style={styles.modalFooter}>
               <TouchableOpacity
@@ -385,79 +321,6 @@ export default function OrderManagementScreen() {
                 <Text style={styles.deleteButtonText}>Xóa</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Loại bỏ hoặc vô hiệu hóa modal thông báo không thể xóa đơn hàng có trạng thái PENDING */}
-      {/* <Modal
-        visible={pendingDeleteAlertVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setPendingDeleteAlertVisible(false)}
-      >
-        ...
-      </Modal> */}
-
-      {/* Modal thanh toán */}
-      <Modal
-        visible={paymentModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setPaymentModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.paymentModalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Thanh toán đơn hàng</Text>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setPaymentModalVisible(false)}
-              >
-                <Feather name="x" size={20} color="#fff" />
-              </TouchableOpacity>
-            </View>
-
-            {selectedOrderForPayment && (
-              <View style={styles.paymentModalBody}>
-                <View style={styles.orderSummaryRow}>
-                  <Text style={styles.paymentLabel}>Mã đơn hàng:</Text>
-                  <Text style={styles.paymentValue}>
-                    {selectedOrderForPayment.id.substring(0, 8)}...
-                  </Text>
-                </View>
-
-                <View style={styles.orderSummaryRow}>
-                  <Text style={styles.paymentLabel}>Bàn:</Text>
-                  <Text style={styles.paymentValue}>{selectedOrderForPayment.table?.number}</Text>
-                </View>
-
-                <View style={styles.orderSummaryRow}>
-                  <Text style={styles.paymentLabel}>Tổng tiền:</Text>
-                  <Text style={styles.paymentValueHighlight}>
-                    {Math.round(getTotalAmount(selectedOrderForPayment))}đ
-                  </Text>
-                </View>
-
-                <View style={styles.qrCodeContainer}>
-                  {qrCodeImage ? (
-                    <Image
-                      source={{ uri: qrCodeImage }}
-                      style={styles.qrCodeImage}
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <ActivityIndicator size="large" color="#D02C1A" />
-                  )}
-                  <Text style={styles.qrCodeText}>Quét mã QR để thanh toán</Text>
-                </View>
-
-                <TouchableOpacity style={styles.confirmPaymentButton} onPress={confirmPayment}>
-                  <Feather name="check-circle" size={20} color="#fff" />
-                  <Text style={styles.confirmPaymentText}>Xác nhận đã thanh toán</Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
         </View>
       </Modal>
