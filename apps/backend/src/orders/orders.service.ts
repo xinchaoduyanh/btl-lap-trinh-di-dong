@@ -9,10 +9,25 @@ export class OrdersService {
 
   async create(createOrderDto: CreateOrderDto) {
     try {
-      return await this.prisma.order.create({
-        data: createOrderDto,
+      // Sử dụng transaction để đảm bảo tính nhất quán
+      return await this.prisma.$transaction(async (prisma) => {
+        // Tạo đơn hàng mới
+        const newOrder = await prisma.order.create({
+          data: createOrderDto,
+        })
+
+        // Cập nhật trạng thái bàn thành OCCUPIED
+        if (createOrderDto.tableId) {
+          await prisma.table.update({
+            where: { id: createOrderDto.tableId },
+            data: { status: TableStatus.OCCUPIED },
+          })
+        }
+
+        return newOrder
       })
     } catch (error) {
+      console.error('Error creating order:', error)
       throw error
     }
   }
@@ -69,29 +84,29 @@ export class OrdersService {
         throw new NotFoundException(`Order with ID ${id} not found`)
       }
 
-      // Xử lý đặc biệt cho timeOut
-      if (order.timeOut) {
-        try {
-          // Chuyển đổi timeOut thành đối tượng Date
-          const timeOutDate = new Date(order.timeOut)
-          console.log(`Order ${id} has timeOut: ${timeOutDate}`)
-        } catch (timeOutErr) {
-          console.error(`Error parsing timeOut for order ${id}:`, timeOutErr)
-        }
-      }
-
-      // Xóa tất cả các OrderItem liên quan trước
-      if (order.orderItems && order.orderItems.length > 0) {
-        await this.prisma.orderItem.deleteMany({
+      // Sử dụng transaction để đảm bảo tính nhất quán
+      return await this.prisma.$transaction(async (prisma) => {
+        // Xóa tất cả các OrderItem liên quan trước
+        await prisma.orderItem.deleteMany({
           where: {
             orderId: id,
           },
         })
-      }
 
-      // Tiếp tục với quá trình xóa đơn hàng
-      return await this.prisma.order.delete({
-        where: { id },
+        // Xóa đơn hàng
+        const deletedOrder = await prisma.order.delete({
+          where: { id },
+        })
+
+        // Cập nhật trạng thái bàn thành CLEANING nếu có tableId
+        if (order.tableId) {
+          await prisma.table.update({
+            where: { id: order.tableId },
+            data: { status: TableStatus.CLEANING },
+          })
+        }
+
+        return deletedOrder
       })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -99,7 +114,9 @@ export class OrdersService {
           throw new NotFoundException(`Order with ID ${id} not found`)
         }
         if (error.code === 'P2003') {
-          throw new ConflictException(`Cannot delete order ${id} because it has related items. Please delete the order items first.`)
+          throw new ConflictException(
+            `Cannot delete order ${id} because it has related items. Please delete the order items first.`
+          )
         }
       }
       console.error(`Error removing order ${id}:`, error)
@@ -111,9 +128,6 @@ export class OrdersService {
     const orders = await this.prisma.order.findMany({
       where: {
         status: OrderStatus.RESERVED,
-        table: {
-          status: TableStatus.RESERVED,
-        },
       },
       include: {
         table: true,

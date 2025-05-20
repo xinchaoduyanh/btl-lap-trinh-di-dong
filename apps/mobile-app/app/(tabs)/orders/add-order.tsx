@@ -1,5 +1,5 @@
-"use client"
-import React, { useEffect, useState, useCallback, useMemo } from "react"
+'use client'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import {
   StyleSheet,
   ScrollView,
@@ -14,32 +14,38 @@ import {
   Animated,
   StatusBar,
   Alert,
-} from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { useRouter } from "expo-router"
-import { useTheme } from "../../../context/ThemeContext"
-import { Feather } from "@expo/vector-icons"
-import { useFood } from "../../../context/FoodContext"
-import { useTable } from "../../../context/TableContext"
-import { useOrder } from "../../../context/OrderContext"
-import { useOrderItem } from "../../../context/OrderItemContext"
-import { useAuth } from "../../../context/AuthContext"
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
+import { useTheme } from '../../../context/ThemeContext'
+import { Feather } from '@expo/vector-icons'
+import { useFood } from '../../../context/FoodContext'
+import { useTable } from '../../../context/TableContext'
+import { useOrder } from '../../../context/OrderContext'
+import { useOrderItem } from '../../../context/OrderItemContext'
+import { useAuth } from '../../../context/AuthContext'
 
 // Components
-import { Header } from "../../../components/Header"
+import { Header } from '../../../components/Header'
 
 // Import interfaces
-import type { Table, Food, FoodCategory, OrderItemStatus,  CreateOrderRequest } from "../../../constants/interface"
+import type {
+  Table,
+  Food,
+  FoodCategory,
+  OrderItemStatus,
+  CreateOrderRequest,
+} from '../../../constants/interface'
 
 // Food categories based on your schema
 const FOOD_CATEGORIES = [
-  { id: "cat1", name: "MAIN_COURSE", icon: "disc", label: "Món chính" },
-  { id: "cat2", name: "APPETIZER", icon: "coffee", label: "Khai vị" },
-  { id: "cat3", name: "DESSERT", icon: "heart", label: "Tráng miệng" },
-  { id: "cat4", name: "BEVERAGE", icon: "coffee", label: "Đồ uống" },
-  { id: "cat5", name: "SOUP", icon: "thermometer", label: "Súp" },
-  { id: "cat6", name: "SALAD", icon: "feather", label: "Salad" },
-  { id: "cat7", name: "SIDE_DISH", icon: "square", label: "Món phụ" },
+  { id: 'cat1', name: 'MAIN_COURSE', icon: 'disc', label: 'Món chính' },
+  { id: 'cat2', name: 'APPETIZER', icon: 'coffee', label: 'Khai vị' },
+  { id: 'cat3', name: 'DESSERT', icon: 'heart', label: 'Tráng miệng' },
+  { id: 'cat4', name: 'BEVERAGE', icon: 'coffee', label: 'Đồ uống' },
+  { id: 'cat5', name: 'SOUP', icon: 'thermometer', label: 'Súp' },
+  { id: 'cat6', name: 'SALAD', icon: 'feather', label: 'Salad' },
+  { id: 'cat7', name: 'SIDE_DISH', icon: 'square', label: 'Món phụ' },
 ]
 
 interface SelectedItem extends Food {
@@ -47,7 +53,7 @@ interface SelectedItem extends Food {
   status: OrderItemStatus
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window")
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export default function AddOrderScreen() {
   const router = useRouter()
@@ -58,13 +64,13 @@ export default function AddOrderScreen() {
   const { createOrderItem } = useOrderItem()
   const { user } = useAuth()
 
-  const [selectedCategory, setSelectedCategory] = useState<FoodCategory>("MAIN_COURSE")
+  const [selectedCategory, setSelectedCategory] = useState<FoodCategory>('MAIN_COURSE')
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
   const [itemModalVisible, setItemModalVisible] = useState(false)
   const [orderSummaryVisible, setOrderSummaryVisible] = useState(false)
   const [currentItem, setCurrentItem] = useState<(Food & { image: string }) | null>(null)
-  const [quantity, setQuantity] = useState("1")
-  const [tableNumber, setTableNumber] = useState("")
+  const [quantity, setQuantity] = useState('1')
+  const [tableNumber, setTableNumber] = useState('')
   const [tableModalVisible, setTableModalVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -87,7 +93,7 @@ export default function AddOrderScreen() {
   }, [selectedCategory, foods])
 
   const availableTables = useMemo(() => {
-    return tables.filter((table) => table.status === "RESERVED")
+    return tables.filter((table) => table.status === 'RESERVED')
   }, [tables])
 
   const totalItems = useMemo(() => {
@@ -100,29 +106,35 @@ export default function AddOrderScreen() {
 
   const getCategoryLabel = (categoryName: FoodCategory) => {
     const category = FOOD_CATEGORIES.find((cat) => cat.name === categoryName)
-    return category ? category.label : categoryName.replace("_", " ")
+    return category ? category.label : categoryName.replace('_', ' ')
   }
 
   const handleCategoryPress = useCallback((category: FoodCategory) => {
     setSelectedCategory(category)
   }, [])
 
-  const handleItemPress = useCallback((item: Food) => {
-    if (!tableNumber) {
-      Alert.alert("Chọn bàn", "Vui lòng chọn bàn trước khi thêm món")
-      return
-    }
-    setCurrentItem({ ...item, image: "https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg" })
-    setQuantity("1")
-    setItemModalVisible(true)
-  }, [tableNumber])
+  const handleItemPress = useCallback(
+    (item: Food) => {
+      if (!tableNumber) {
+        Alert.alert('Chọn bàn', 'Vui lòng chọn bàn trước khi thêm món')
+        return
+      }
+      setCurrentItem({
+        ...item,
+        image: 'https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg',
+      })
+      setQuantity('1')
+      setItemModalVisible(true)
+    },
+    [tableNumber]
+  )
 
   const addItemToOrder = useCallback(() => {
     if (!currentItem) return
 
     const parsedQuantity = Number.parseInt(quantity)
     if (parsedQuantity < 1) {
-      setError("Số lượng phải ít nhất là 1")
+      setError('Số lượng phải ít nhất là 1')
       return
     }
 
@@ -143,7 +155,7 @@ export default function AddOrderScreen() {
         {
           ...currentItem,
           quantity: parsedQuantity,
-          status: "PENDING",
+          status: 'PENDING',
         },
       ])
     }
@@ -170,49 +182,54 @@ export default function AddOrderScreen() {
     (itemId: string) => {
       setSelectedItems(selectedItems.filter((item) => item.id !== itemId))
     },
-    [selectedItems],
+    [selectedItems]
   )
 
   const updateItemQuantity = useCallback(
     (itemId: string, newQuantity: number) => {
       if (newQuantity < 1) {
-        setError("Số lượng phải ít nhất là 1")
+        setError('Số lượng phải ít nhất là 1')
         return
       }
 
-      const updatedItems = selectedItems.map((item) => (item.id === itemId ? { ...item, quantity: newQuantity } : item))
+      const updatedItems = selectedItems.map((item) =>
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      )
       setSelectedItems(updatedItems)
       setError(null)
     },
-    [selectedItems],
+    [selectedItems]
   )
 
-  const handleSelectTable = useCallback((table: Table) => {
-    setTableNumber(table.number.toString())
-    setSelectedTableId(table.id)
-    const order = orders.find(o => o.tableId === table.id)
-    setSelectedOrderId(order ? order.id : null)
-    setTableModalVisible(false)
-  }, [orders])
+  const handleSelectTable = useCallback(
+    (table: Table) => {
+      setTableNumber(table.number.toString())
+      setSelectedTableId(table.id)
+      const order = orders.find((o) => o.tableId === table.id)
+      setSelectedOrderId(order ? order.id : null)
+      setTableModalVisible(false)
+    },
+    [orders]
+  )
 
   const handlePlaceOrder = useCallback(async () => {
     if (!selectedTableId) {
-      setError("Vui lòng chọn bàn trước khi đặt hàng")
+      setError('Vui lòng chọn bàn trước khi đặt hàng')
       return
     }
     if (selectedItems.length === 0) {
-      setError("Vui lòng thêm ít nhất một món")
+      setError('Vui lòng thêm ít nhất một món')
       return
     }
 
     setIsLoading(true)
     try {
-      let orderId = selectedOrderId;
+      let orderId = selectedOrderId
 
       // Nếu chưa có đơn hàng cho bàn này, tạo đơn hàng mới
       if (!orderId) {
         if (!user || !user.id) {
-          setError("Không thể xác định nhân viên. Vui lòng đăng nhập lại.")
+          setError('Không thể xác định nhân viên. Vui lòng đăng nhập lại.')
           setIsLoading(false)
           return
         }
@@ -221,7 +238,7 @@ export default function AddOrderScreen() {
         const newOrderData: CreateOrderRequest = {
           tableId: selectedTableId,
           employeeId: user.id,
-          status: "RESERVED"
+          status: 'RESERVED',
         }
 
         const newOrder = await createOrder(newOrderData)
@@ -234,9 +251,12 @@ export default function AddOrderScreen() {
           orderId: orderId,
           foodId: item.id,
           quantity: item.quantity,
-          status: item.status
+          status: item.status,
         })
       }
+
+      // Cập nhật lại danh sách bàn sau khi đặt hàng thành công
+      await fetchTables()
 
       setOrderSummaryVisible(false)
       setSuccessModalVisible(true)
@@ -250,18 +270,26 @@ export default function AddOrderScreen() {
       setTimeout(() => {
         setSuccessModalVisible(false)
         setSelectedItems([])
-        setTableNumber("")
+        setTableNumber('')
         setSelectedOrderId(null)
         setSelectedTableId(null)
         // Điều hướng về trang danh sách đơn hàng
         router.push('/(tabs)/orders')
       }, 2000)
     } catch (error: any) {
-      setError(error.message || "Không thể đặt hàng")
+      setError(error.message || 'Không thể đặt hàng')
     } finally {
       setIsLoading(false)
     }
-  }, [selectedOrderId, selectedTableId, selectedItems, createOrderItem, createOrder, user])
+  }, [
+    selectedOrderId,
+    selectedTableId,
+    selectedItems,
+    createOrderItem,
+    createOrder,
+    user,
+    fetchTables,
+  ])
 
   const incrementQuantity = useCallback(() => {
     const newQuantity = Number.parseInt(quantity) + 1
@@ -280,20 +308,25 @@ export default function AddOrderScreen() {
       <Header
         title="Thêm đơn hàng mới"
         onBackPress={() => router.push('/(tabs)/orders')}
-        rightIcon={selectedItems.length > 0 ? "shopping-cart" : undefined}
+        rightIcon={selectedItems.length > 0 ? 'shopping-cart' : undefined}
         onRightPress={selectedItems.length > 0 ? () => setOrderSummaryVisible(true) : undefined}
       />
 
       <View style={styles.tableInfoBar}>
         <TouchableOpacity style={styles.tableSelector} onPress={() => setTableModalVisible(true)}>
           <Feather name="coffee" size={18} color="#D02C1A" />
-          <Text style={styles.tableSelectorText}>{tableNumber ? `Bàn ${tableNumber}` : "Chọn bàn"}</Text>
+          <Text style={styles.tableSelectorText}>
+            {tableNumber ? `Bàn ${tableNumber}` : 'Chọn bàn'}
+          </Text>
           <Feather name="chevron-down" size={16} color="#666" />
         </TouchableOpacity>
 
         {selectedItems.length > 0 && (
           <Animated.View style={[styles.cartButton, { transform: [{ scale: cartBounceAnim }] }]}>
-            <TouchableOpacity style={styles.cartButtonInner} onPress={() => setOrderSummaryVisible(true)}>
+            <TouchableOpacity
+              style={styles.cartButtonInner}
+              onPress={() => setOrderSummaryVisible(true)}
+            >
               <Feather name="shopping-cart" size={18} color="#fff" />
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{totalItems}</Text>
@@ -308,10 +341,17 @@ export default function AddOrderScreen() {
           {FOOD_CATEGORIES.map((category) => (
             <TouchableOpacity
               key={category.id}
-              style={[styles.categoryButton, selectedCategory === category.name && styles.categoryButtonActive]}
+              style={[
+                styles.categoryButton,
+                selectedCategory === category.name && styles.categoryButtonActive,
+              ]}
               onPress={() => handleCategoryPress(category.name as FoodCategory)}
             >
-              <Feather name={category.icon as keyof typeof Feather.glyphMap} size={16} color={selectedCategory === category.name ? "#fff" : "#D02C1A"} />
+              <Feather
+                name={category.icon as keyof typeof Feather.glyphMap}
+                size={16}
+                color={selectedCategory === category.name ? '#fff' : '#D02C1A'}
+              />
               <Text
                 style={[
                   styles.categoryButtonText,
@@ -337,7 +377,11 @@ export default function AddOrderScreen() {
           numColumns={2}
           contentContainerStyle={styles.foodItemsGrid}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.foodItemCard} onPress={() => handleItemPress(item)} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.foodItemCard}
+              onPress={() => handleItemPress(item)}
+              activeOpacity={0.7}
+            >
               <Image source={{ uri: item.image }} style={styles.foodItemImage} />
               <View style={styles.foodItemInfo}>
                 <Text style={styles.foodItemName} numberOfLines={1}>
@@ -374,7 +418,10 @@ export default function AddOrderScreen() {
               <>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Thêm vào đơn hàng</Text>
-                  <TouchableOpacity style={styles.modalCloseButton} onPress={() => setItemModalVisible(false)}>
+                  <TouchableOpacity
+                    style={styles.modalCloseButton}
+                    onPress={() => setItemModalVisible(false)}
+                  >
                     <Feather name="x" size={20} color="#fff" />
                   </TouchableOpacity>
                 </View>
@@ -383,14 +430,19 @@ export default function AddOrderScreen() {
                   <Image source={{ uri: currentItem.image }} style={styles.modalItemImage} />
                   <View style={styles.foodItemInfo}>
                     <Text style={styles.modalItemName}>{currentItem.name}</Text>
-                    <Text style={styles.foodItemCard}>{getCategoryLabel(currentItem.category)}</Text>
+                    <Text style={styles.foodItemCard}>
+                      {getCategoryLabel(currentItem.category)}
+                    </Text>
                     <Text style={styles.modalItemPrice}>Giá: {Math.round(currentItem.price)}đ</Text>
                   </View>
 
                   <View style={styles.modalQuantityContainer}>
                     <Text style={styles.modalQuantityLabel}>Số lượng:</Text>
                     <View style={styles.modalQuantityControls}>
-                      <TouchableOpacity style={styles.modalQuantityButton} onPress={decrementQuantity}>
+                      <TouchableOpacity
+                        style={styles.modalQuantityButton}
+                        onPress={decrementQuantity}
+                      >
                         <Feather name="minus" size={20} color="#D02C1A" />
                       </TouchableOpacity>
 
@@ -401,7 +453,10 @@ export default function AddOrderScreen() {
                         keyboardType="number-pad"
                       />
 
-                      <TouchableOpacity style={styles.modalQuantityButton} onPress={incrementQuantity}>
+                      <TouchableOpacity
+                        style={styles.modalQuantityButton}
+                        onPress={incrementQuantity}
+                      >
                         <Feather name="plus" size={20} color="#D02C1A" />
                       </TouchableOpacity>
                     </View>
@@ -430,7 +485,10 @@ export default function AddOrderScreen() {
           <View style={styles.orderSummaryModal}>
             <View style={styles.orderSummaryHeader}>
               <Text style={styles.orderSummaryTitle}>TÓM TẮT ĐƠN HÀNG</Text>
-              <TouchableOpacity style={styles.modalCloseButton} onPress={() => setOrderSummaryVisible(false)}>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setOrderSummaryVisible(false)}
+              >
                 <Feather name="x" size={20} color="#fff" />
               </TouchableOpacity>
             </View>
@@ -438,7 +496,7 @@ export default function AddOrderScreen() {
             <View style={styles.orderSummaryTableInfo}>
               <Feather name="coffee" size={20} color="#D02C1A" />
               <Text style={styles.orderSummaryTableText}>
-                {tableNumber ? `Bàn ${tableNumber}` : "Chưa chọn bàn"}
+                {tableNumber ? `Bàn ${tableNumber}` : 'Chưa chọn bàn'}
               </Text>
               {!tableNumber && (
                 <TouchableOpacity
@@ -462,7 +520,9 @@ export default function AddOrderScreen() {
                         <Text style={styles.orderItemName} numberOfLines={1}>
                           {item.name}
                         </Text>
-                        <Text style={styles.orderItemPrice}>{Math.round(item.price * item.quantity)}đ</Text>
+                        <Text style={styles.orderItemPrice}>
+                          {Math.round(item.price * item.quantity)}đ
+                        </Text>
                       </View>
 
                       <View style={styles.orderItemQuantityContainer}>
@@ -483,7 +543,10 @@ export default function AddOrderScreen() {
                         </TouchableOpacity>
                       </View>
 
-                      <TouchableOpacity style={styles.removeButton} onPress={() => removeItem(item.id)}>
+                      <TouchableOpacity
+                        style={styles.removeButton}
+                        onPress={() => removeItem(item.id)}
+                      >
                         <Feather name="trash-2" size={16} color="#F44336" />
                       </TouchableOpacity>
                     </View>
@@ -497,7 +560,10 @@ export default function AddOrderScreen() {
                   </View>
 
                   <TouchableOpacity
-                    style={[styles.placeOrderButton, (!selectedTableId || isLoading) && styles.placeOrderButtonDisabled]}
+                    style={[
+                      styles.placeOrderButton,
+                      (!selectedTableId || isLoading) && styles.placeOrderButtonDisabled,
+                    ]}
                     onPress={handlePlaceOrder}
                     disabled={!selectedTableId || isLoading}
                   >
@@ -517,7 +583,10 @@ export default function AddOrderScreen() {
                 <Feather name="shopping-cart" size={50} color="#ccc" />
                 <Text style={styles.emptyOrderText}>ĐƠN HÀNG TRỐNG</Text>
                 <Text style={styles.emptyOrderSubtext}>Thêm món ăn từ thực đơn</Text>
-                <TouchableOpacity style={styles.browseMenuButton} onPress={() => setOrderSummaryVisible(false)}>
+                <TouchableOpacity
+                  style={styles.browseMenuButton}
+                  onPress={() => setOrderSummaryVisible(false)}
+                >
                   <Text style={styles.browseMenuButtonText}>XEM THỰC ĐƠN</Text>
                 </TouchableOpacity>
               </View>
@@ -537,7 +606,10 @@ export default function AddOrderScreen() {
           <View style={styles.tableModalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Chọn bàn</Text>
-              <TouchableOpacity style={styles.modalCloseButton} onPress={() => setTableModalVisible(false)}>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setTableModalVisible(false)}
+              >
                 <Feather name="x" size={20} color="#fff" />
               </TouchableOpacity>
             </View>
@@ -545,7 +617,11 @@ export default function AddOrderScreen() {
             <ScrollView style={styles.tableList}>
               {availableTables.length > 0 ? (
                 availableTables.map((table) => (
-                  <TouchableOpacity key={table.id} style={styles.tableItem} onPress={() => handleSelectTable(table)}>
+                  <TouchableOpacity
+                    key={table.id}
+                    style={styles.tableItem}
+                    onPress={() => handleSelectTable(table)}
+                  >
                     <Feather name="coffee" size={20} color="#D02C1A" />
                     <Text style={styles.tableItemText}>Bàn {table.number}</Text>
                     <View style={styles.tableStatusBadge}>
@@ -567,7 +643,9 @@ export default function AddOrderScreen() {
       {/* Success Modal */}
       <Modal visible={successModalVisible} transparent={true} animationType="none">
         <View style={styles.successModalOverlay}>
-          <Animated.View style={[styles.successModalContent, { transform: [{ scale: successScaleAnim }] }]}>
+          <Animated.View
+            style={[styles.successModalContent, { transform: [{ scale: successScaleAnim }] }]}
+          >
             <View style={styles.successIconContainer}>
               <Feather name="check-circle" size={50} color="#fff" />
             </View>
@@ -582,110 +660,110 @@ export default function AddOrderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f8f8",
+    backgroundColor: '#f8f8f8',
   },
   tableInfoBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "white",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'white',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   tableSelector: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f8f8f8",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f8f8',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
   },
   tableSelectorText: {
     fontSize: 14,
-    color: "#333",
+    color: '#333',
     marginHorizontal: 8,
   },
   cartButton: {
-    position: "relative",
+    position: 'relative',
   },
   cartButtonInner: {
-    backgroundColor: "#D02C1A",
+    backgroundColor: '#D02C1A',
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cartBadge: {
-    position: "absolute",
+    position: 'absolute',
     top: -5,
     right: -5,
-    backgroundColor: "#FF9800",
+    backgroundColor: '#FF9800',
     width: 20,
     height: 20,
     borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cartBadgeText: {
-    color: "white",
+    color: 'white',
     fontSize: 12,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   categoriesContainer: {
-    backgroundColor: "white",
+    backgroundColor: 'white',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   categoryButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginRight: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#D02C1A",
+    borderColor: '#D02C1A',
   },
   categoryButtonActive: {
-    backgroundColor: "#D02C1A",
+    backgroundColor: '#D02C1A',
   },
   categoryButtonText: {
     marginLeft: 8,
     fontSize: 14,
-    color: "#D02C1A",
-    fontWeight: "500",
+    color: '#D02C1A',
+    fontWeight: '500',
   },
   categoryButtonTextActive: {
-    color: "white",
+    color: 'white',
   },
   contentContainer: {
     flex: 1,
   },
   categoryHeaderContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "white",
+    backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   categoryHeaderTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
   },
   categoryHeaderCount: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
   },
   foodItemsGrid: {
     padding: 8,
@@ -694,16 +772,16 @@ const styles = StyleSheet.create({
     width: (SCREEN_WIDTH - 48) / 2,
     margin: 8,
     borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: "white",
-    shadowColor: "#000",
+    overflow: 'hidden',
+    backgroundColor: 'white',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   foodItemImage: {
-    width: "100%",
+    width: '100%',
     height: 120,
   },
   foodItemInfo: {
@@ -711,74 +789,74 @@ const styles = StyleSheet.create({
   },
   foodItemName: {
     fontSize: 14,
-    fontWeight: "500",
-    color: "#333",
+    fontWeight: '500',
+    color: '#333',
     marginBottom: 8,
   },
   foodItemPriceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   foodItemPrice: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#D02C1A",
+    fontWeight: 'bold',
+    color: '#D02C1A',
   },
   addButton: {
-    backgroundColor: "#D02C1A",
+    backgroundColor: '#D02C1A',
     width: 28,
     height: 28,
     borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyListContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 40,
   },
   emptyListText: {
     marginTop: 10,
-    color: "#666",
+    color: '#666',
     fontSize: 16,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: 'white',
     borderRadius: 16,
-    width: "85%",
+    width: '85%',
     maxWidth: 400,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   modalHeader: {
-    backgroundColor: "#D02C1A",
+    backgroundColor: '#D02C1A',
     padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   modalTitle: {
-    color: "white",
+    color: 'white',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   modalCloseButton: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalBody: {
     padding: 16,
-    alignItems: "center",
+    alignItems: 'center',
   },
   modalItemImage: {
     width: 150,
@@ -788,136 +866,136 @@ const styles = StyleSheet.create({
   },
   modalItemName: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 4,
-    textAlign: "center",
+    textAlign: 'center',
   },
   modalItemPrice: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#D02C1A",
+    fontWeight: 'bold',
+    color: '#D02C1A',
     marginBottom: 20,
   },
   modalQuantityContainer: {
-    width: "100%",
+    width: '100%',
     marginTop: 8,
   },
   modalQuantityLabel: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 12,
-    textAlign: "center",
+    textAlign: 'center',
   },
   modalQuantityControls: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalQuantityButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: '#ddd',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalQuantityInput: {
     width: 60,
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginHorizontal: 16,
   },
   modalFooter: {
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: '#eee',
   },
   modalAddButton: {
     padding: 16,
-    alignItems: "center",
-    backgroundColor: "#D02C1A",
+    alignItems: 'center',
+    backgroundColor: '#D02C1A',
   },
   modalAddButtonText: {
-    color: "white",
-    fontWeight: "bold",
+    color: 'white',
+    fontWeight: 'bold',
     fontSize: 16,
   },
   orderSummaryModal: {
-    backgroundColor: "white",
+    backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    width: "100%",
-    maxHeight: "90%",
-    position: "absolute",
+    width: '100%',
+    maxHeight: '90%',
+    position: 'absolute',
     bottom: 0,
   },
   orderSummaryHeader: {
-    backgroundColor: "#D02C1A",
+    backgroundColor: '#D02C1A',
     padding: 16,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   orderSummaryTitle: {
-    color: "white",
+    color: 'white',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   orderSummaryTableInfo: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   orderSummaryTableText: {
     fontSize: 16,
-    color: "#333",
-    fontWeight: "500",
+    color: '#333',
+    fontWeight: '500',
     marginLeft: 10,
     flex: 1,
   },
   selectTableButton: {
-    backgroundColor: "#D02C1A",
+    backgroundColor: '#D02C1A',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
   },
   selectTableButtonText: {
-    color: "white",
-    fontWeight: "bold",
+    color: 'white',
+    fontWeight: 'bold',
   },
   orderItemsList: {
     maxHeight: 350,
   },
   orderItemRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   orderItemInfo: {
     flex: 1,
   },
   orderItemName: {
     fontSize: 16,
-    color: "#333",
+    color: '#333',
     marginBottom: 4,
   },
   orderItemPrice: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#D02C1A",
+    fontWeight: 'bold',
+    color: '#D02C1A',
   },
   orderItemQuantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginRight: 16,
   },
   quantityButton: {
@@ -925,156 +1003,156 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: '#ddd',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   quantityText: {
     width: 30,
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   removeButton: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "#f8f8f8",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#f8f8f8',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   orderSummaryFooter: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: '#eee',
   },
   orderTotalContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
   orderTotalLabel: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
   },
   orderTotalAmount: {
     fontSize: 20,
-    fontWeight: "bold",
-    color: "#D02C1A",
+    fontWeight: 'bold',
+    color: '#D02C1A',
   },
   placeOrderButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#D02C1A",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#D02C1A',
     padding: 16,
     borderRadius: 12,
   },
   placeOrderButtonDisabled: {
-    backgroundColor: "#ccc",
+    backgroundColor: '#ccc',
   },
   placeOrderButtonText: {
-    color: "white",
-    fontWeight: "bold",
+    color: 'white',
+    fontWeight: 'bold',
     fontSize: 16,
     marginLeft: 8,
   },
   emptyOrderContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 40,
   },
   emptyOrderText: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#666",
+    fontWeight: 'bold',
+    color: '#666',
     marginTop: 16,
   },
   emptyOrderSubtext: {
     fontSize: 14,
-    color: "#999",
+    color: '#999',
     marginTop: 8,
     marginBottom: 20,
   },
   browseMenuButton: {
-    backgroundColor: "#D02C1A",
+    backgroundColor: '#D02C1A',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 25,
   },
   browseMenuButtonText: {
-    color: "white",
-    fontWeight: "bold",
+    color: 'white',
+    fontWeight: 'bold',
     fontSize: 16,
   },
   tableModalContent: {
-    backgroundColor: "white",
+    backgroundColor: 'white',
     borderRadius: 16,
-    width: "85%",
+    width: '85%',
     maxWidth: 400,
-    maxHeight: "80%",
-    overflow: "hidden",
+    maxHeight: '80%',
+    overflow: 'hidden',
   },
   tableList: {
     maxHeight: 350,
   },
   tableItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   tableItemText: {
     fontSize: 16,
-    color: "#333",
+    color: '#333',
     marginLeft: 12,
     flex: 1,
   },
   tableStatusBadge: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: '#4CAF50',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   tableStatusText: {
-    color: "white",
+    color: 'white',
     fontSize: 12,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   emptyTableContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 40,
   },
   emptyTableText: {
     marginTop: 10,
-    color: "#666",
+    color: '#666',
     fontSize: 16,
   },
   successModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   successModalContent: {
-    backgroundColor: "#D02C1A",
+    backgroundColor: '#D02C1A',
     borderRadius: 16,
     padding: 24,
-    alignItems: "center",
-    width: "70%",
+    alignItems: 'center',
+    width: '70%',
     maxWidth: 300,
   },
   successIconContainer: {
     marginBottom: 16,
   },
   successModalText: {
-    color: "white",
+    color: 'white',
     fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 })
