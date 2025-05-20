@@ -6,6 +6,14 @@ import { CreateSloganDto, UpdateSloganDto } from './slogan.dto'
 export class SlogansController {
   constructor(private readonly slogansService: SlogansService) {}
 
+  // Endpoint chính cho ứng dụng mobile - lấy các slogan có thể hiển thị
+  @Get('visible')
+  findVisible() {
+    return this.slogansService.findVisible()
+  }
+
+  // Các endpoint dưới đây có thể được sử dụng trong tương lai cho admin dashboard
+
   @Post()
   create(@Body() createSloganDto: CreateSloganDto) {
     return this.slogansService.create(createSloganDto)
@@ -14,11 +22,6 @@ export class SlogansController {
   @Get()
   findAll() {
     return this.slogansService.findAll()
-  }
-
-  @Get('visible')
-  findVisible() {
-    return this.slogansService.findVisible()
   }
 
   @Get(':id')
@@ -34,10 +37,5 @@ export class SlogansController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.slogansService.remove(id)
-  }
-
-  @Patch(':id/visibility')
-  updateVisibility(@Param('id') id: string, @Body() updateData: { isVisible: boolean }) {
-    return this.slogansService.update(id, { isVisible: updateData.isVisible })
   }
 }

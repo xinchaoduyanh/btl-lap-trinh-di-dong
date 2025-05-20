@@ -20,9 +20,6 @@ type SloganContextType = {
   fetchRandomSlogan: () => Promise<void>
 }
 
-
-
-
 // Tạo context với giá trị mặc định
 const SloganContext = createContext<SloganContextType>({
   slogan: null,
