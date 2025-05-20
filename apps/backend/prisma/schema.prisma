@@ -78,6 +78,7 @@ model Food {
   category    FoodCategory
   isAvailable Boolean     @default(true)
   orderItems  OrderItem[]
+  imageUrl    String?
 }
 
 model Notification {
