@@ -4,7 +4,6 @@ import {
   StyleSheet,
   ScrollView,
   View,
-  Image,
   Text,
   TouchableOpacity,
   TextInput,
@@ -77,6 +76,7 @@ export default function AddOrderScreen() {
   const [successModalVisible, setSuccessModalVisible] = useState(false)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Animation values
   const cartBounceAnim = useState(new Animated.Value(1))[0]
@@ -89,8 +89,18 @@ export default function AddOrderScreen() {
   }, [])
 
   const filteredItems = useMemo(() => {
-    return foods.filter((item) => item.category === selectedCategory && item.isAvailable)
-  }, [selectedCategory, foods])
+    const categoryFiltered = foods.filter(
+      (item) => item.category === selectedCategory && item.isAvailable
+    )
+
+    if (!searchQuery.trim()) return categoryFiltered
+
+    return categoryFiltered.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.price.toString().includes(searchQuery)
+    )
+  }, [selectedCategory, foods, searchQuery])
 
   const availableTables = useMemo(() => {
     return tables.filter((table) => table.status === 'RESERVED')
@@ -121,7 +131,7 @@ export default function AddOrderScreen() {
       }
       setCurrentItem({
         ...item,
-        image: 'https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg',
+        image: '', // Để trống vì không cần hiển thị hình ảnh
       })
       setQuantity('1')
       setItemModalVisible(true)
@@ -365,6 +375,16 @@ export default function AddOrderScreen() {
         </ScrollView>
       </View>
 
+      <View style={styles.searchContainer}>
+        <Feather name="search" size={20} color="#666" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Tìm kiếm món ăn..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
       <View style={styles.contentContainer}>
         <View style={styles.categoryHeaderContainer}>
           <Text style={styles.categoryHeaderTitle}>{getCategoryLabel(selectedCategory)}</Text>
@@ -382,7 +402,6 @@ export default function AddOrderScreen() {
               onPress={() => handleItemPress(item)}
               activeOpacity={0.7}
             >
-              <Image source={{ uri: item.image }} style={styles.foodItemImage} />
               <View style={styles.foodItemInfo}>
                 <Text style={styles.foodItemName} numberOfLines={1}>
                   {item.name}
@@ -427,7 +446,6 @@ export default function AddOrderScreen() {
                 </View>
 
                 <View style={styles.modalBody}>
-                  <Image source={{ uri: currentItem.image }} style={styles.modalItemImage} />
                   <View style={styles.foodItemInfo}>
                     <Text style={styles.modalItemName}>{currentItem.name}</Text>
                     <Text style={styles.foodItemCard}>
@@ -772,7 +790,7 @@ const styles = StyleSheet.create({
     width: (SCREEN_WIDTH - 48) / 2,
     margin: 8,
     borderRadius: 12,
-    overflow: 'hidden',
+    padding: 12,
     backgroundColor: 'white',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -780,12 +798,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  foodItemImage: {
-    width: '100%',
-    height: 120,
-  },
   foodItemInfo: {
-    padding: 12,
+    flex: 1,
   },
   foodItemName: {
     fontSize: 14,
@@ -1154,5 +1168,25 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    borderColor: '#D02C1A',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 12,
   },
 })
