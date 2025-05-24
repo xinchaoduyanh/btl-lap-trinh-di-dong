@@ -14,6 +14,7 @@ import { EmployeesModule } from './employees/employees.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { SlogansModule } from './slogans/slogans.module'
 import { NotificationAssignmentsModule } from './notification-assignments/notification-assignments.module'
+import { UploadModule } from './upload/upload.module'
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { NotificationAssignmentsModule } from './notification-assignments/notifi
     NotificationsModule,
     SlogansModule,
     NotificationAssignmentsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [

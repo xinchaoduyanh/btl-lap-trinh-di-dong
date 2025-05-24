@@ -13,6 +13,6 @@
     "jsx": "react", // Thêm cấu hình JSX
     "jsxFactory": "React.createElement", // Chỉ định factory function cho JSX
     "jsxFragmentFactory": "React.Fragment", // Chỉ định factory function cho Fragment
-    "types": ["react-native"]
+    "types": ["react-native", "node", "multer"]
   }
 }
