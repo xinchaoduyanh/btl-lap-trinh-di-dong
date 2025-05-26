@@ -13,6 +13,7 @@ import {
   Animated,
   StatusBar,
   Alert,
+  Image,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -53,6 +54,8 @@ interface SelectedItem extends Food {
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
+
+const DEFAULT_FOOD_IMAGE = 'https://images.pexels.com/photos/1211887/pexels-photo-1211887.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
 
 export default function AddOrderScreen() {
   const router = useRouter()
@@ -103,7 +106,7 @@ export default function AddOrderScreen() {
   }, [selectedCategory, foods, searchQuery])
 
   const availableTables = useMemo(() => {
-    return tables.filter((table) => table.status === 'RESERVED')
+    return tables.filter((table) => table.status === 'OCCUPIED')
   }, [tables])
 
   const totalItems = useMemo(() => {
@@ -249,7 +252,10 @@ export default function AddOrderScreen() {
       const newOrderData: CreateOrderRequest = {
         tableId: selectedTableId,
         employeeId: user.id,
-        status: 'RESERVED',
+        orderItems: selectedItems.map((item) => ({
+          foodId: item.id,
+          quantity: item.quantity,
+        })),
       }
 
       const newOrder = await createOrder(newOrderData)
@@ -402,6 +408,11 @@ export default function AddOrderScreen() {
               onPress={() => handleItemPress(item)}
               activeOpacity={0.7}
             >
+              <Image
+                source={{ uri: item.imageUrl || DEFAULT_FOOD_IMAGE }}
+                style={styles.foodItemImage}
+                resizeMode="cover"
+              />
               <View style={styles.foodItemInfo}>
                 <Text style={styles.foodItemName} numberOfLines={1}>
                   {item.name}
@@ -1200,5 +1211,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 12,
+  },
+  foodItemImage: {
+    width: '100%',
+    height: 120,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    marginBottom: 8,
   },
 })

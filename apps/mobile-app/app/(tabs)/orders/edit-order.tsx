@@ -37,6 +37,8 @@ const STATUS_COLORS: Record<OrderItemStatus | string, string> = {
   COMPLETE: '#4CAF50',
 }
 
+const DEFAULT_FOOD_IMAGE = 'https://images.pexels.com/photos/1211887/pexels-photo-1211887.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+
 export default function EditOrderScreen() {
   const params = useLocalSearchParams()
   const orderId = params.id as string
@@ -454,6 +456,11 @@ export default function EditOrderScreen() {
                 </View>
 
                 <View style={styles.selectedFoodCard}>
+                  <Image
+                    source={{ uri: selectedFood?.imageUrl || DEFAULT_FOOD_IMAGE }}
+                    style={styles.modalItemImage}
+                    resizeMode="cover"
+                  />
                   <Text style={styles.selectedFoodName}>{selectedFood.name}</Text>
                   <Text style={styles.selectedFoodPrice}>{Math.round(selectedFood.price)}đ</Text>
 
@@ -932,5 +939,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  modalItemImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 12,
+    marginBottom: 16,
   },
 })

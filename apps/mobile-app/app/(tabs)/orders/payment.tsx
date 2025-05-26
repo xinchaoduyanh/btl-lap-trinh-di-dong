@@ -138,7 +138,7 @@ export default function PaymentScreen() {
         [
           {
             text: 'OK',
-            onPress: () => router.back(),
+            onPress: () => router.push('/(tabs)/orders'),
           },
         ]
       )
@@ -157,14 +157,14 @@ export default function PaymentScreen() {
     order,
     user,
     updateOrderPaymentStatus,
-    updateTable, // Sử dụng updateTable thay vì updateTableStatus
+    updateTable,
     calculateTotal,
     router,
   ])
 
   // Handle cancel
   const handleCancel = useCallback(() => {
-    router.back()
+    router.push('/(tabs)/orders')
   }, [router])
 
   if (loading) {
