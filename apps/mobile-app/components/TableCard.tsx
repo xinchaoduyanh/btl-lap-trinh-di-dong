@@ -42,7 +42,7 @@ export const TableCard: React.FC<TableCardProps> = ({ table, width, onPress }) =
       ]}
     >
       <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(table.status) }]} />
-      <Image source={{ uri: 'https://img.freepik.com/free-vector/hand-drawn-hot-pot-illustration_23-2149175802.jpg' }} style={styles.tableIcon} />
+      <Image source={{ uri: 'https://baron.vn/wp-content/uploads/2024/02/ban-an-Jcao-cap-hemera-ba05-13.jpg' }} style={styles.tableIcon} />
       <Text style={styles.tableNumber}>Table {table.number}</Text>
       <Text style={[styles.tableStatus, { color: getStatusColor(table.status) }]}> {table.status} </Text>
     </TouchableOpacity>

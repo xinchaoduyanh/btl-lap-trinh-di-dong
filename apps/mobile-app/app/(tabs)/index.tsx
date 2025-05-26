@@ -269,7 +269,7 @@ export default function HomeScreen() {
                   </View>
                   <View style={styles.sloganTextRow}>
                     <Feather name="refresh-cw" size={14} color="#888" style={styles.sloganTextIcon} />
-                    <Text style={styles.sloganRefreshHint}>Chạm để làm mới</Text>
+                    <Text style={styles.sloganRefreshHint}>Chạm để lấy khẩu hiệu mới !</Text>
                   </View>
                 </View>
               </>
@@ -293,7 +293,7 @@ export default function HomeScreen() {
                       style={styles.sloganTextIcon}
                     />
                     <Text style={styles.sloganRefreshHint}>
-                      {slogan ? "Chạm nhẹ, làm mới khẩu hiệu cực xịn!" : "Chạm để tải"}
+                      {slogan ? "Chạm nhẹ, làm mới khẩu hiệu cực xịn!" : "Chạm nhẹ, làm mới khẩu hiệu cực xịn!"}
                     </Text>
                   </View>
                 </View>
