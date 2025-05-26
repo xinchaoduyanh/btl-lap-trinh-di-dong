@@ -76,6 +76,7 @@ const foodFormSchema = z.object({
 
 export default function FoodsPage() {
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
@@ -180,10 +181,13 @@ export default function FoodsPage() {
     }
   }
 
-  // Lọc món ăn theo từ khóa tìm kiếm
-  const filteredFoods = foods.filter(
-    (item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.price.toString().includes(searchTerm)
-  )
+  // Lọc món ăn theo từ khóa tìm kiếm và danh mục
+  const filteredFoods = foods.filter((item) => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.price.toString().includes(searchTerm)
+    const matchesCategory = selectedCategory === "ALL" || item.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
 
   // Phân trang
   const indexOfLastItem = currentPage * itemsPerPage
@@ -319,6 +323,22 @@ export default function FoodsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <Select
+          value={selectedCategory}
+          onValueChange={setSelectedCategory}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Categories</SelectItem>
+            {Object.values(FoodCategory).map((category) => (
+              <SelectItem key={category} value={category}>
+                {formatCategoryName(category)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {error && (
@@ -598,7 +618,7 @@ export default function FoodsPage() {
                 // Logic để hiển thị tối đa 10 trang
                 const maxVisiblePages = 5; // Số trang hiển thị ở mỗi bên của trang hiện tại
                 const pages = [];
-                
+
                 // Luôn hiển thị trang đầu tiên
                 if (currentPage > 1 + maxVisiblePages) {
                   pages.push(
@@ -611,7 +631,7 @@ export default function FoodsPage() {
                       1
                     </Button>
                   );
-                  
+
                   // Thêm dấu ... nếu cần
                   if (currentPage > 2 + maxVisiblePages) {
                     pages.push(
@@ -626,11 +646,11 @@ export default function FoodsPage() {
                     );
                   }
                 }
-                
+
                 // Tính toán phạm vi trang hiển thị
                 const startPage = Math.max(1, currentPage - maxVisiblePages);
                 const endPage = Math.min(totalPages, currentPage + maxVisiblePages);
-                
+
                 // Thêm các trang trong phạm vi
                 for (let i = startPage; i <= endPage; i++) {
                   pages.push(
@@ -644,7 +664,7 @@ export default function FoodsPage() {
                     </Button>
                   );
                 }
-                
+
                 // Luôn hiển thị trang cuối cùng
                 if (currentPage < totalPages - maxVisiblePages) {
                   // Thêm dấu ... nếu cần
@@ -660,7 +680,7 @@ export default function FoodsPage() {
                       </Button>
                     );
                   }
-                  
+
                   pages.push(
                     <Button
                       key={totalPages}
@@ -672,7 +692,7 @@ export default function FoodsPage() {
                     </Button>
                   );
                 }
-                
+
                 return pages;
               })()}
             </div>
