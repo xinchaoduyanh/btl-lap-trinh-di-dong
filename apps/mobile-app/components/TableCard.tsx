@@ -8,10 +8,11 @@ import type { Table, TableStatus } from '../constants/interface'
 interface TableCardProps {
   table: Table
   width: number
-  onPress?: () => void
+  onPress: () => void
+  disabled?: boolean
 }
 
-export const TableCard: React.FC<TableCardProps> = ({ table, width, onPress }) => {
+export function TableCard({ table, width, onPress, disabled }: TableCardProps) {
   const { colors } = useTheme()
 
   const getStatusColor = (status: TableStatus | string) => {
@@ -31,32 +32,44 @@ export const TableCard: React.FC<TableCardProps> = ({ table, width, onPress }) =
 
   return (
     <TouchableOpacity
-      onPress={onPress}
       style={[
         styles.tableCard,
         {
           width: width,
           backgroundColor: getStatusColor(table.status) + '20',
           borderColor: getStatusColor(table.status),
+          opacity: disabled ? 0.5 : 1,
         },
       ]}
+      onPress={onPress}
+      disabled={disabled}
     >
       <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(table.status) }]} />
       <Image source={{ uri: 'https://baron.vn/wp-content/uploads/2024/02/ban-an-Jcao-cap-hemera-ba05-13.jpg' }} style={styles.tableIcon} />
-      <Text style={styles.tableNumber}>Table {table.number}</Text>
-      <Text style={[styles.tableStatus, { color: getStatusColor(table.status) }]}> {table.status} </Text>
+      <Text style={styles.tableNumber}>Bàn {table.number}</Text>
+      <Text style={[styles.tableStatus, { color: getStatusColor(table.status) }]}>
+        {table.status === 'AVAILABLE' ? 'Trống' :
+         table.status === 'OCCUPIED' ? 'Đang phục vụ' :
+         table.status === 'RESERVED' ? 'Đã đặt trước' :
+         'Đang dọn dẹp'}
+      </Text>
     </TouchableOpacity>
   )
 }
 
 const styles = StyleSheet.create({
   tableCard: {
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 16,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
     aspectRatio: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   statusIndicator: {
     width: 12,
@@ -67,17 +80,19 @@ const styles = StyleSheet.create({
     right: 8,
   },
   tableIcon: {
-    width: 40,
-    height: 40,
-    marginBottom: 5,
+    width: 50,
+    height: 50,
+    marginBottom: 8,
+    borderRadius: 8,
   },
   tableNumber: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 4,
   },
   tableStatus: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
     marginTop: 'auto',
   },
