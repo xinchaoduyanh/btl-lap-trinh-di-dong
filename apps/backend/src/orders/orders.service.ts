@@ -33,7 +33,15 @@ export class OrdersService {
   }
 
   async findAll() {
-    return await this.prisma.order.findMany()
+    // THêm điều kiện để log ra đc cả thông tin employee
+    const a = await this.prisma.order.findMany({
+      include: {
+        employee: true,
+        table: true,
+      },
+    })
+    console.log(a)
+    return a
   }
 
   async findOne(id: string) {
