@@ -312,13 +312,11 @@ export default function OrdersPage() {
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.id.includes(searchTerm) ||
-      order.tableId.includes(searchTerm) ||
-      order.employeeId.includes(searchTerm) ||
+      (order.table?.number?.toString() || '').includes(searchTerm) ||
+      (order.employee?.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.status.toLowerCase().includes(searchTerm.toLowerCase())
 
-
     const matchesStatus = statusFilter === "ALL" || order.status === statusFilter
-
 
     return matchesSearch && matchesStatus
   })
@@ -419,8 +417,8 @@ export default function OrdersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Order ID</TableHead>
-              <TableHead>Table ID</TableHead>
-              <TableHead>Employee ID</TableHead>
+              <TableHead>Table Number</TableHead>
+              <TableHead>Employee Email</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead>Time Out</TableHead>
@@ -444,11 +442,11 @@ export default function OrdersPage() {
               filteredOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.id.substring(0, 8)}...</TableCell>
-                  <TableCell>{order.tableId.substring(0, 8)}...</TableCell>
-                  <TableCell>{order.employeeId.substring(0, 8)}...</TableCell>
+                  <TableCell>{order.table?.number || 'N/A'}</TableCell>
+                  <TableCell>{order.employee?.email || 'N/A'}</TableCell>
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell>{formatDate(order.createdAt)}</TableCell>
-                  <TableCell>N/A</TableCell>
+                  <TableCell>{order.timeOut ? formatDate(order.timeOut) : 'N/A'}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -583,12 +581,12 @@ export default function OrdersPage() {
                       <div>{getStatusBadge(selectedOrder.status)}</div>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Table ID</p>
-                      <p>{selectedOrder.tableId}</p>
+                      <p className="text-sm font-medium text-muted-foreground">Table Number</p>
+                      <p>{selectedOrder.table?.number || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Employee ID</p>
-                      <p>{selectedOrder.employeeId}</p>
+                      <p className="text-sm font-medium text-muted-foreground">Employee Email</p>
+                      <p>{selectedOrder.employee?.email || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Created At</p>
