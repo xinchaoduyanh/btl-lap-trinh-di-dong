@@ -88,7 +88,7 @@ export default function TableManagementScreen() {
       <View style={styles.restaurantMapContainer}>
         <Text style={styles.mapTitle}>Nhà hàng Lẩu Thiên Đường</Text>
         <Image
-          source={{ uri: "https://img.freepik.com/free-vector/restaurant-floor-plan-template_23-2147980214.jpg" }}
+          source={{ uri: "https://posapp.vn/wp-content/uploads/2020/09/%C4%91%E1%BB%93ng-b%E1%BB%99-n%E1%BB%99i-th%E1%BA%A5t.jpg" }}
           style={styles.restaurantMap}
           resizeMode="contain"
         />
