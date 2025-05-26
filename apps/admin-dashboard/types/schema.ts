@@ -74,6 +74,7 @@ export interface Food {
   category: FoodCategory
   isAvailable: boolean
   orderItems?: OrderItem[]
+  imageUrl?: string
 }
 
 export enum FoodCategory {
@@ -87,16 +88,16 @@ export enum FoodCategory {
 }
 
 export interface Order {
-  timeOut: string
   id: string
   tableId: string
   employeeId: string
   status: OrderStatus
-  totalAmount: number
   createdAt: string
-  employee?: Employee
+  timeOut?: string
   table?: Table
+  employee?: Employee
   orderItems?: OrderItem[]
+  imageUrl?: string
 }
 
 export interface OrderItem {
@@ -186,6 +187,7 @@ export interface CreateFoodRequest {
   price: number
   category: FoodCategory
   isAvailable?: boolean
+  imageUrl?: string
 }
 
 export interface UpdateFoodRequest {
@@ -193,6 +195,7 @@ export interface UpdateFoodRequest {
   price?: number
   category?: FoodCategory
   isAvailable?: boolean
+  imageUrl?: string
 }
 
 export interface CreateOrderRequest {

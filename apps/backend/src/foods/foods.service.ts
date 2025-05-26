@@ -10,7 +10,10 @@ export class FoodsService {
   async create(createFoodDto: CreateFoodDto) {
     try {
       return await this.prisma.food.create({
-        data: createFoodDto,
+        data: {
+          ...createFoodDto,
+          imageUrl: createFoodDto.imageUrl || null,
+        },
       })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -40,9 +43,14 @@ export class FoodsService {
 
   async update(id: string, updateFoodDto: UpdateFoodDto) {
     try {
+      const existingFood = await this.findOne(id)
+
       return await this.prisma.food.update({
         where: { id },
-        data: updateFoodDto,
+        data: {
+          ...updateFoodDto,
+          imageUrl: updateFoodDto.imageUrl || existingFood.imageUrl,
+        },
       })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -59,6 +67,7 @@ export class FoodsService {
 
   async remove(id: string) {
     try {
+      const food = await this.findOne(id)
       return await this.prisma.food.delete({
         where: { id },
       })

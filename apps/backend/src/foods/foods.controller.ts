@@ -41,8 +41,8 @@ export class FoodsController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async remove(@Param('id') id: string) {
-    await this.foodsService.remove(id)
+    return this.foodsService.remove(id)
   }
 }

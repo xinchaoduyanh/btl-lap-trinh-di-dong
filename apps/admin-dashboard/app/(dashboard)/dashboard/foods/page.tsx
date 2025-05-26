@@ -20,8 +20,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Switch } from '@/components/ui/switch'
-import { Plus, Search, MoreHorizontal, Edit, Trash, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Search, MoreHorizontal, Edit, Trash, ChevronLeft, ChevronRight, Image } from 'lucide-react'
 import { useFood } from '@/hooks/use-foods'
+import { useUpload } from '@/hooks/use-upload'
 import {
   Dialog,
   DialogContent,
@@ -72,6 +73,7 @@ const foodFormSchema = z.object({
   price: z.number().min(0.01, { message: "Giá phải lớn hơn 0" }),
   category: z.nativeEnum(FoodCategory),
   isAvailable: z.boolean().default(true),
+  imageUrl: z.string().optional(),
 })
 
 export default function FoodsPage() {
@@ -82,6 +84,9 @@ export default function FoodsPage() {
   const [editingItem, setEditingItem] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5) // Giảm xuống 5 item mỗi trang
+  const { uploadImage, isUploading } = useUpload()
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const {
     foods,
@@ -101,6 +106,7 @@ export default function FoodsPage() {
       price: 0,
       category: FoodCategory.MAIN_COURSE,
       isAvailable: true,
+      imageUrl: '',
     },
   })
 
@@ -112,8 +118,28 @@ export default function FoodsPage() {
       price: 0,
       category: FoodCategory.MAIN_COURSE,
       isAvailable: true,
+      imageUrl: '',
     },
   })
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setSelectedFile(file)
+    try {
+      const imageUrl = await uploadImage(file)
+      setPreviewImage(imageUrl)
+      // Cập nhật giá trị imageUrl trong form
+      if (isEditDialogOpen) {
+        editForm.setValue('imageUrl', imageUrl)
+      } else {
+        addForm.setValue('imageUrl', imageUrl)
+      }
+    } catch (err) {
+      console.error('Error uploading image:', err)
+    }
+  }
 
   // Xử lý thêm mới món ăn
   const handleAddFood = async (data: z.infer<typeof foodFormSchema>) => {
@@ -122,11 +148,14 @@ export default function FoodsPage() {
         name: data.name,
         price: data.price,
         category: data.category,
-        isAvailable: data.isAvailable
+        isAvailable: data.isAvailable,
+        imageUrl: data.imageUrl
       }
       await createFood(foodData)
       setIsAddDialogOpen(false)
       addForm.reset()
+      setPreviewImage(null)
+      setSelectedFile(null)
     } catch (error) {
       console.error('Lỗi khi thêm món ăn:', error)
     }
@@ -141,11 +170,14 @@ export default function FoodsPage() {
         name: data.name,
         price: data.price,
         category: data.category,
-        isAvailable: data.isAvailable
+        isAvailable: data.isAvailable,
+        imageUrl: data.imageUrl
       }
       await updateFood(editingItem.id, foodData)
       setIsEditDialogOpen(false)
       setEditingItem(null)
+      setPreviewImage(null)
+      setSelectedFile(null)
     } catch (error) {
       console.error('Lỗi khi cập nhật món ăn:', error)
     }
@@ -154,11 +186,13 @@ export default function FoodsPage() {
   // Mở dialog chỉnh sửa và điền thông tin món ăn
   const openEditDialog = (item: any) => {
     setEditingItem(item)
+    setPreviewImage(item.imageUrl || null)
     editForm.reset({
       name: item.name,
       price: item.price,
       category: item.category || FoodCategory.MAIN_COURSE,
       isAvailable: item.isAvailable,
+      imageUrl: item.imageUrl || '',
     })
     setIsEditDialogOpen(true)
   }
@@ -295,13 +329,46 @@ export default function FoodsPage() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={addForm.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hình ảnh món ăn</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-col gap-2">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            disabled={isUploading}
+                          />
+                          {previewImage && (
+                            <div className="relative w-full h-48">
+                              <img
+                                src={previewImage}
+                                alt="Preview"
+                                className="w-full h-full object-cover rounded-md"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={() => {
+                    setIsAddDialogOpen(false)
+                    setPreviewImage(null)
+                    setSelectedFile(null)
+                  }}>
                     Hủy
                   </Button>
                   <Button
                     type="submit"
-                    disabled={!addForm.formState.isValid || addForm.formState.isSubmitting}
+                    disabled={!addForm.formState.isValid || addForm.formState.isSubmitting || isUploading}
                   >
                     {addForm.formState.isSubmitting ? 'Đang thêm...' : 'Thêm món ăn'}
                   </Button>
@@ -351,25 +418,39 @@ export default function FoodsPage() {
         <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40%]">Name</TableHead>
+              <TableHead className="w-[30%]">Name</TableHead>
               <TableHead className="w-[15%]">Price</TableHead>
-              <TableHead className="w-[25%]">Availability</TableHead>
+              <TableHead className="w-[20%]">Image</TableHead>
+              <TableHead className="w-[15%]">Availability</TableHead>
               <TableHead className="w-[20%] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : filteredFoods.length > 0 ? (
               currentItems.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium w-[40%]">{item.name}</TableCell>
+                  <TableCell className="font-medium w-[30%]">{item.name}</TableCell>
                   <TableCell className="w-[15%]">${item.price.toFixed(2)}</TableCell>
-                  <TableCell className="w-[25%]">
+                  <TableCell className="w-[20%]">
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded-md"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
+                        <Image className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="w-[15%]">
                     <div className="flex items-center space-x-2">
                       <Switch
                         checked={item.isAvailable}
@@ -395,6 +476,8 @@ export default function FoodsPage() {
                             if (!open) {
                               setIsEditDialogOpen(false)
                               setEditingItem(null)
+                              setPreviewImage(null)
+                              setSelectedFile(null)
                             }
                           }}
                         >
@@ -507,6 +590,35 @@ export default function FoodsPage() {
                                       </FormItem>
                                     )}
                                   />
+                                  <FormField
+                                    control={editForm.control}
+                                    name="imageUrl"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Hình ảnh món ăn</FormLabel>
+                                        <FormControl>
+                                          <div className="flex flex-col gap-2">
+                                            <Input
+                                              type="file"
+                                              accept="image/*"
+                                              onChange={handleFileChange}
+                                              disabled={isUploading}
+                                            />
+                                            {previewImage && (
+                                              <div className="relative w-full h-48">
+                                                <img
+                                                  src={previewImage}
+                                                  alt="Preview"
+                                                  className="w-full h-full object-cover rounded-md"
+                                                />
+                                              </div>
+                                            )}
+                                          </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
                                   <DialogFooter>
                                     <Button
                                       type="button"
@@ -514,13 +626,15 @@ export default function FoodsPage() {
                                       onClick={() => {
                                         setIsEditDialogOpen(false)
                                         setEditingItem(null)
+                                        setPreviewImage(null)
+                                        setSelectedFile(null)
                                       }}
                                     >
                                       Hủy
                                     </Button>
                                     <Button
                                       type="submit"
-                                      disabled={!editForm.formState.isValid || editForm.formState.isSubmitting}
+                                      disabled={!editForm.formState.isValid || editForm.formState.isSubmitting || isUploading}
                                     >
                                       {editForm.formState.isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
                                     </Button>
@@ -566,7 +680,7 @@ export default function FoodsPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   No foods found.
                 </TableCell>
               </TableRow>

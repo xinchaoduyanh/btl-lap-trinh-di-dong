@@ -106,53 +106,42 @@ export default function OrdersPage() {
   const handleCreateOrder = async (data: any) => {
     setIsSubmitting(true)
     try {
-      // Kiểm tra xem bàn đã có đơn hàng trong trạng thái RESERVED chưa
       if (data.status === "RESERVED" && isTableAlreadyReserved(data.tableId)) {
         setIsTableReservedAlertOpen(true)
         return
       }
 
-      // Chuyển đổi status từ UI sang giá trị hợp lệ trong backend
-      // Trong Prisma schema, OrderStatus chỉ có RESERVED và PAID
       const mappedData = {
         ...data,
-        // Đảm bảo status chỉ có thể là "PAID" hoặc "RESERVED"
         status: data.status === "PAID" ? "PAID" : "RESERVED"
-      };
+      }
 
-      console.log("Sending order data:", mappedData);
-      await createOrder(mappedData);
+      console.log("Sending order data:", mappedData)
+      await createOrder(mappedData)
 
-      // Refresh orders list after successful creation
-      await fetchOrders();
-
-      setIsNewDialogOpen(false);
-      newForm.reset();
+      await fetchOrders()
+      setIsNewDialogOpen(false)
+      newForm.reset()
       toast({
         title: "Order created",
         description: "The order has been successfully created."
-      });
+      })
     } catch (err) {
-      console.error("Error creating order:", err);
-
-      // Check if error is about duplicate order ID
-      const errorMessage = (err as Error).message;
-      if (errorMessage.includes("duplicate") || errorMessage.includes("already exists") || errorMessage.includes("Unique constraint")) {
-        // Set error message and open duplicate order alert dialog
-        setDuplicateOrderError(errorMessage);
-        setIsDuplicateOrderAlertOpen(true);
+      console.error("Error creating order:", err)
+      const errorMessage = (err as Error).message
+      if (errorMessage.includes("duplicate") || errorMessage.includes("already exists")) {
+        setDuplicateOrderError(errorMessage)
+        setIsDuplicateOrderAlertOpen(true)
       } else {
-        // Show more detailed error message
-        let detailedError = errorMessage;
+        let detailedError = errorMessage
         if (errorMessage.includes("500")) {
-          detailedError = "Lỗi server: Kiểm tra xem tableId và employeeId có tồn tại không";
+          detailedError = "Lỗi server: Kiểm tra xem tableId và employeeId có tồn tại không"
         }
-
         toast({
           title: "Error creating order",
           description: detailedError,
           variant: "destructive"
-        });
+        })
       }
     } finally {
       setIsSubmitting(false)
@@ -165,34 +154,24 @@ export default function OrdersPage() {
       console.log('Submitting update for order:', id)
       console.log('Update data:', data)
 
-      // Clean up the data before sending
       const cleanData = {
         ...data,
         timeOut: data.timeOut === "" ? null : data.timeOut,
-        // Đảm bảo status chỉ có thể là "PAID" hoặc "RESERVED"
         status: data.status === "PAID" ? "PAID" : "RESERVED"
       }
 
       console.log('Mapped update data:', cleanData)
       await updateOrder(id, cleanData)
 
-      // Close the dialog
       setIsEditDialogOpen(false)
-
-      // Show success alert
       showUpdateAlert("The order has been successfully updated.")
-
-      // Refresh orders list
       fetchOrders()
     } catch (err) {
       console.error('Error in handleUpdateOrder:', err)
-
-      // Show more detailed error message
-      let errorMessage = (err as Error).message;
+      let errorMessage = (err as Error).message
       if (errorMessage.includes("500")) {
-        errorMessage = "Lỗi server: Kiểm tra xem tableId và employeeId có tồn tại không";
+        errorMessage = "Lỗi server: Kiểm tra xem tableId và employeeId có tồn tại không"
       }
-
       showUpdateAlert(`Error updating order: ${errorMessage}`)
     } finally {
       setIsSubmitting(false)
@@ -611,13 +590,6 @@ export default function OrdersPage() {
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => selectedOrder && testDirectUpdate(selectedOrder.id)}
-                  className="bg-yellow-100"
-                >
-                  Test Direct Update
-                </Button>
               </div>
             </div>
           )}
@@ -637,9 +609,9 @@ export default function OrdersPage() {
             <Form {...editForm}>
               <form
                 onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = editForm.getValues();
-                  handleUpdateOrder(selectedOrder.id, formData);
+                  e.preventDefault()
+                  const formData = editForm.getValues()
+                  handleUpdateOrder(selectedOrder.id, formData)
                 }}
                 className="space-y-4"
               >
@@ -692,8 +664,6 @@ export default function OrdersPage() {
                     </FormItem>
                   )}
                 />
-
-
 
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
