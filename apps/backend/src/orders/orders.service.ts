@@ -9,20 +9,30 @@ export class OrdersService {
 
   async create(createOrderDto: CreateOrderDto) {
     try {
-      // Sử dụng transaction để đảm bảo tính nhất quán
       return await this.prisma.$transaction(async (prisma) => {
-        // Tạo đơn hàng mới
         const newOrder = await prisma.order.create({
-          data: createOrderDto,
+          data: {
+            tableId: createOrderDto.tableId,
+            employeeId: createOrderDto.employeeId,
+            orderItems: {
+              create:
+                createOrderDto.orderItems?.map((item) => ({
+                  foodId: item.foodId,
+                  quantity: item.quantity,
+                  status: 'PENDING',
+                })) || [],
+            },
+          },
+          include: {
+            orderItems: {
+              include: {
+                food: true,
+              },
+            },
+            table: true,
+            employee: true,
+          },
         })
-
-        // Cập nhật trạng thái bàn thành OCCUPIED
-        if (createOrderDto.tableId) {
-          await prisma.table.update({
-            where: { id: createOrderDto.tableId },
-            data: { status: TableStatus.OCCUPIED },
-          })
-        }
 
         return newOrder
       })
@@ -64,9 +74,10 @@ export class OrdersService {
 
   async update(id: string, updateOrderDto: UpdateOrderDto) {
     try {
+      const { orderItems, ...orderData } = updateOrderDto
       return await this.prisma.order.update({
         where: { id },
-        data: updateOrderDto,
+        data: orderData,
       })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {

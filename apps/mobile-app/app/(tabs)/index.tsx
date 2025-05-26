@@ -262,7 +262,7 @@ export default function HomeScreen() {
                 </View>
                 <View style={styles.sloganContent}>
                   <View style={styles.sloganTextRow}>
-                    <Feather name="message-square" size={16} color="#E53935" style={styles.sloganTextIcon} />
+                    {/* <Feather name="message-square" size={16} color="#E53935" style={styles.sloganTextIcon} /> */}
                     <Text style={[styles.sloganText, { color: colors.text }]}>
                       {slogan.content}
                     </Text>
