@@ -253,7 +253,7 @@ export default function AddOrderScreen() {
     }
 
     if (!selectedTableId) {
-      setError('Vui lòng chọn bàn trước khi đặt hàng')
+      setError('Vui lòng chọn bàn trước khi thêm món')
       return
     }
     if (selectedItems.length === 0) {
@@ -281,6 +281,7 @@ export default function AddOrderScreen() {
 
         // Show success modal
         setSuccessModalVisible(true)
+        setOrderSummaryVisible(false)
 
         Animated.timing(successScaleAnim, {
           toValue: 1,
