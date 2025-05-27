@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { useFocusEffect } from 'expo-router'
 import {
   StyleSheet,
   ScrollView,
@@ -37,7 +38,8 @@ const STATUS_COLORS: Record<OrderItemStatus | string, string> = {
   COMPLETE: '#4CAF50',
 }
 
-const DEFAULT_FOOD_IMAGE = 'https://images.pexels.com/photos/1211887/pexels-photo-1211887.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+const DEFAULT_FOOD_IMAGE =
+  'https://images.pexels.com/photos/1211887/pexels-photo-1211887.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
 
 export default function EditOrderScreen() {
   const params = useLocalSearchParams()
@@ -67,6 +69,35 @@ export default function EditOrderScreen() {
   const [selectedFood, setSelectedFood] = useState<Food | null>(null)
   const [quantity, setQuantity] = useState('1')
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Add useFocusEffect to refresh data when screen comes into focus
+  const fetchOrderData = useCallback(() => {
+    setLoading(true)
+    fetchOrderById(orderId)
+      .then((data) => {
+        setOrder(data)
+        setLoading(false)
+      })
+      .catch((error) => {
+        console.error('Error fetching order:', error)
+        setLoading(false)
+      })
+  }, [orderId, fetchOrderById])
+
+  // Use this effect for initial load
+  useEffect(() => {
+    fetchOrderData()
+  }, [fetchOrderData])
+
+  // Add this to refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrderData()
+      return () => {
+        // Cleanup if needed
+      }
+    }, [fetchOrderData])
+  )
 
   // Initialize edited items from order
   useEffect(() => {
@@ -132,11 +163,16 @@ export default function EditOrderScreen() {
 
   // Open add item modal
   const handleOpenAddItemModal = useCallback(() => {
-    setAddItemModalVisible(true)
-    setSearchQuery('')
-    setSelectedFood(null)
-    setQuantity('1')
-  }, [])
+    // Instead of showing the modal, navigate to add-order with params
+    router.push({
+      pathname: '/(tabs)/orders/add-order',
+      params: {
+        orderId: orderId,
+        tableId: order?.tableId,
+        isAddingToExistingOrder: 'true',
+      },
+    })
+  }, [orderId, order?.tableId, router])
 
   // Handle select food
   const handleSelectFood = useCallback((food: Food) => {
