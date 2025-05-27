@@ -144,16 +144,13 @@ export default function OrderManagementScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header
-        title="Quản lý đơn hàng"
-        onBackPress={() => router.push('/(tabs)')}
-        rightIcon="plus"
-        onRightPress={handleAddOrder}
-      />
+      <Header title="Quản lý đơn hàng" onBackPress={() => router.push('/(tabs)')} />
 
       <View style={styles.bannerContainer}>
         <Image
-          source={{ uri: 'https://images.pexels.com/photos/8160608/pexels-photo-8160608.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' }}
+          source={{
+            uri: 'https://images.pexels.com/photos/8160608/pexels-photo-8160608.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+          }}
           style={styles.bannerImage}
         />
         <View style={styles.bannerTextContainer}>
@@ -267,7 +264,9 @@ export default function OrderManagementScreen() {
           ) : (
             <View style={styles.emptyContainer}>
               <Image
-                source={{ uri: 'https://gifdb.com/images/high/positive-vibes-positive-energy-care-bears-xknwls1qzeaw7as3.gif' }}
+                source={{
+                  uri: 'https://gifdb.com/images/high/positive-vibes-positive-energy-care-bears-xknwls1qzeaw7as3.gif',
+                }}
                 style={styles.emptyImage}
                 resizeMode="cover"
               />
@@ -282,9 +281,7 @@ export default function OrderManagementScreen() {
                   <Feather name="heart" size={24} color="#FF69B4" style={styles.icon} />
                   <Feather name="award" size={24} color="#D02C1A" style={styles.icon} />
                 </View>
-                <Text style={styles.emptyMessage}>
-                  Bạn luôn là Nhân viên số 1
-                </Text>
+                <Text style={styles.emptyMessage}>Bạn luôn là Nhân viên số 1</Text>
               </View>
             </View>
           )}
