@@ -14,6 +14,7 @@ import { TopItemsChart } from "@/components/charts/top-items-chart"
 import { TableStatusChart } from "@/components/charts/table-status-chart"
 import { EmployeePerformanceChart } from "@/components/charts/employee-performance-chart"
 import { CategoryRevenueChart } from "@/components/charts/category-revenue-chart"
+import { useRevenue } from "@/hooks/use-revenue"
 
 export default function DashboardPage() {
   const { employees, isLoading: isLoadingEmployees } = useEmployees()
@@ -27,6 +28,7 @@ export default function DashboardPage() {
     revenueByCategory,
     isLoading: isLoadingAnalytics,
   } = useAnalytics()
+  const { data: revenueData, totalRevenue, isLoading: isLoadingRevenue } = useRevenue(30)
 
   const [stats, setStats] = useState({
     revenue: 0,
@@ -38,8 +40,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isLoadingEmployees && !isLoadingTables && !isLoadingOrders) {
       // Calculate stats
-      const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0)
-      const activeOrdersCount = orders.filter((order) => order.status !== "COMPLETED").length
+      const activeOrdersCount = orders.filter((order) => order.status !== "PAID").length
       const activeEmployeesCount = employees.filter((emp) => emp.isActive).length
       const availableTablesCount = tables.filter((table) => table.status === "AVAILABLE").length
 
@@ -52,7 +53,13 @@ export default function DashboardPage() {
     }
   }, [employees, tables, orders, isLoadingEmployees, isLoadingTables, isLoadingOrders])
 
-  const isLoading = isLoadingEmployees || isLoadingTables || isLoadingOrders || isLoadingAnalytics
+  const isLoading = isLoadingEmployees || isLoadingTables || isLoadingOrders || isLoadingRevenue
+
+  // Lấy 7 ngày gần nhất
+  const last7Days = revenueData.slice(-7)
+  const total = last7Days.reduce((sum, d) => sum + d.totalAmount, 0)
+  const avg = last7Days.length ? total / last7Days.length : 0
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -83,7 +90,7 @@ export default function DashboardPage() {
                   <Skeleton className="h-8 w-24" />
                 ) : (
                   <>
-                    <div className="text-2xl font-bold">${stats.revenue.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">+18% from last month</p>
                   </>
                 )}
@@ -155,7 +162,11 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             ) : (
-              <RevenueChart data={dailySales} />
+              <>
+                <RevenueChart data={revenueData} />
+                <div>Total Revenue: ${total.toLocaleString()}</div>
+                <div>Average Daily: ${avg.toLocaleString()}</div>
+              </>
             )}
 
             <Card className="col-span-3">
@@ -183,7 +194,7 @@ export default function DashboardPage() {
                           <p className="text-sm font-medium leading-none">Order #{order.id}</p>
                           <p className="text-sm text-muted-foreground">Table {order.tableId}</p>
                         </div>
-                        <div className="ml-auto font-medium">${order.totalAmount.toFixed(2)}</div>
+                        <div className="ml-auto font-medium">--</div>
                       </div>
                     ))}
                   </div>
@@ -229,7 +240,6 @@ export default function DashboardPage() {
             ) : (
               <>
                 <TableStatusChart data={tableOccupancy} />
-                <CategoryRevenueChart data={revenueByCategory} />
                 <Card>
                   <CardHeader>
                     <CardTitle>Quick Actions</CardTitle>
@@ -237,19 +247,31 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-2">
-                      <button className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <button
+                        className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        onClick={() => window.location.href = "/orders/new"}
+                      >
                         <ClipboardList className="h-6 w-6 text-red-600 mb-2" />
                         <span className="text-sm">New Order</span>
                       </button>
-                      <button className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <button
+                        className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        onClick={() => window.location.href = "/employees/new"}
+                      >
                         <Users className="h-6 w-6 text-red-600 mb-2" />
                         <span className="text-sm">Add Employee</span>
                       </button>
-                      <button className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <button
+                        className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        onClick={() => window.location.href = "/tables"}
+                      >
                         <Coffee className="h-6 w-6 text-red-600 mb-2" />
                         <span className="text-sm">Manage Tables</span>
                       </button>
-                      <button className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <button
+                        className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        onClick={() => window.location.href = "/reports"}
+                      >
                         <TrendingUp className="h-6 w-6 text-red-600 mb-2" />
                         <span className="text-sm">View Reports</span>
                       </button>
