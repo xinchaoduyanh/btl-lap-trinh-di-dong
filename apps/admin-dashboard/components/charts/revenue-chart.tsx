@@ -7,11 +7,12 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface RevenueChartProps {
   data: { date: string; total: number }[]
+  timeRange: number
+  onTimeRangeChange: (days: number) => void
 }
 
-export function RevenueChart({ data }: RevenueChartProps) {
+export function RevenueChart({ data, timeRange, onTimeRangeChange }: RevenueChartProps) {
   console.log("RevenueChart data prop:", data)
-  const [timeRange, setTimeRange] = useState("7days")
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -21,9 +22,9 @@ export function RevenueChart({ data }: RevenueChartProps) {
 
   // Format currency
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("vi-VN", {
       style: "currency",
-      currency: "USD",
+      currency: "VND",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value)
@@ -39,25 +40,25 @@ export function RevenueChart({ data }: RevenueChartProps) {
   const percentageChange = data.length >= 2 ? ((data[data.length - 1].total - data[0].total) / data[0].total) * 100 : 0
 
   return (
-    <Card className="col-span-4">
+    <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
           <CardTitle>Revenue Overview</CardTitle>
           <CardDescription>Daily revenue for the selected period</CardDescription>
         </div>
-        <Select value={timeRange} onValueChange={setTimeRange}>
+        <Select value={String(timeRange)} onValueChange={v => onTimeRangeChange(Number(v))}>
           <SelectTrigger className="w-[120px]">
             <SelectValue placeholder="Time Range" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="7days">Last 7 days</SelectItem>
-            <SelectItem value="30days">Last 30 days</SelectItem>
-            <SelectItem value="90days">Last 90 days</SelectItem>
+            <SelectItem value="7">Last 7 days</SelectItem>
+            <SelectItem value="30">Last 30 days</SelectItem>
+            <SelectItem value="90">Last 90 days</SelectItem>
           </SelectContent>
         </Select>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="flex flex-row justify-between items-center mb-4 w-full">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
             <p className="text-2xl font-bold">{formatCurrency(totalRevenue)}</p>
@@ -66,21 +67,14 @@ export function RevenueChart({ data }: RevenueChartProps) {
             <p className="text-sm font-medium text-muted-foreground">Average Daily</p>
             <p className="text-2xl font-bold">{formatCurrency(averageDailyRevenue)}</p>
           </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Growth</p>
-            <p className={`text-2xl font-bold ${percentageChange >= 0 ? "text-green-600" : "text-red-600"}`}>
-              {percentageChange >= 0 ? "+" : ""}
-              {percentageChange.toFixed(1)}%
-            </p>
-          </div>
         </div>
-        <div className="h-[300px]">
+        <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={data}
               margin={{
                 top: 10,
-                right: 10,
+                right: 0,
                 left: 0,
                 bottom: 0,
               }}
@@ -99,8 +93,8 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 axisLine={false}
                 tickLine={false}
               />
-              <YAxis tickFormatter={(value) => `$${value}`} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(value) => [`$${value}`, "Revenue"]} labelFormatter={formatDate} />
+              <YAxis tickFormatter={(value) => formatCurrency(value)} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+              <Tooltip formatter={(value) => [formatCurrency(value as number), "Revenue"]} labelFormatter={formatDate} />
               <Area type="monotone" dataKey="total" stroke="#ef4444" fillOpacity={1} fill="url(#colorRevenue)" />
             </AreaChart>
           </ResponsiveContainer>

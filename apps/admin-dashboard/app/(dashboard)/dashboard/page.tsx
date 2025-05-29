@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, Coffee, ClipboardList, TrendingUp, DollarSign, Flame } from "lucide-react"
+import { Users, Coffee, ClipboardList, TrendingUp, DollarSign, Flame, QrCode } from "lucide-react"
 import { useEmployees } from "@/hooks/use-employees"
 import { useTables } from "@/hooks/use-tables"
 import { useOrders } from "@/hooks/use-orders"
@@ -28,7 +28,8 @@ export default function DashboardPage() {
     revenueByCategory,
     isLoading: isLoadingAnalytics,
   } = useAnalytics()
-  const { data: revenueData, totalRevenue, isLoading: isLoadingRevenue } = useRevenue(30)
+  const [timeRange, setTimeRange] = useState(7)
+  const { data: revenueDataRaw, totalRevenue, isLoading: isLoadingRevenue } = useRevenue(90)
 
   const [stats, setStats] = useState({
     revenue: 0,
@@ -55,11 +56,14 @@ export default function DashboardPage() {
 
   const isLoading = isLoadingEmployees || isLoadingTables || isLoadingOrders || isLoadingRevenue
 
-  // Lấy 7 ngày gần nhất
-  const last7Days = revenueData.slice(-7)
-  const total = last7Days.reduce((sum, d) => sum + d.totalAmount, 0)
-  const avg = last7Days.length ? total / last7Days.length : 0
+  // Map data cho đúng format
+  const revenueData = revenueDataRaw.map(d => ({
+    date: d.date,
+    total: d.totalAmount
+  }))
 
+  // Lấy data gần nhất theo timeRange
+  const filteredRevenueData = revenueData.slice(-timeRange)
 
   return (
     <div className="flex flex-col gap-4">
@@ -149,58 +153,12 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            {isLoading ? (
-              <Card className="col-span-4">
-                <CardHeader>
-                  <CardTitle>Revenue Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px] flex items-center justify-center bg-muted/20 rounded-md">
-                    <Skeleton className="h-full w-full" />
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                <RevenueChart data={revenueData} />
-                <div>Total Revenue: ${total.toLocaleString()}</div>
-                <div>Average Daily: ${avg.toLocaleString()}</div>
-              </>
-            )}
-
-            <Card className="col-span-3">
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Latest 5 orders placed</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-4">
-                    {Array(5)
-                      .fill(0)
-                      .map((_, i) => (
-                        <div key={i} className="flex items-center justify-between">
-                          <Skeleton className="h-5 w-32" />
-                          <Skeleton className="h-5 w-16" />
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {orders.slice(0, 5).map((order) => (
-                      <div key={order.id} className="flex items-center">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium leading-none">Order #{order.id}</p>
-                          <p className="text-sm text-muted-foreground">Table {order.tableId}</p>
-                        </div>
-                        <div className="ml-auto font-medium">--</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <div className="w-full">
+            <RevenueChart
+              data={filteredRevenueData}
+              timeRange={timeRange}
+              onTimeRangeChange={setTimeRange}
+            />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -249,31 +207,31 @@ export default function DashboardPage() {
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                        onClick={() => window.location.href = "/orders/new"}
+                        onClick={() => window.location.href = "/dashboard/orders"}
                       >
                         <ClipboardList className="h-6 w-6 text-red-600 mb-2" />
-                        <span className="text-sm">New Order</span>
+                        <span className="text-sm">Go to Orders</span>
                       </button>
                       <button
                         className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                        onClick={() => window.location.href = "/employees/new"}
+                        onClick={() => window.location.href = "/dashboard/employees"}
                       >
                         <Users className="h-6 w-6 text-red-600 mb-2" />
-                        <span className="text-sm">Add Employee</span>
+                        <span className="text-sm">Go to Employees</span>
                       </button>
                       <button
                         className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                        onClick={() => window.location.href = "/tables"}
+                        onClick={() => window.location.href = "/dashboard/tables"}
                       >
                         <Coffee className="h-6 w-6 text-red-600 mb-2" />
                         <span className="text-sm">Manage Tables</span>
                       </button>
                       <button
                         className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                        onClick={() => window.location.href = "/reports"}
+                        onClick={() => window.location.href = "/dashboard/qrcode"}
                       >
-                        <TrendingUp className="h-6 w-6 text-red-600 mb-2" />
-                        <span className="text-sm">View Reports</span>
+                        <QrCode className="h-6 w-6 text-red-600 mb-2" />
+                        <span className="text-sm">Manage QR code</span>
                       </button>
                     </div>
                   </CardContent>
@@ -297,7 +255,11 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             ) : (
-              <RevenueChart data={dailySales} />
+              <RevenueChart
+                data={dailySales}
+                timeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
+              />
             )}
 
             {isLoading ? (
