@@ -133,5 +133,8 @@ export interface CheckoutError {
 export interface CreateOrderRequest {
   tableId: string;
   employeeId: string;
-  status: "RESERVED" | "PAID";
+  orderItems?: Array<{
+    foodId: string;
+    quantity: number;
+  }>;
 }

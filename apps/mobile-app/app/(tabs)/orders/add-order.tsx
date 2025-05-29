@@ -13,6 +13,7 @@ import {
   Animated,
   StatusBar,
   Alert,
+  Image,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -23,6 +24,7 @@ import { useTable } from '../../../context/TableContext'
 import { useOrder } from '../../../context/OrderContext'
 import { useOrderItem } from '../../../context/OrderItemContext'
 import { useAuth } from '../../../context/AuthContext'
+import { useLocalSearchParams } from 'expo-router'
 
 // Components
 import { Header } from '../../../components/Header'
@@ -54,8 +56,19 @@ interface SelectedItem extends Food {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
+const DEFAULT_FOOD_IMAGE =
+  'https://images.pexels.com/photos/1211887/pexels-photo-1211887.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+
 export default function AddOrderScreen() {
   const router = useRouter()
+  const params = useLocalSearchParams()
+  const existingOrderId = params.orderId as string
+  const existingTableId = params.tableId as string
+  const isAddingToExistingOrder = params.isAddingToExistingOrder === 'true'
+
+  // Modify title based on mode
+  const screenTitle = isAddingToExistingOrder ? 'Thêm món vào đơn hàng' : 'Thêm đơn hàng mới'
+
   const { colors } = useTheme()
   const { foods, loading: foodsLoading, fetchFoods } = useFood()
   const { tables, loading: tablesLoading, fetchTables } = useTable()
@@ -86,7 +99,17 @@ export default function AddOrderScreen() {
   useEffect(() => {
     fetchFoods()
     fetchTables()
-  }, [])
+
+    // If adding to existing order, set the table and order ID
+    if (isAddingToExistingOrder && existingTableId) {
+      const table = tables.find((t) => t.id === existingTableId)
+      if (table) {
+        setTableNumber(table.number.toString())
+        setSelectedTableId(existingTableId)
+        setSelectedOrderId(existingOrderId)
+      }
+    }
+  }, [isAddingToExistingOrder, existingTableId, existingOrderId, tables])
 
   const filteredItems = useMemo(() => {
     const categoryFiltered = foods.filter(
@@ -103,7 +126,7 @@ export default function AddOrderScreen() {
   }, [selectedCategory, foods, searchQuery])
 
   const availableTables = useMemo(() => {
-    return tables.filter((table) => table.status === 'RESERVED')
+    return tables.filter((table) => table.status === 'OCCUPIED')
   }, [tables])
 
   const totalItems = useMemo(() => {
@@ -230,7 +253,7 @@ export default function AddOrderScreen() {
     }
 
     if (!selectedTableId) {
-      setError('Vui lòng chọn bàn trước khi đặt hàng')
+      setError('Vui lòng chọn bàn trước khi thêm món')
       return
     }
     if (selectedItems.length === 0) {
@@ -245,53 +268,93 @@ export default function AddOrderScreen() {
         return
       }
 
-      // Tạo đơn hàng mới
-      const newOrderData: CreateOrderRequest = {
-        tableId: selectedTableId,
-        employeeId: user.id,
-        status: 'RESERVED',
+      if (isAddingToExistingOrder && existingOrderId) {
+        // Add items to existing order
+        for (const item of selectedItems) {
+          await createOrderItem({
+            orderId: existingOrderId,
+            foodId: item.id,
+            quantity: item.quantity,
+            status: item.status,
+          })
+        }
+
+        // Show success modal
+        setSuccessModalVisible(true)
+        setOrderSummaryVisible(false)
+
+        Animated.timing(successScaleAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start()
+
+        // Navigate back to edit order after a short delay
+        setTimeout(() => {
+          setSuccessModalVisible(false)
+          // Clear selected items before navigating back
+          setSelectedItems([])
+
+          // Navigate back to edit order with replace to ensure a fresh load
+          router.replace({
+            pathname: '/(tabs)/orders/edit-order',
+            params: { id: existingOrderId },
+          })
+        }, 1500)
+      } else {
+        // Create new order (existing logic)
+        const newOrderData: CreateOrderRequest = {
+          tableId: selectedTableId,
+          employeeId: user.id,
+          orderItems: selectedItems.map((item) => ({
+            foodId: item.id,
+            quantity: item.quantity,
+          })),
+        }
+
+        const newOrder = await createOrder(newOrderData)
+        const orderId = newOrder.id
+
+        // Thêm các món ăn vào đơn hàng
+        for (const item of selectedItems) {
+          await createOrderItem({
+            orderId: orderId,
+            foodId: item.id,
+            quantity: item.quantity,
+            status: item.status,
+          })
+        }
+
+        // Cập nhật lại danh sách bàn sau khi đặt hàng thành công
+        await fetchTables()
+
+        setOrderSummaryVisible(false)
+        setSuccessModalVisible(true)
+
+        Animated.timing(successScaleAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start()
+
+        setTimeout(() => {
+          setSuccessModalVisible(false)
+          setSelectedItems([])
+          setTableNumber('')
+          setSelectedOrderId(null)
+          setSelectedTableId(null)
+          // Điều hướng về trang danh sách đơn hàng
+          router.push('/(tabs)/orders')
+        }, 2000)
       }
-
-      const newOrder = await createOrder(newOrderData)
-      const orderId = newOrder.id
-
-      // Thêm các món ăn vào đơn hàng
-      for (const item of selectedItems) {
-        await createOrderItem({
-          orderId: orderId,
-          foodId: item.id,
-          quantity: item.quantity,
-          status: item.status,
-        })
-      }
-
-      // Cập nhật lại danh sách bàn sau khi đặt hàng thành công
-      await fetchTables()
-
-      setOrderSummaryVisible(false)
-      setSuccessModalVisible(true)
-
-      Animated.timing(successScaleAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start()
-
-      setTimeout(() => {
-        setSuccessModalVisible(false)
-        setSelectedItems([])
-        setTableNumber('')
-        setSelectedOrderId(null)
-        setSelectedTableId(null)
-        // Điều hướng về trang danh sách đơn hàng
-        router.push('/(tabs)/orders')
-      }, 2000)
     } catch (error: any) {
       setError(error.message || 'Không thể đặt hàng')
     } finally {
       setIsLoading(false)
     }
   }, [
+    isAddingToExistingOrder,
+    existingOrderId,
     selectedOrderId,
     selectedTableId,
     selectedItems,
@@ -316,19 +379,31 @@ export default function AddOrderScreen() {
       <StatusBar barStyle="light-content" backgroundColor="#D02C1A" />
 
       <Header
-        title="Thêm đơn hàng mới"
-        onBackPress={() => router.push('/(tabs)/orders')}
-        rightIcon={selectedItems.length > 0 ? 'shopping-cart' : undefined}
-        onRightPress={selectedItems.length > 0 ? () => setOrderSummaryVisible(true) : undefined}
+        title={screenTitle}
+        onBackPress={() => {
+          if (isAddingToExistingOrder) {
+            router.push({
+              pathname: '/(tabs)/orders/edit-order',
+              params: { id: existingOrderId },
+            })
+          } else {
+            router.push('/(tabs)/orders')
+          }
+        }}
       />
 
+      {/* Disable table selection when adding to existing order */}
       <View style={styles.tableInfoBar}>
-        <TouchableOpacity style={styles.tableSelector} onPress={() => setTableModalVisible(true)}>
+        <TouchableOpacity
+          style={styles.tableSelector}
+          onPress={() => !isAddingToExistingOrder && setTableModalVisible(true)}
+          disabled={isAddingToExistingOrder}
+        >
           <Feather name="coffee" size={18} color="#D02C1A" />
-          <Text style={styles.tableSelectorText}>
+          <Text style={[styles.tableSelectorText, isAddingToExistingOrder && { color: '#888' }]}>
             {tableNumber ? `Bàn ${tableNumber}` : 'Chọn bàn'}
           </Text>
-          <Feather name="chevron-down" size={16} color="#666" />
+          {!isAddingToExistingOrder && <Feather name="chevron-down" size={16} color="#666" />}
         </TouchableOpacity>
 
         {selectedItems.length > 0 && (
@@ -402,6 +477,11 @@ export default function AddOrderScreen() {
               onPress={() => handleItemPress(item)}
               activeOpacity={0.7}
             >
+              <Image
+                source={{ uri: item.imageUrl || DEFAULT_FOOD_IMAGE }}
+                style={styles.foodItemImage}
+                resizeMode="cover"
+              />
               <View style={styles.foodItemInfo}>
                 <Text style={styles.foodItemName} numberOfLines={1}>
                   {item.name}
@@ -588,7 +668,9 @@ export default function AddOrderScreen() {
                     ) : (
                       <>
                         <Feather name="check-circle" size={18} color="#fff" />
-                        <Text style={styles.placeOrderButtonText}>ĐẶT HÀNG</Text>
+                        <Text style={styles.placeOrderButtonText}>
+                          {isAddingToExistingOrder ? 'THÊM VÀO ĐƠN HÀNG' : 'ĐẶT HÀNG'}
+                        </Text>
                       </>
                     )}
                   </TouchableOpacity>
@@ -665,7 +747,7 @@ export default function AddOrderScreen() {
             <View style={styles.successIconContainer}>
               <Feather name="check-circle" size={50} color="#fff" />
             </View>
-            <Text style={styles.successModalText}>Order Placed Successfully!</Text>
+            <Text style={styles.successModalText}>Đơn hàng đã được thêm thành công!</Text>
           </Animated.View>
         </View>
       </Modal>
@@ -1200,5 +1282,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 12,
+  },
+  foodItemImage: {
+    width: '100%',
+    height: 120,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    marginBottom: 8,
   },
 })

@@ -102,15 +102,10 @@ export default function PaymentScreen() {
     }, 0)
   }, [order])
 
-  // Calculate tax (10%)
-  const calculateTax = useCallback(() => {
-    return calculateSubtotal() * 0.1
-  }, [calculateSubtotal])
-
   // Calculate total
   const calculateTotal = useCallback(() => {
-    return calculateSubtotal() + calculateTax()
-  }, [calculateSubtotal, calculateTax])
+    return calculateSubtotal()
+  }, [calculateSubtotal])
 
   // Handle payment
   const handleProcessPayment = useCallback(async () => {
@@ -120,16 +115,16 @@ export default function PaymentScreen() {
 
     try {
       // 1. Cập nhật trạng thái đơn hàng thành PAID và thêm timeOut
-      setPaymentSteps(prev => ({ ...prev, updatingOrder: true }))
+      setPaymentSteps((prev) => ({ ...prev, updatingOrder: true }))
       const currentTime = new Date().toISOString()
       await updateOrderPaymentStatus(order.id, currentTime)
-      setPaymentSteps(prev => ({ ...prev, updatingOrder: false, updatingTable: true }))
+      setPaymentSteps((prev) => ({ ...prev, updatingOrder: false, updatingTable: true }))
 
       // 2. Cập nhật trạng thái bàn thành CLEANING
       if (order.tableId) {
         await updateTable(order.tableId, { status: 'CLEANING' })
       }
-      setPaymentSteps(prev => ({ ...prev, updatingTable: false }))
+      setPaymentSteps((prev) => ({ ...prev, updatingTable: false }))
 
       // 3. Hiển thị thông báo thành công
       Alert.alert(
@@ -138,7 +133,7 @@ export default function PaymentScreen() {
         [
           {
             text: 'OK',
-            onPress: () => router.back(),
+            onPress: () => router.push('/(tabs)/orders'),
           },
         ]
       )
@@ -152,19 +147,11 @@ export default function PaymentScreen() {
         updatingTable: false,
       })
     }
-  }, [
-    processing,
-    order,
-    user,
-    updateOrderPaymentStatus,
-    updateTable, // Sử dụng updateTable thay vì updateTableStatus
-    calculateTotal,
-    router,
-  ])
+  }, [processing, order, user, updateOrderPaymentStatus, updateTable, calculateTotal, router])
 
   // Handle cancel
   const handleCancel = useCallback(() => {
-    router.back()
+    router.push('/(tabs)/orders')
   }, [router])
 
   if (loading) {
@@ -264,11 +251,6 @@ export default function PaymentScreen() {
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Tạm tính</Text>
               <Text style={styles.summaryValue}>{Math.round(calculateSubtotal())}đ</Text>
-            </View>
-
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Thuế (10%)</Text>
-              <Text style={styles.summaryValue}>{Math.round(calculateTax())}đ</Text>
             </View>
 
             <View style={styles.totalRow}>

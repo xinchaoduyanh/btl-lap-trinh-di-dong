@@ -10,6 +10,7 @@ interface RevenueChartProps {
 }
 
 export function RevenueChart({ data }: RevenueChartProps) {
+  console.log("RevenueChart data prop:", data)
   const [timeRange, setTimeRange] = useState("7days")
 
   // Format date for display

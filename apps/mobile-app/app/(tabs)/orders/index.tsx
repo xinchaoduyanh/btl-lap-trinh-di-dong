@@ -27,18 +27,9 @@ import { useAuth } from '../../../context/AuthContext'
 // Components
 import { Header } from '../../../components/Header'
 
-// Import interfaces
+// Import interfaces and types
 import type { OrderItemStatus, Order } from '../../../constants/interface'
-
-// Order status colors
-const STATUS_COLORS: Record<OrderItemStatus | 'DELIVERED' | 'COMPLETED', string> = {
-  PENDING: '#FF9800',
-  PREPARING: '#2196F3',
-  READY: '#4CAF50',
-  DELIVERED: '#9C27B0',
-  COMPLETED: '#607D8B',
-  COMPLETE: '#4CAF50',
-}
+import { STATUS_COLORS, DEFAULT_FOOD_IMAGE } from './types'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -153,16 +144,13 @@ export default function OrderManagementScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header
-        title="Quản lý đơn hàng"
-        onBackPress={() => router.push('/(tabs)')}
-        rightIcon="plus"
-        onRightPress={handleAddOrder}
-      />
+      <Header title="Quản lý đơn hàng" onBackPress={() => router.push('/(tabs)')} />
 
       <View style={styles.bannerContainer}>
         <Image
-          source={{ uri: 'https://img.freepik.com/free-photo/hot-pot-asian-food_74190-7540.jpg' }}
+          source={{
+            uri: 'https://images.pexels.com/photos/8160608/pexels-photo-8160608.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+          }}
           style={styles.bannerImage}
         />
         <View style={styles.bannerTextContainer}>
@@ -233,6 +221,11 @@ export default function OrderManagementScreen() {
                   {order.orderItems && order.orderItems.length > 0 ? (
                     order.orderItems.map((item) => (
                       <View key={item.id} style={styles.orderItem}>
+                        <Image
+                          source={{ uri: item.food?.imageUrl || DEFAULT_FOOD_IMAGE }}
+                          style={styles.foodItemImage}
+                          resizeMode="cover"
+                        />
                         <View style={styles.orderItemDetails}>
                           <View style={styles.itemNameContainer}>
                             <Text style={styles.itemName}>{item.food?.name}</Text>
@@ -270,13 +263,26 @@ export default function OrderManagementScreen() {
             ))
           ) : (
             <View style={styles.emptyContainer}>
-              <Feather name="coffee" size={50} color="#ccc" />
-              <Text style={styles.emptyTitle}>Không tìm thấy đơn hàng</Text>
-              <Text style={styles.emptySubtitle}>Không có đơn hàng nào phù hợp với bộ lọc</Text>
-              <TouchableOpacity style={styles.addOrderButton} onPress={handleAddOrder}>
-                <Feather name="plus" size={18} color="#fff" />
-                <Text style={styles.addOrderButtonText}>Thêm đơn hàng mới</Text>
-              </TouchableOpacity>
+              <Image
+                source={{
+                  uri: 'https://gifdb.com/images/high/positive-vibes-positive-energy-care-bears-xknwls1qzeaw7as3.gif',
+                }}
+                style={styles.emptyImage}
+                resizeMode="cover"
+              />
+              <View style={styles.messageContainer}>
+                <Text style={styles.emptyTitle}>Chúc mừng nhân viên yêu dấu!</Text>
+                <View style={styles.divider} />
+                <Text style={styles.emptySubtitle}>
+                  Vì hiện tại không có Bàn nào đang cần phục vụ.{'\n'}Hãy nghỉ ngơi 1 lúc nhé &lt;3
+                </Text>
+                <View style={styles.iconContainer}>
+                  <Feather name="star" size={24} color="#FFD700" style={styles.icon} />
+                  <Feather name="heart" size={24} color="#FF69B4" style={styles.icon} />
+                  <Feather name="award" size={24} color="#D02C1A" style={styles.icon} />
+                </View>
+                <Text style={styles.emptyMessage}>Bạn luôn là Nhân viên số 1</Text>
+              </View>
             </View>
           )}
         </ScrollView>
@@ -533,20 +539,55 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 40,
+    padding: 20,
     marginTop: 20,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  messageContainer: {
+    alignItems: 'center',
+    padding: 16,
+  },
+  emptyImage: {
+    width: 400,
+    height: 250,
+    borderRadius: 12,
+    marginBottom: 20,
   },
   emptyTitle: {
-    marginTop: 10,
-    color: '#666',
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
+    color: '#D02C1A',
+    marginBottom: 10,
+    textAlign: 'center',
   },
   emptySubtitle: {
-    marginTop: 5,
-    color: '#999',
-    fontSize: 14,
-    marginBottom: 20,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 24,
+  },
+  emptyMessage: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#D02C1A',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  icon: {
+    marginHorizontal: 12,
   },
   addOrderButton: {
     flexDirection: 'row',
@@ -743,5 +784,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
     marginLeft: 8,
+  },
+  foodItemImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: 12,
   },
 })

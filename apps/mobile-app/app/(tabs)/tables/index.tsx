@@ -16,6 +16,8 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { useTheme } from "../../../context/ThemeContext"
 import { useTable } from "../../../context/TableContext"
+import { useOrder } from "../../../context/OrderContext"
+import { useAuth } from "../../../context/AuthContext"
 import type { Table, TableStatus } from "../../../constants/interface"
 
 // Components
@@ -36,6 +38,8 @@ export default function TableManagementScreen() {
   const router = useRouter()
   const { colors } = useTheme()
   const { tables, loading, fetchTables, updateTable } = useTable()
+  const { createOrder } = useOrder()
+  const { user } = useAuth()
   const [activeFilter, setActiveFilter] = useState<string>("Tất cả")
   const [editingTable, setEditingTable] = useState<Table | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<TableStatus | null>(null)
@@ -45,11 +49,16 @@ export default function TableManagementScreen() {
   }, [])
 
   const getFilteredTables = () => {
-    if (activeFilter === "Tất cả") return tables
-    const statusKey = Object.keys(STATUS_LABELS).find((key) => STATUS_LABELS[key as TableStatus] === activeFilter) as
-      | TableStatus
-      | undefined
-    return statusKey ? tables.filter((table) => table.status === statusKey) : tables
+    let filteredTables = tables
+    if (activeFilter !== "Tất cả") {
+      const statusKey = Object.keys(STATUS_LABELS).find(
+        (key) => STATUS_LABELS[key as TableStatus] === activeFilter
+      ) as TableStatus | undefined
+      filteredTables = statusKey ? tables.filter((table) => table.status === statusKey) : tables
+    }
+
+    // Sắp xếp bàn theo số bàn
+    return filteredTables.sort((a, b) => a.number - b.number)
   }
 
   const windowWidth = Dimensions.get("window").width
@@ -66,14 +75,41 @@ export default function TableManagementScreen() {
 
     try {
       await updateTable(editingTable.id, { status: selectedStatus })
+
+      // Tự động tạo đơn hàng khi chuyển sang trạng thái "Đang phục vụ"
+      if (selectedStatus === "OCCUPIED") {
+        await createOrder({
+          tableId: editingTable.id,
+          employeeId: user?.id || '',
+        })
+        Alert.alert(
+          "Thành công",
+          "Đã cập nhật trạng thái bàn và tạo đơn hàng mới. Bạn có thể quản lý đơn hàng trong mục Quản lý đơn hàng."
+        )
+      } else {
+        Alert.alert("Thành công", "Cập nhật trạng thái bàn thành công!")
+      }
+
       fetchTables()
-      Alert.alert("Thành công", "Cập nhật trạng thái bàn thành công!")
     } catch (error) {
+      console.error('Error:', error)
       Alert.alert("Lỗi", "Không thể cập nhật trạng thái bàn")
     } finally {
       setEditingTable(null)
       setSelectedStatus(null)
     }
+  }
+
+  const handleTablePress = (table: Table) => {
+    if (table.status === "OCCUPIED") {
+      Alert.alert(
+        "Không thể thao tác",
+        "Bàn này đang được phục vụ. Vui lòng quản lý đơn hàng trong mục Quản lý đơn hàng."
+      )
+      return
+    }
+    setEditingTable(table)
+    setSelectedStatus(table.status)
   }
 
   return (
@@ -117,10 +153,8 @@ export default function TableManagementScreen() {
               key={table.id}
               table={table}
               width={tableWidth}
-              onPress={() => {
-                setEditingTable(table)
-                setSelectedStatus(table.status)
-              }}
+              onPress={() => handleTablePress(table)}
+              disabled={table.status === "OCCUPIED"}
             />
           ))}
           {getFilteredTables().length === 0 && (
