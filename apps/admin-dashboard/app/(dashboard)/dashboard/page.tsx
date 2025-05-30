@@ -15,6 +15,7 @@ import { TableStatusChart } from "@/components/charts/table-status-chart"
 import { EmployeePerformanceChart } from "@/components/charts/employee-performance-chart"
 import { CategoryRevenueChart } from "@/components/charts/category-revenue-chart"
 import { useRevenue } from "@/hooks/use-revenue"
+import { TableStatus } from "@/types/schema"
 
 export default function DashboardPage() {
   const { employees, isLoading: isLoadingEmployees } = useEmployees()
@@ -65,6 +66,14 @@ export default function DashboardPage() {
   // Lấy data gần nhất theo timeRange
   const filteredRevenueData = revenueData.slice(-timeRange)
 
+  // Chuẩn bị data cho TableStatusChart từ tables
+  const tableStatusData = [
+    { status: TableStatus.AVAILABLE, count: tables.filter(t => t.status === TableStatus.AVAILABLE).length },
+    { status: TableStatus.OCCUPIED, count: tables.filter(t => t.status === TableStatus.OCCUPIED).length },
+    { status: TableStatus.RESERVED, count: tables.filter(t => t.status === TableStatus.RESERVED).length },
+    { status: "CLEANING", count: tables.filter(t => t.status === "CLEANING").length },
+  ]
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -93,10 +102,7 @@ export default function DashboardPage() {
                 {isLoading ? (
                   <Skeleton className="h-8 w-24" />
                 ) : (
-                  <>
-                    <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">+18% from last month</p>
-                  </>
+                  <div className="text-2xl font-bold">{totalRevenue.toLocaleString()}</div>
                 )}
               </CardContent>
             </Card>
@@ -110,10 +116,7 @@ export default function DashboardPage() {
                 {isLoading ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <>
-                    <div className="text-2xl font-bold">{stats.activeOrders}</div>
-                    <p className="text-xs text-muted-foreground">+2 since last hour</p>
-                  </>
+                  <div className="text-2xl font-bold">{stats.activeOrders}</div>
                 )}
               </CardContent>
             </Card>
@@ -127,10 +130,7 @@ export default function DashboardPage() {
                 {isLoading ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <>
-                    <div className="text-2xl font-bold">{stats.activeEmployees}</div>
-                    <p className="text-xs text-muted-foreground">+1 since yesterday</p>
-                  </>
+                  <div className="text-2xl font-bold">{stats.activeEmployees}</div>
                 )}
               </CardContent>
             </Card>
@@ -161,83 +161,53 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {isLoading ? (
-              <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Table Status</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[200px]">
-                      <Skeleton className="h-full w-full" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revenue by Category</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[200px]">
-                      <Skeleton className="h-full w-full" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Employee Performance</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[200px]">
-                      <Skeleton className="h-full w-full" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </>
-            ) : (
-              <>
-                <TableStatusChart data={tableOccupancy} />
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                    <CardDescription>Common tasks and shortcuts</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                        onClick={() => window.location.href = "/dashboard/orders"}
-                      >
-                        <ClipboardList className="h-6 w-6 text-red-600 mb-2" />
-                        <span className="text-sm">Go to Orders</span>
-                      </button>
-                      <button
-                        className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                        onClick={() => window.location.href = "/dashboard/employees"}
-                      >
-                        <Users className="h-6 w-6 text-red-600 mb-2" />
-                        <span className="text-sm">Go to Employees</span>
-                      </button>
-                      <button
-                        className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                        onClick={() => window.location.href = "/dashboard/tables"}
-                      >
-                        <Coffee className="h-6 w-6 text-red-600 mb-2" />
-                        <span className="text-sm">Manage Tables</span>
-                      </button>
-                      <button
-                        className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                        onClick={() => window.location.href = "/dashboard/qrcode"}
-                      >
-                        <QrCode className="h-6 w-6 text-red-600 mb-2" />
-                        <span className="text-sm">Manage QR code</span>
-                      </button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </>
-            )}
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Table Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TableStatusChart data={tableStatusData} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Common tasks and shortcuts</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    onClick={() => window.location.href = "/dashboard/orders"}
+                  >
+                    <ClipboardList className="h-6 w-6 text-red-600 mb-2" />
+                    <span className="text-sm">Go to Orders</span>
+                  </button>
+                  <button
+                    className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    onClick={() => window.location.href = "/dashboard/employees"}
+                  >
+                    <Users className="h-6 w-6 text-red-600 mb-2" />
+                    <span className="text-sm">Go to Employees</span>
+                  </button>
+                  <button
+                    className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    onClick={() => window.location.href = "/dashboard/tables"}
+                  >
+                    <Coffee className="h-6 w-6 text-red-600 mb-2" />
+                    <span className="text-sm">Manage Tables</span>
+                  </button>
+                  <button
+                    className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    onClick={() => window.location.href = "/dashboard/qrcode"}
+                  >
+                    <QrCode className="h-6 w-6 text-red-600 mb-2" />
+                    <span className="text-sm">Manage QR code</span>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
