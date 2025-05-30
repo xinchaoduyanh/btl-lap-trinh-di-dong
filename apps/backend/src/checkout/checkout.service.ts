@@ -81,16 +81,18 @@ export class CheckoutService {
 
     const qrCode = await this.prisma.qRCode.findFirst({
       where: {
-        code: code, // Check theo code thay vì id
+        code: code,
+        isUsed: false, // Chỉ cho phép check-in khi QR code chưa được sử dụng
+        validUntil: {
+          gt: new Date(), // Chưa hết hạn
+        },
       },
     })
-
-    //Kiểm tra xem còn hạn k
-    const isQRCodeValid = qrCode?.validUntil && qrCode.validUntil > new Date()
 
     if (!qrCode) {
       throw new BadRequestException('Mã QR không hợp lệ, đã hết hạn hoặc đang bị khóa')
     }
+
     // Kiểm tra xem employee có tồn tại không
     const employee = await this.prisma.employee.findUnique({
       where: { id: checkInDto.employeeId },

@@ -42,8 +42,9 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await getCurrentStatus(employeeId);
     } catch (error) {
       if (error instanceof Error) {
-        Alert.alert('Error', error.message);
+        throw error;
       }
+      throw new Error('Failed to check in');
     } finally {
       setLoading(false);
     }

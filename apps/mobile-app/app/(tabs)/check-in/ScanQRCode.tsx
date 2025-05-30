@@ -64,18 +64,28 @@ export default function ScanQRCode() {
         }
       ]);
     } catch (error) {
-      console.error('Check-in error:', error);
-
       if (error instanceof Error) {
         if (error.message.includes('already checked in')) {
           router.replace('/(tabs)/check-in');
         } else {
-          Alert.alert('Error', error.message);
-          setScanned(false);  // Cho phép quét lại nếu có lỗi
+          Alert.alert('Error', error.message || 'Failed to check-in. Please try again.', [
+            {
+              text: 'OK',
+              onPress: () => {
+                router.replace('/(tabs)/check-in');
+              }
+            }
+          ]);
         }
       } else {
-        Alert.alert('Error', 'Failed to check-in. Please try again.');
-        setScanned(false);  // Cho phép quét lại nếu có lỗi
+        Alert.alert('Error', 'Failed to check-in. Please try again.', [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.replace('/(tabs)/check-in');
+            }
+          }
+        ]);
       }
     } finally {
       setLoading(false);
