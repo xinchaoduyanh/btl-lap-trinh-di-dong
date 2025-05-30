@@ -87,6 +87,12 @@ export default function OrdersPage() {
   const [duplicateOrderError, setDuplicateOrderError] = useState("")
   const [isTableReservedAlertOpen, setIsTableReservedAlertOpen] = useState(false)
 
+  // PHÂN TRANG
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(8)
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   // Function to show update alert
   const showUpdateAlert = (message: string) => {
@@ -300,6 +306,11 @@ export default function OrdersPage() {
     return matchesSearch && matchesStatus
   })
 
+  // PHÂN TRANG
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentOrders = filteredOrders.slice(indexOfFirstItem, indexOfLastItem)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString()
@@ -417,8 +428,8 @@ export default function OrdersPage() {
                   Error loading orders: {error.message}
                 </TableCell>
               </TableRow>
-            ) : filteredOrders.length > 0 ? (
-              filteredOrders.map((order) => (
+            ) : currentOrders.length > 0 ? (
+              currentOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.id.substring(0, 8)}...</TableCell>
                   <TableCell>{order.table?.number || 'N/A'}</TableCell>
@@ -464,6 +475,62 @@ export default function OrdersPage() {
             )}
           </TableBody>
         </Table>
+        {/* PHÂN TRANG */}
+        <div className="flex items-center justify-between py-4">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredOrders.length === 0 ? 0 : indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredOrders.length)} of {filteredOrders.length} orders
+            </p>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(parseInt(value))
+                setCurrentPage(1)
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue placeholder={itemsPerPage.toString()} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">per page</p>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* New Order Dialog */}

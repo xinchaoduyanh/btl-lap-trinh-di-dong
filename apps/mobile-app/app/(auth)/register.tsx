@@ -21,7 +21,7 @@ import { useTheme } from "../../context/ThemeContext"
 
 // Components
 import { FormInput } from "../../components/FormInput"
-import { PrimaryButton } from "../../components/Buttons"
+import { PrimaryButton, SecondaryButton } from "../../components/Buttons"
 import Fireworks from "../../components/Fireworks"
 
 export default function RegisterScreen() {
@@ -91,6 +91,28 @@ export default function RegisterScreen() {
       showSuccessMessage()
     } catch (err: any) {
       setError(err.message)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    try {
+      await sendOtp(email)
+      Alert.alert("Thành công", "Mã OTP mới đã được gửi đến email của bạn")
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
+  const handleBack = () => {
+    if (step === 2) {
+      setStep(1)
+      setOtp("")
+      setFullName("")
+      setPassword("")
+      setConfirmPassword("")
+      setError("")
+    } else {
+      router.back()
     }
   }
 
@@ -179,17 +201,30 @@ export default function RegisterScreen() {
                       onPress={handleRegister}
                       disabled={isLoading}
                     />
+                    <SecondaryButton
+                      title="Gửi lại OTP"
+                      onPress={handleResendOtp}
+                      disabled={isLoading}
+                    />
                   </View>
                 )}
 
-                <View style={styles.loginContainer}>
-                  <Text style={styles.loginText}>Đã có tài khoản? </Text>
-                  <Link href="/login" asChild>
-                    <TouchableOpacity>
-                      <Text style={[styles.loginLink, { color: colors.primary }]}>Đăng nhập</Text>
-                    </TouchableOpacity>
-                  </Link>
-                </View>
+                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                  <Text style={[styles.backButtonText, { color: colors.primary }]}>
+                    {step === 1 ? "Quay lại đăng nhập" : "Quay lại"}
+                  </Text>
+                </TouchableOpacity>
+
+                {step === 1 && (
+                  <View style={styles.loginContainer}>
+                    <Text style={styles.loginText}>Đã có tài khoản? </Text>
+                    <Link href="/login" asChild>
+                      <TouchableOpacity>
+                        <Text style={[styles.loginLink, { color: colors.primary }]}>Đăng nhập</Text>
+                      </TouchableOpacity>
+                    </Link>
+                  </View>
+                )}
               </View>
             </ImageBackground>
           </View>
@@ -308,5 +343,14 @@ const styles = StyleSheet.create({
     right: 20,
     top: '50%',
     transform: [{ translateY: -10 }],
+  },
+  backButton: {
+    alignItems: "center",
+    padding: 10,
+    marginTop: 10,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
   },
 })
