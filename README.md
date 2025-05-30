@@ -2,9 +2,9 @@
 
 ## Tổng Quan
 Đây là một dự án full-stack bao gồm 3 phần chính:
-- Backend API (Node.js/Express)
-- Admin Dashboard (React)
-- Mobile App (React Native)
+- Backend API (Nestjs)
+- Admin Dashboard (Next15)
+- Mobile App (Expo)
 
 ## Cấu Trúc Dự Án
 ```
@@ -152,19 +152,17 @@ API documentation có sẵn trong file `API.postman_collection.json`. Bạn có 
 - Xem danh sách món ăn
 - Quản lý thông tin chi tiết món ăn (tên, giá, mô tả, hình ảnh)
 - Phân loại món ăn
-- Quản lý trạng thái món ăn (còn hàng/hết hàng)
+
 
 #### Quản Lý Bàn
 - Thêm, sửa, xóa bàn
 - Xem trạng thái bàn (trống/đang sử dụng)
 - Quản lý thông tin bàn
-- Phân khu vực bàn
+
 
 #### Quản Lý Đơn Hàng
 - Xem danh sách đơn hàng
 - Cập nhật trạng thái đơn hàng
-- Xem chi tiết đơn hàng
-- Xem lịch sử đơn hàng
 - Thống kê doanh thu
 
 #### Quản Lý Nhân Viên
@@ -175,9 +173,7 @@ API documentation có sẵn trong file `API.postman_collection.json`. Bạn có 
 
 #### Hệ Thống Thông Báo
 - Gửi thông báo cho nhân viên
-- Phân công thông báo
-- Quản lý trạng thái thông báo
-- Tạo thông báo khẩn cấp
+
 
 #### Tính Năng Khác
 - Quản lý khẩu hiệu (slogans)
