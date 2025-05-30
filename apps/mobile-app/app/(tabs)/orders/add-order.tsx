@@ -97,8 +97,15 @@ export default function AddOrderScreen() {
 
   // Fetch data on mount
   useEffect(() => {
-    fetchFoods()
-    fetchTables()
+    const loadData = async () => {
+      try {
+        await Promise.all([fetchFoods(), fetchTables()])
+      } catch (error) {
+        console.error('Error loading data:', error)
+      }
+    }
+
+    loadData()
 
     // If adding to existing order, set the table and order ID
     if (isAddingToExistingOrder && existingTableId) {
@@ -109,7 +116,7 @@ export default function AddOrderScreen() {
         setSelectedOrderId(existingOrderId)
       }
     }
-  }, [isAddingToExistingOrder, existingTableId, existingOrderId, tables])
+  }, []) // Chỉ chạy một lần khi component mount
 
   const filteredItems = useMemo(() => {
     const categoryFiltered = foods.filter(
