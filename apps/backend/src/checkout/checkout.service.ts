@@ -78,17 +78,16 @@ export class CheckoutService {
   async checkIn(checkInDto: CheckInDto) {
     // Validate QR code trước
     const { qrCode: code, employeeId } = checkInDto
-    console.log(code)
 
     const qrCode = await this.prisma.qRCode.findFirst({
       where: {
         code: code, // Check theo code thay vì id
       },
     })
-    console.log(qrCode)
+
     //Kiểm tra xem còn hạn k
     const isQRCodeValid = qrCode?.validUntil && qrCode.validUntil > new Date()
-    console.log(isQRCodeValid)
+
     if (!qrCode) {
       throw new BadRequestException('Mã QR không hợp lệ, đã hết hạn hoặc đang bị khóa')
     }

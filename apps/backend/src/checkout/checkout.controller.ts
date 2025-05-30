@@ -22,7 +22,6 @@ export class CheckoutController {
 
   @Get('status/:employeeId')
   getCurrentStatus(@Param('employeeId') employeeId: string) {
-    console.log('Controller received employeeId:', employeeId)
     return this.checkoutService.getCurrentStatus(employeeId)
   }
 

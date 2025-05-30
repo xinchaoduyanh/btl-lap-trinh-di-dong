@@ -72,7 +72,6 @@ export class OrdersService {
         table: true,
       },
     })
-    console.log(a)
     return a
   }
 
@@ -183,8 +182,6 @@ export class OrdersService {
           createdAt: 'desc',
         },
       })
-
-      console.log(`Found ${orders.length} preparing orders`)
 
       // Trả về mảng rỗng thay vì throw error nếu không có đơn hàng
       return orders
